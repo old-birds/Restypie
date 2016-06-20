@@ -1,0 +1,12 @@
+language: node_js
+node_js:
+  - '5'
+  - '4'
+sudo: required
+addons:
+  mariadb: "10.0"
+before_install:
+  - mysql -e "CREATE DATABASE IF NOT EXISTS restypie_test;" -u root
+  - npm install -g grunt-cli
+services:
+  - mysql

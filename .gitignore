@@ -1,0 +1,13 @@
+node_modules
+
+.idea
+.DS_Store
+*.log
+
+coverage.html
+
+npm-debug.log
+
+typings/
+!typings/tsd.d.ts
+!index.d.ts

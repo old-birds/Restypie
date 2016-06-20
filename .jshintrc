@@ -1,0 +1,27 @@
+{
+  "-W030": true,
+  "-W079": true,
+  "newcap": true,
+  "esnext": true,
+  "noempty": true,
+  "indent": 2,
+  "unused": true,
+  "eqeqeq": true,
+  "loopfunc": true,
+  "globalstrict": true,
+  "node": true,
+  "undef": true,
+  "maxparams": 4,
+  "maxlen": 120,
+  "globals": {
+    "Restypie": false,
+    "describe": false,
+    "it": false,
+    "before": false,
+    "beforeEach": false,
+    "after": false,
+    "afterEach": false,
+    "should": false,
+    "rek": false
+  }
+}

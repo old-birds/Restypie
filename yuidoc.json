@@ -1,0 +1,12 @@
+{
+  "name": "NodeToolkit",
+  "description": "A place for modules shared across services",
+  "options": {
+    "paths": "./",
+    "themedir": "./node_modules/yuidoc-theme-blue/",
+    "exclude": "node_modules,test",
+    "linkNatives": true,
+    "outdir": "docs",
+    "tabtospace": 2
+  }
+}
