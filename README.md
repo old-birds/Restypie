@@ -1,4 +1,6 @@
-# Restypie [![Build Status](https://travis-ci.org/SylvainEstevez/Restypie.svg?branch=master)](https://travis-ci.org/SylvainEstevez/Restypie)
+# Restypie
+[![Build Status](https://travis-ci.org/SylvainEstevez/Restypie.svg?branch=master)](https://travis-ci.org/SylvainEstevez/Restypie)
+[![npm version](https://badge.fury.io/js/restypie.svg)](https://badge.fury.io/js/restypie)
 
 Tastypie inspired, lightweight and storage agnostic REST resources manager.
 
