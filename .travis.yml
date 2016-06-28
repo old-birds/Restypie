@@ -1,11 +1,19 @@
+dist: trusty
 language: node_js
 node_js:
   - '6'
   - '5'
   - '4'
 sudo: required
+addons:
+  apt:
+    packages:
+    - mysql-server-5.6
+    - mysql-client-core-5.6
+    - mysql-client-5.6
 before_install:
   - mysql -e "CREATE DATABASE IF NOT EXISTS restypie_test;" -u root
   - npm install -g grunt-cli
-services:
-  - mysql
+script:
+  - grunt check
+  - grunt coveralls
