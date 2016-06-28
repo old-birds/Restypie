@@ -1,6 +1,7 @@
 'use strict';
 
-let packageJSON = require('./package.json');
+let path = require('path');
+let packageJSON = require(path.join(process.cwd(), 'package.json'));
 let _ = require('lodash');
 
 module.exports = {
@@ -59,24 +60,24 @@ module.exports = {
     return qs;
   },
 
-  get API() { return require('./src/api'); },
-  get Route() { return require('./src/route'); },
-  get Resources() { return require('./src/resources'); },
-  get BasicRoutes() { return require('./src/basic-routes'); },
-  get Fields() { return require('./src/fields'); },
-  get RestErrors() { return require('./src/rest-errors'); },
-  get TemplateErrors() { return require('./src/template-errors'); },
-  get RoutesSorter() { return require('./src/routes-sorter'); },
-  get Bundle() { return require('./src/bundle'); },
-  get Serializers() { return require('./src/serializers'); },
-  get Methods() { return require('./src/methods'); },
-  get Codes() { return require('./src/codes'); },
-  get Utils() { return require('./src/utils'); },
-  get Url() { return require('./src/url'); },
-  get Operators() { return require('./src/operators'); },
-  get Client() { return require('./src/client'); },
-  get Model() { return require('./src/model'); },
-  get Query() { return require('./src/client/lib/query'); },
-  get Logger() { return require('./src/logger'); }
+  get API() { return require('./api'); },
+  get Route() { return require('./route'); },
+  get Resources() { return require('./resources'); },
+  get BasicRoutes() { return require('./basic-routes'); },
+  get Fields() { return require('./fields'); },
+  get RestErrors() { return require('./rest-errors'); },
+  get TemplateErrors() { return require('./template-errors'); },
+  get RoutesSorter() { return require('./routes-sorter'); },
+  get Bundle() { return require('./bundle'); },
+  get Serializers() { return require('./serializers'); },
+  get Methods() { return require('./methods'); },
+  get Codes() { return require('./codes'); },
+  get Utils() { return require('./utils'); },
+  get Url() { return require('./url'); },
+  get Operators() { return require('./operators'); },
+  get Client() { return require('./client'); },
+  get Model() { return require('./model'); },
+  get Query() { return require('./client/lib/query'); },
+  get Logger() { return require('./logger'); }
 
 };

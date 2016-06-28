@@ -1,7 +1,7 @@
 'use strict';
 
 let Query = require('./lib/query');
-let Restypie = require('../../');
+let Restypie = require('../');
 
 module.exports = class Client {
 

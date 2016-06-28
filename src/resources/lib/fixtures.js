@@ -6,7 +6,7 @@
 let _ = require('lodash');
 let sortBy = require('sort-by');
 
-let Restypie = require('../../../');
+let Restypie = require('../../');
 
 /***********************************************************************************************************************
  * @namespace Restypie.Resources

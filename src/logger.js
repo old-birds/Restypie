@@ -2,7 +2,7 @@
 
 let Winston = require('winston');
 
-let Restypie = require('../');
+let Restypie = require('./');
 
 let logger = new Winston.Logger({
   level: 'error',
