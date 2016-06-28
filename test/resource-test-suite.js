@@ -1007,7 +1007,7 @@ module.exports = function (options) {
             console.log(data.map(item => item.email));
             data.forEach(function (current) {
               current = current.email;
-              if (prev !== null) (current > prev).should.equal(true);
+              if (prev !== null) current.should.be.at.least(prev);
               prev = current;
             });
             return done();
@@ -1024,7 +1024,7 @@ module.exports = function (options) {
             console.log(data.map(item => item.email));
             data.forEach(function (current) {
               current = current.email;
-              if (prev !== null) (current < prev).should.equal(true);
+              if (prev !== null) current.should.be.at.most(prev);
               prev = current;
             });
             return done();
