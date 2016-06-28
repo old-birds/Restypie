@@ -2,7 +2,7 @@
 
 let request = require('request');
 
-let Restypie = require('../../../');
+let Restypie = require('../../');
 
 module.exports = class Query {
 

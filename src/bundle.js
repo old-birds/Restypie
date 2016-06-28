@@ -6,7 +6,7 @@
 let _ = require('lodash');
 let QS = require('querystring');
 
-let Restypie = require('../');
+let Restypie = require('./');
 
 /***********************************************************************************************************************
  * @namespace Restypie

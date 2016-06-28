@@ -8,7 +8,7 @@ let path = require('path');
 let OS = require('os');
 let UUID = require('node-uuid');
 
-let Restypie = require('../../../');
+let Restypie = require('../../');
 
 /***********************************************************************************************************************
  * @namespace Restypie.Fields

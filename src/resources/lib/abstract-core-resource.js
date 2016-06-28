@@ -1,6 +1,6 @@
 'use strict';
 
-let Restypie = require('../../../');
+let Restypie = require('../../');
 let _ = require('lodash');
 
 module.exports = class AbstractCoreResource {

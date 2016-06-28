@@ -11,7 +11,7 @@ let formDataToObject = require('form-data-to-object');
 let https = require('https');
 let request = require('request');
 
-let Restypie = require('../../../');
+let Restypie = require('../../');
 let Utils = Restypie.Utils;
 
 const RESERVED_KEYWORDS = ['limit', 'offset', 'sort', 'select', 'format', 'populate'];

@@ -10,22 +10,56 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-githooks');
   grunt.loadNpmTasks('grunt-jscs');
   grunt.loadNpmTasks('grunt-mocha-cov');
+  grunt.loadNpmTasks('grunt-mocha-test');
+  grunt.loadNpmTasks('grunt-mocha-istanbul');
 
 
   let CHECK_MATCH = [
-    '**/*.js',
-    '!**/node_modules/**'
+    'src/**/*.js'
   ];
 
 
   grunt.initConfig({
 
     /**
-     * Git pre-commit hook
+     * Istanbul coverage
+     */
+    mocha_istanbul: {
+      coverage: {
+        src: ['./test/**/*.test.js'],
+        options: {
+          quiet: true,
+          recursive: true,
+          require: [
+            './test/common.js'
+          ],
+          scriptPath: require.resolve('./node_modules/.bin/istanbul')
+        }
+      }
+    },
+
+    /**
+     * Git pre-push hook
      */
     githooks: {
       all: {
-        'pre-commit': 'check'
+        'pre-push': 'check'
+      }
+    },
+
+    /**
+     * Mocha
+     */
+    mochaTest: {
+      test: {
+        options: {
+          reporter: 'spec',
+          recursive: true,
+          require: [
+            './test/common.js'
+          ]
+        },
+        src: ['./test/**/*.test.js']
       }
     },
 
@@ -48,41 +82,14 @@ module.exports = function (grunt) {
       options: {
         config: '.jscsrc'
       }
-    },
-
-    /**
-     * Mocha
-     */
-    mochacov: {
-      test: {
-        options: {
-          reporter: 'spec',
-          recursive: true,
-          require: [
-            'test/common.js'
-          ]
-        },
-        src: args.file || ['test/**/*.test.js']
-      },
-      coverage: {
-        options: {
-          reporter: 'html-cov',
-          output: 'coverage.html',
-          quiet: true,
-          recursive: true,
-          require: [
-            'test/common.js'
-          ],
-          src: ['test/**/*.test.js']
-        }
-      }
     }
   });
 
-  grunt.registerTask('hook', 'githooks');
-  grunt.registerTask('test', 'mochacov:test');
-  grunt.registerTask('check', ['hook', 'jshint', 'jscs', 'mochacov:test']);
+  grunt.registerTask('hooks', 'githooks');
+  grunt.registerTask('test', 'mochaTest:test');
+  grunt.registerTask('check', ['hooks', 'jshint', 'jscs', 'test']);
   grunt.registerTask('default', 'check');
+  grunt.registerTask('cov', ['mocha_istanbul:coverage']);
   grunt.registerTask('doc', 'Build or serve YUIDOC', function () {
     let docArgs = [];
     if (!args.build) docArgs.push('--server');

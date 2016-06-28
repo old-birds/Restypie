@@ -5,6 +5,7 @@ node_modules
 *.log
 
 coverage.html
+coverage/
 
 npm-debug.log
 
