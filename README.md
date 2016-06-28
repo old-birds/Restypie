@@ -1,4 +1,5 @@
-# Restypie
+# Restypie [![Build Status](https://travis-ci.org/SylvainEstevez/Restypie.svg?branch=master)](https://travis-ci.org/SylvainEstevez/Restypie)
+
 Tastypie inspired, lightweight and storage agnostic REST resources manager.
 
 ## Requirements
