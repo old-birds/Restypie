@@ -14,3 +14,6 @@ addons:
 before_install:
   - mysql -e "CREATE DATABASE IF NOT EXISTS restypie_test;" -u root
   - npm install -g grunt-cli
+script:
+  - grunt check
+  - grunt coveralls

@@ -1,5 +1,7 @@
 'use strict';
 
+const coveralls = require('coveralls');
+
 let args = require('minimist')(process.argv, {
   strings: ['file'],
   booleans: ['build']
@@ -29,6 +31,18 @@ module.exports = function (grunt) {
         src: ['./test/**/*.test.js'],
         options: {
           quiet: true,
+          recursive: true,
+          require: [
+            './test/common.js'
+          ],
+          scriptPath: require.resolve('./node_modules/.bin/istanbul')
+        }
+      },
+      coveralls: {
+        src: ['./test/**/*.test.js'],
+        options: {
+          quiet: true,
+          coverage: true,
           recursive: true,
           require: [
             './test/common.js'
@@ -85,11 +99,16 @@ module.exports = function (grunt) {
     }
   });
 
+  grunt.event.on('coverage', function(lcov, done){
+    return coveralls.handleInput(lcov, done);
+  });
+
   grunt.registerTask('hooks', 'githooks');
   grunt.registerTask('test', 'mochaTest:test');
   grunt.registerTask('check', ['hooks', 'jshint', 'jscs', 'test']);
   grunt.registerTask('default', 'check');
   grunt.registerTask('cov', ['mocha_istanbul:coverage']);
+  grunt.registerTask('coveralls', ['mocha_istanbul:coveralls']);
   grunt.registerTask('doc', 'Build or serve YUIDOC', function () {
     let docArgs = [];
     if (!args.build) docArgs.push('--server');

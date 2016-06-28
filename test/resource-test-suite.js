@@ -1004,7 +1004,6 @@ module.exports = function (options) {
             if (err) return done(err);
             let data = res.body.data;
             let prev = null;
-            console.log(data.map(item => item.email));
             data.forEach(function (current) {
               current = current.email;
               if (prev !== null) current.should.be.at.least(prev);
@@ -1021,7 +1020,6 @@ module.exports = function (options) {
             if (err) return done(err);
             let data = res.body.data;
             let prev = null;
-            console.log(data.map(item => item.email));
             data.forEach(function (current) {
               current = current.email;
               if (prev !== null) current.should.be.at.most(prev);
