@@ -70,7 +70,7 @@ let User = db.define('User', {
   createdAt: 'createdOn'
 });
 
-describe('Resources.SequelizeResource', function () {
+describe.only('Resources.SequelizeResource', function () {
 
   before(function () {
     return User.sync({ force: true });
