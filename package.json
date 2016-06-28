@@ -1,7 +1,7 @@
 {
   "name": "restypie",
   "main": "./src/index",
-  "version": "0.0.2",
+  "version": "0.1.2",
   "engines": {
     "node": ">=4.2.2"
   },
