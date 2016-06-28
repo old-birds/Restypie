@@ -1,6 +1,6 @@
 'use strict';
 
-let Restypie = require('../../../');
+let Restypie = require('../../');
 
 module.exports = class RestypieResource extends Restypie.Resources.AbstractResource {
   

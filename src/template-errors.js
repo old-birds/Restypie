@@ -5,7 +5,7 @@
  **********************************************************************************************************************/
 let _ = require('lodash');
 
-let Restypie = require('../');
+let Restypie = require('./');
 
 class AbstractError extends Restypie.RestErrors.AbstractRestError {
   get name() { return this.constructor.name; }
