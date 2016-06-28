@@ -51,7 +51,7 @@ module.exports = class FileField extends Restypie.Fields.AbstractField {
    * @return {String}
    */
   buildFilePath(file) {
-    return path.join(OS.tmpdir(), `restypie_${UUID.v4()}_${path.basename(file.name)}`);
+    return path.join(OS.tmpdir(), `restypie_${UUID.v4()}_${path.basename(file.name || '')}`);
   }
 
   /**
