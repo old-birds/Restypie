@@ -44,13 +44,14 @@ module.exports = class SequelizeResource extends Restypie.Resources.AbstractReso
   }
 
   getObjects(bundle) {
-    return this.model.findAll({
+    let options = {
       where: SequelizeResource.formatFilters(bundle.filters),
-      limit: bundle.limit,
-      offset: bundle.offset,
       attributes: bundle.select || ['*'],
       order: bundle.sort ? SequelizeResource.toOrder(bundle.sort) : null
-    }).then(function (objects) {
+    };
+    if (bundle.limit) options.limit = bundle.limit;
+    if (bundle.offset) options.offset = bundle.offset;
+    return this.model.findAll(options).then(function (objects) {
       return Promise.resolve(objects.map(function (object) {
         return object.get({ plain: true });
       }));
