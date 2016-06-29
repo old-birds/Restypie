@@ -3,7 +3,9 @@
 /***********************************************************************************************************************
  * Dependencies
  **********************************************************************************************************************/
-let _ = require('lodash');
+const _ = require('lodash');
+const http = require('http');
+const https = require('https');
 
 let Restypie = require('./');
 
@@ -29,11 +31,11 @@ module.exports = class API {
   /**
    * The express application on which the routes will be attached
    *
-   * @property app
-   * @type express
+   * @property server
+   * @type http.Server
    * @writeOnce
    */
-  get app() { return this._app; }
+  get server() { return this._server; }
 
   /**
    *
@@ -57,6 +59,7 @@ module.exports = class API {
   constructor(options) {
     this._isLaunched = false;
     if (options.app) this._app = options.app;
+    if (options.server) this._server = options.server;
     this._path = options.path || '';
     this._resources = {};
   }
@@ -69,11 +72,16 @@ module.exports = class API {
    *
    * @method launch
    */
-  launch(app) {
+  launch(router, server) {
     this._throwIfLaunched();
 
-    app = this._app = app || this._app;
-    if (!app) throw new Error('An API requires an express app');
+    router = this._router = router || this._router;
+    server = this._server = server || this._server;
+
+    if (!router) throw new Error('An API requires an app (see Restypie.ROUTER_TYPES for supported frameworks)');
+    if (!(server instanceof http.Server) && !(server instanceof https.Server)) {
+      throw new Error('An API requires a server');
+    }
 
     let apiPath = this._path;
     let resources = this._resources;
@@ -94,9 +102,7 @@ module.exports = class API {
     // Sort the routes and declare them to the app
     Restypie.RoutesSorter
       .sort(routes)
-      .forEach(function (route) {
-        app[route.method.toLowerCase()](route.path, route.handlers);
-      });
+      .forEach(this._registerRoute.bind(this));
 
     // The API is now launched and couldn't be launched again
     this._isLaunched = true;
@@ -134,6 +140,17 @@ module.exports = class API {
       self.registerResource(resourceName, resources[resourceName]);
     });
     return this;
+  }
+
+  _registerRoute(def) {
+    switch (Restypie.routerType) {
+
+      case Restypie.ROUTER_TYPES.EXPRESS:
+      case Restypie.ROUTER_TYPES.KOA_ROUTER:
+        this._router[def.method.toLowerCase()].apply(this._router, [def.path, ...def.handlers]);
+        break;
+
+    }
   }
 
   _throwIfLaunched() {

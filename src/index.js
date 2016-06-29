@@ -13,16 +13,16 @@ module.exports = {
   LIST_SEPARATOR: ',',
   get LIST_SEPARATOR_REG() { return new RegExp('\\\s*' + this.LIST_SEPARATOR + '\\\s*', 'g'); },
 
-  MIDDLEWARE_TYPES: {
-    // KOA: 'koa',
+  ROUTER_TYPES: {
+    KOA_ROUTER: 'koa-router',
     EXPRESS: 'express'
   },
 
-  middlewareType: 'express',
+  routerType: 'express',
 
-  setMiddlewareType(type) {
-    if (!_.includes(_.values(this.MIDDLEWARE_TYPES), type)) throw new Error(`Unsupported middleware type : ${type}`);
-    this.middlewareType = type;
+  setRouterType(type) {
+    if (!_.includes(_.values(this.ROUTER_TYPES), type)) throw new Error(`Unsupported router type : ${type}`);
+    this.routerType = type;
   },
 
   listToArray(str) {

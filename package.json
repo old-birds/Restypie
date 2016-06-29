@@ -48,16 +48,14 @@
     "istanbul": "^0.4.4",
     "jshint-stylish": "^2.1.0",
     "koa": "^1.2.0",
+    "koa-router": "^5.4.0",
     "minimist": "^1.2.0",
     "mocha": "^2.5.3",
     "mysql": "~2.9.0",
     "sequelize": "~3.14.2",
     "supertest": "^1.1.0",
+    "supertest-koa-agent": "^0.2.1",
     "yuidoc-theme-blue": "^0.1.9"
-  },
-  "optionalDependencies": {
-    "mysql": "~2.9.0",
-    "sequelize": "~3.14.2"
   },
   "author": "Sylvain Estevez",
   "contributors": [

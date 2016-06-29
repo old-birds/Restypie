@@ -9,8 +9,8 @@ let Busboy = require('busboy');
 const bodyParser = require('body-parser');
 let typeIs = require('type-is');
 let formDataToObject = require('form-data-to-object');
-let https = require('https');
 let request = require('request');
+const URL = require('url');
 
 let Restypie = require('../../');
 let Utils = Restypie.Utils;
@@ -243,13 +243,14 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
    * @method getFullUrl
    * @return {String}
    */
-  getFullUrl() {
+  getFullUrl(bundle) {
     let api = this.api;
-    let app = api.app;
-    let port = app.get('port');
-    let protocol = app instanceof https.Server ? 'https' : 'http';
-    let basePath = Restypie.Url.join(protocol + '://127.0.0.1:' + port, api.path);
-    return Restypie.Url.join(basePath, this.path);
+    return URL.format({
+      protocol: bundle.url.protocol || 'http',
+      hostname: bundle.url.host || '127.0.0.1',
+      port: api.server.address().port || 80,
+      pathname: Restypie.Url.join(api.path, this.path)
+    });
   }
 
   /**
@@ -874,7 +875,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
         let tasks = [];
 
         if (field.isManyRelation) {
-          url = Restypie.Url.join(resource.getFullUrl());
+          url = Restypie.Url.join(resource.getFullUrl(bundle));
           qs.limit = 0;
 
           let through = field.through;
@@ -891,7 +892,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
               return new Promise(function (resolve, reject) {
                 return request({
                   method: 'GET',
-                  url: through.getFullUrl(),
+                  url: through.getFullUrl(bundle),
                   qs: {
                     [throughKeyField.key]: object[self.primaryKeyField.key],
                     limit: 0, // All items
@@ -918,7 +919,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
             qs[toKeyField.key] = object[self.primaryKeyField.key];
           }
         } else {
-          url = Restypie.Url.join(resource.getFullUrl(), object[key]);
+          url = Restypie.Url.join(resource.getFullUrl(bundle), object[key]);
         }
 
 

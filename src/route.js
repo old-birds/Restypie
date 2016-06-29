@@ -62,8 +62,7 @@ module.exports = class Route {
       throw new TypeError(`Property "method" should be a valid http method from 'Restypie.Methods'`);
     }
 
-    this._handlers = [];
-    this._registerHandler(this.createBundleHandler());
+    this._handlers = [this.createBundleHandler()];
     this._registerHandler(this.handler);
     Object.defineProperty(this, 'handlers', { get() { return this._handlers; } });
   }
@@ -76,19 +75,20 @@ module.exports = class Route {
    * @method createBundleHandler
    */
   createBundleHandler() {
-    switch (Restypie.middlewareType) {
+    switch (Restypie.routerType) {
 
-      case Restypie.MIDDLEWARE_TYPES.EXPRESS:
+      case Restypie.ROUTER_TYPES.EXPRESS:
         return function (req, res, next) {
           req.bundle = new Restypie.Bundle({ req, res });
           return next();
         };
 
-      case Restypie.MIDDLEWARE_TYPES.KOA:
-        return function *() {
-          this.request.params = this.params; // Copy params so that we don't have to parse them
-          this.state.bundle = new Restypie.Bundle({ req: this.request, res: this.response });
-          yield;
+      case Restypie.ROUTER_TYPES.KOA_ROUTER:
+        return function *(next) {
+          this.req.params = this.params; // Copy params so that we don't have to parse them
+          this.req.query = this.query;
+          this.state.bundle = new Restypie.Bundle({ req: this.req, res: this.res });
+          yield next;
         };
     }
   }
@@ -104,9 +104,9 @@ module.exports = class Route {
   _registerHandler(handler) {
     handler = handler.bind(this);
 
-    switch (Restypie.middlewareType) {
+    switch (Restypie.routerType) {
 
-      case Restypie.MIDDLEWARE_TYPES.EXPRESS:
+      case Restypie.ROUTER_TYPES.EXPRESS:
         if (handler.length === 1) {
           this._handlers.push(function (req, res, next) { return handler(req.bundle, next); });
         } else {
@@ -114,8 +114,11 @@ module.exports = class Route {
         }
         break;
 
-      case Restypie.MIDDLEWARE_TYPES.KOA:
-        this._handlers.push(function *() { return yield handler(this.state.bundle); });
+      case Restypie.ROUTER_TYPES.KOA_ROUTER:
+        this._handlers.push(function *(next) {
+          yield handler(this.state.bundle);
+          yield next;
+        });
         break;
     }
 
