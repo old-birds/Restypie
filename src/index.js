@@ -13,6 +13,18 @@ module.exports = {
   LIST_SEPARATOR: ',',
   get LIST_SEPARATOR_REG() { return new RegExp('\\\s*' + this.LIST_SEPARATOR + '\\\s*', 'g'); },
 
+  MIDDLEWARE_TYPES: {
+    KOA: 'koa',
+    EXPRESS: 'express'
+  },
+
+  middlewareType: 'express',
+
+  setMiddlewareType(type) {
+    if (!_.includes(Object.keys(this.MIDDLEWARE_TYPES), type)) throw new Error(`Unsupported middleware type : ${type}`);
+    this.middlewareType = type;
+  },
+
   listToArray(str) {
     if (!str) return [];
     return str.split(this.LIST_SEPARATOR_REG);
