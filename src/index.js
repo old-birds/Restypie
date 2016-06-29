@@ -13,6 +13,18 @@ module.exports = {
   LIST_SEPARATOR: ',',
   get LIST_SEPARATOR_REG() { return new RegExp('\\\s*' + this.LIST_SEPARATOR + '\\\s*', 'g'); },
 
+  ROUTER_TYPES: {
+    KOA_ROUTER: 'koa-router',
+    EXPRESS: 'express'
+  },
+
+  routerType: 'express',
+
+  setRouterType(type) {
+    if (!_.includes(_.values(this.ROUTER_TYPES), type)) throw new Error(`Unsupported router type : ${type}`);
+    this.routerType = type;
+  },
+
   listToArray(str) {
     if (!str) return [];
     return str.split(this.LIST_SEPARATOR_REG);

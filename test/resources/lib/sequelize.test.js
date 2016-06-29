@@ -1,6 +1,7 @@
 'use strict';
 
-let Sequelize = require('sequelize');
+const Sequelize = require('sequelize');
+const _ = require('lodash');
 
 let db = new Sequelize('restypie_test', 'root', '', {
   host: 'localhost',
@@ -72,50 +73,61 @@ let User = db.define('User', {
 
 describe('Resources.SequelizeResource', function () {
 
-  before(function () {
-    return User.sync({ force: true });
-  });
+  for (const routerType of _.values(Restypie.ROUTER_TYPES)) {
 
-  let testData = require('../../resource-test-suite')({
-    resource: class UsersResource extends Restypie.Resources.SequelizeResource {
-      get model() { return User; }
-    }
-  });
-  
-  it('should map min validation error', function () {
-    return testData.api.resources.Users.createObject({
-      body: {
-        fName: 'Sequelize',
-        lName: 'Sequelize',
-        email: 'sequelizewrongdate@example.com',
-        year: 1850, // Too small
-        pw: 'Passw0rd',
-        emails: true,
-        gender: 'male'
-      }
-    }).catch(function (err) {
-      err.code.should.equal('OutOfRangeError');
-      err.meta.key.should.equal('yearOfBirth');
-      return Promise.resolve();
+    before(function () {
+      Restypie.setRouterType(routerType);
     });
-  });
-  
-  it('should map min validation error', function () {
-    return testData.api.resources.Users.createObject({
-      body: {
-        fName: 'Sequelize',
-        lName: 'Sequelize',
-        email: 'sequelizewrongdate@example.com',
-        year: new Date().getFullYear() + 10, // Too big
-        pw: 'Passw0rd',
-        emails: true,
-        gender: 'male'
-      }
-    }).catch(function (err) {
-      err.code.should.equal('OutOfRangeError');
-      err.meta.key.should.equal('yearOfBirth');
-      return Promise.resolve();
+
+    before(function () {
+      return User.sync({force: true});
     });
-  });
-  
+
+    let testData;
+
+
+    testData = require('../../resource-test-suite')({
+      resource: class UsersResource extends Restypie.Resources.SequelizeResource {
+        get model() {
+          return User;
+        }
+      }
+    });
+
+    it('should map min validation error', function () {
+      return testData.api.resources.Users.createObject({
+        body: {
+          fName : 'Sequelize',
+          lName : 'Sequelize',
+          email : 'sequelizewrongdate@example.com',
+          year  : 1850, // Too small
+          pw    : 'Passw0rd',
+          emails: true,
+          gender: 'male'
+        }
+      }).catch(function (err) {
+        err.code.should.equal('OutOfRangeError');
+        err.meta.key.should.equal('yearOfBirth');
+        return Promise.resolve();
+      });
+    });
+
+    it('should map min validation error', function () {
+      return testData.api.resources.Users.createObject({
+        body: {
+          fName : 'Sequelize',
+          lName : 'Sequelize',
+          email : 'sequelizewrongdate@example.com',
+          year  : new Date().getFullYear() + 10, // Too big
+          pw    : 'Passw0rd',
+          emails: true,
+          gender: 'male'
+        }
+      }).catch(function (err) {
+        err.code.should.equal('OutOfRangeError');
+        err.meta.key.should.equal('yearOfBirth');
+        return Promise.resolve();
+      });
+    });
+  }
 });

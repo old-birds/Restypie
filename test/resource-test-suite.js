@@ -3,14 +3,16 @@
 /***********************************************************************************************************************
  * Dependencies
  **********************************************************************************************************************/
-let _ = require('lodash');
-let express = require('express');
-let http = require('http');
-let bodyParser = require('body-parser');
-let supertest = require('supertest');
-let formDataToObject = require('form-data-to-object');
-let QS = require('querystring');
-let async = require('async');
+const _ = require('lodash');
+const express = require('express');
+const koa = require('koa');
+const http = require('http');
+const KoaRouter = require('koa-router');
+const formDataToObject = require('form-data-to-object');
+const QS = require('querystring');
+const async = require('async');
+
+const SERVER_PORT = 3333;
 
 /***********************************************************************************************************************
  * Resource tests suite. Run your implementation against this test suite to verify that it supports the basics of the
@@ -25,13 +27,6 @@ module.exports = function (options) {
   // Ensure the resource is a right one
   Restypie.Utils.isSubclassOf(options.resource, Restypie.Resources.AbstractResource, true);
 
-  // Create the express app
-  let app = express();
-  app.set('port', options.port || 8888);
-  let server = http.createServer(app);
-  app.use(bodyParser.json());
-
-
   /**
    * Util function to fill multipart fields on a request.
    */
@@ -43,7 +38,12 @@ module.exports = function (options) {
     }
   }
 
-  let api = new Restypie.API({ path: '/v1' });
+
+  let supertest;
+  let app;
+  let server;
+  let router;
+  let api;
 
   /*********************************************************************************************************************
    ********************************* The resource that we will be testing **********************************************
@@ -218,16 +218,6 @@ module.exports = function (options) {
     }
   }
 
-  /*********************************************************************************************************************
-   ****************************************************** The api ******************************************************
-   ********************************************************************************************************************/
-  api
-    .registerResource('Jobs', JobsResource)
-    .registerResource('Users', UsersResource)
-    .registerResource('SlackTeams', SlackTeamsResource)
-    .registerResource('UserSlackTeams', UserSlackTeamsResource)
-    .registerResource('SlackTeamChannels', SlackTeamChannelsResource)
-    .launch(app);
 
   /**
    * Util function to reset the users in the storage and fill it with newly generated ones.
@@ -249,9 +239,9 @@ module.exports = function (options) {
         return api.resources.Users.deleteObject({ filters: { id: object.id } });
       }));
     }).then(function () {
-      
+
       if (!count) return Promise.resolve([]);
-      
+
       let users = [];
       for (let i = 0; i < count; i++) {
         users.push(Object.assign({
@@ -282,15 +272,49 @@ module.exports = function (options) {
       return done(null, Array.from(arguments)[0]);
     }, done);
   }
-  
-  
+
+  switch (Restypie.routerType) {
+
+    case Restypie.ROUTER_TYPES.EXPRESS:
+      app = express();
+      router = app;
+      server = http.createServer(app);
+      supertest = require('supertest');
+      break;
+    case Restypie.ROUTER_TYPES.KOA_ROUTER:
+      app = koa();
+      router = new KoaRouter();
+      server = http.createServer(app.callback());
+      supertest = require('supertest-koa-agent');
+      break;
+  }
+
+
+  // Setup and launch the api
+  api = new Restypie.API({ path: '/v1' });
+  api
+    .registerResource('Jobs', JobsResource)
+    .registerResource('Users', UsersResource)
+    .registerResource('SlackTeams', SlackTeamsResource)
+    .registerResource('UserSlackTeams', UserSlackTeamsResource)
+    .registerResource('SlackTeamChannels', SlackTeamChannelsResource)
+    .launch(router, server);
+
+
+  switch (Restypie.routerType) {
+    case Restypie.ROUTER_TYPES.KOA_ROUTER:
+      app.use(router.routes());
+      break;
+  }
+
+
   /*********************************************************************************************************************
    ********************************************** The tests suite ******************************************************
    ********************************************************************************************************************/
-  describe('RESOURCE TESTS SUITE - ' + options.resource.name, function () {
+  describe(`@ Running test suite for "${Restypie.routerType}" router`, function () {
 
     before(function (done) {
-      return server.listen(app.get('port'), done);
+      return server.listen(SERVER_PORT, done);
     });
 
     // Populate jobs
@@ -1613,17 +1637,17 @@ module.exports = function (options) {
       });
 
     });
-    
-    
-    
-    
+
+
+
+
     describe('PUT', function () {
-      
+
       it('Preparing tests...', function (done) {
         if (!UsersResource.prototype.supportsUpserts) return this.skip();
         return resetAndFillUsers(0, done);
       });
-      
+
       it('should create a user', function (done) {
         if (!UsersResource.prototype.supportsUpserts) return this.skip();
         return supertest(app)
@@ -1646,7 +1670,7 @@ module.exports = function (options) {
             return done();
           });
       });
-      
+
       it('should update the created user', function (done) {
         if (!UsersResource.prototype.supportsUpserts) return this.skip();
         return supertest(app)
@@ -1669,7 +1693,7 @@ module.exports = function (options) {
             return done();
           });
       });
-      
+
       it('should NOT create a user (no upsert keys)', function (done) {
         if (!UsersResource.prototype.supportsUpserts) return this.skip();
         return supertest(app)
@@ -1753,9 +1777,7 @@ module.exports = function (options) {
 
   });
 
-  // Allow individual classes to use data from this test suite
   return { app, api };
-  
 };
 
 
