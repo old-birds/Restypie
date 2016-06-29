@@ -6,6 +6,7 @@
 let _ = require('lodash');
 let Negotiator = require('negotiator');
 let Busboy = require('busboy');
+const bodyParser = require('body-parser');
 let typeIs = require('type-is');
 let formDataToObject = require('form-data-to-object');
 let https = require('https');
@@ -401,7 +402,6 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
    * @return {Promise}
    */
   parseBody(bundle) {
-    // TODO Allow to define parsers just like serializers
     let supported = ['application/json', 'multipart/form-data'];
     switch (typeIs(bundle.req, supported)) {
       case 'application/json':
@@ -1145,19 +1145,18 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
    * @private
    */
   _parseJSON(bundle) {
-    let body = bundle.req.body;
-
-    if (body instanceof Buffer) body = body.toString();
-
-    if (typeof body === 'string') {
-      try {
-        body = JSON.stringify(body);
-      } catch (ex) {
-        return bundle.next(new Restypie.RestErrors.BadRequest(`Could not parse JSON : ${ex.message}`));
-      }
+    // Body is already parsed
+    if (bundle.req.body) {
+      return bundle.setBody(bundle.req.body).next();
     }
 
-    return bundle.setBody(body).next();
+    return new Promise((resolve, reject) => {
+      bodyParser.json()(bundle.req, bundle.res, function(err) {
+        if (err) return reject(err);
+        bundle.setBody(bundle.req.body);
+        return resolve(bundle);
+      });
+    });
   }
 
   static get LIST_SEPARATOR() { return /\s*,\s*/; }

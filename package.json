@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "bluebird": "^3.0.6",
+    "body-parser": "^1.15.2",
     "busboy": "~0.2.12",
     "form-data-to-object": "^0.2.0",
     "lodash": "^3.10.1",
@@ -34,7 +35,6 @@
   },
   "devDependencies": {
     "async": "^1.5.2",
-    "body-parser": "^1.14.1",
     "chai": "^3.4.1",
     "coveralls": "^2.11.9",
     "express": "^4.13.3",
