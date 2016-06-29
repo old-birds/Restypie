@@ -85,7 +85,7 @@ module.exports = class Route {
         };
 
       case Restypie.MIDDLEWARE_TYPES.KOA:
-        return function * () {
+        return function *() {
           this.request.params = this.params; // Copy params so that we don't have to parse them
           this.state.bundle = new Restypie.Bundle({ req: this.request, res: this.response });
           yield;
@@ -115,7 +115,7 @@ module.exports = class Route {
         break;
 
       case Restypie.MIDDLEWARE_TYPES.KOA:
-        this._handlers.push(function * () { return yield handler(this.state.bundle); });
+        this._handlers.push(function *() { return yield handler(this.state.bundle); });
         break;
     }
 

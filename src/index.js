@@ -14,14 +14,14 @@ module.exports = {
   get LIST_SEPARATOR_REG() { return new RegExp('\\\s*' + this.LIST_SEPARATOR + '\\\s*', 'g'); },
 
   MIDDLEWARE_TYPES: {
-    KOA: 'koa',
+    // KOA: 'koa',
     EXPRESS: 'express'
   },
 
   middlewareType: 'express',
 
   setMiddlewareType(type) {
-    if (!_.includes(Object.keys(this.MIDDLEWARE_TYPES), type)) throw new Error(`Unsupported middleware type : ${type}`);
+    if (!_.includes(_.values(this.MIDDLEWARE_TYPES), type)) throw new Error(`Unsupported middleware type : ${type}`);
     this.middlewareType = type;
   },
 

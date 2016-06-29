@@ -1151,7 +1151,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
     }
 
     return new Promise((resolve, reject) => {
-      bodyParser.json()(bundle.req, bundle.res, function(err) {
+      bodyParser.json()(bundle.req, bundle.res, function (err) {
         if (err) return reject(err);
         bundle.setBody(bundle.req.body);
         return resolve(bundle);
