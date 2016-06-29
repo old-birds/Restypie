@@ -197,7 +197,7 @@ describe('Utils', function () {
   describe('.missingImplementation', function () {
 
     class Base {
-      get foo() { return Utils.missingImplementation('foo'); }
+      get foo() { return Utils.missingImplementation.bind(this, 'foo'); }
     }
 
     class Right extends Base {

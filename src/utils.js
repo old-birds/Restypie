@@ -199,9 +199,7 @@ module.exports = {
    * @param {String} name
    */
   missingImplementation(name) {
-    return function () {
-      throw new Error(`${this && this.constructor && this.constructor.name} must implement ${name}()`);
-    };
+    throw new Error(`${this && this.constructor && this.constructor.name} must implement ${name}()`);
   }
 
 };

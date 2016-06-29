@@ -63,7 +63,7 @@ module.exports = class Route {
     }
 
     this._handlers = [];
-    this._registerHandler(this.createBundle);
+    this._registerHandler(this.createBundleHandler());
     this._registerHandler(this.handler);
     Object.defineProperty(this, 'handlers', { get() { return this._handlers; } });
   }
@@ -73,14 +73,24 @@ module.exports = class Route {
   /**
    * Middlewares that creates the instance of `bundle` to be passed to next handlers.
    *
-   * @method createBundle
-   * @param req
-   * @param res
-   * @param next
+   * @method createBundleHandler
    */
-  createBundle(req, res, next) {
-    req.bundle = new Restypie.Bundle({ req, res });
-    return next();
+  createBundleHandler() {
+    switch (Restypie.middlewareType) {
+
+      case Restypie.MIDDLEWARE_TYPES.EXPRESS:
+        return function (req, res, next) {
+          req.bundle = new Restypie.Bundle({ req, res });
+          return next();
+        };
+
+      case Restypie.MIDDLEWARE_TYPES.KOA:
+        return function * () {
+          this.request.params = this.params; // Copy params so that we don't have to parse them
+          this.state.bundle = new Restypie.Bundle({ req: this.request, res: this.response });
+          yield;
+        };
+    }
   }
 
 
@@ -93,11 +103,23 @@ module.exports = class Route {
    */
   _registerHandler(handler) {
     handler = handler.bind(this);
-    if (handler.length === 1) {
-      this._handlers.push(function (req, res, next) { return handler(req.bundle, next); });
-    } else {
-      this._handlers.push(handler);
+
+    switch (Restypie.middlewareType) {
+
+      case Restypie.MIDDLEWARE_TYPES.EXPRESS:
+        if (handler.length === 1) {
+          this._handlers.push(function (req, res, next) { return handler(req.bundle, next); });
+        } else {
+          this._handlers.push(handler);
+        }
+        break;
+
+      case Restypie.MIDDLEWARE_TYPES.KOA:
+        this._handlers.push(function * () { return yield handler(this.state.bundle); });
+        break;
     }
+
+
   }
 
 };
