@@ -62,8 +62,7 @@ module.exports = class Route {
       throw new TypeError(`Property "method" should be a valid http method from 'Restypie.Methods'`);
     }
 
-    this._handlers = [];
-    this._registerHandler(this.createBundle);
+    this._handlers = [this.createBundleHandler()];
     this._registerHandler(this.handler);
     Object.defineProperty(this, 'handlers', { get() { return this._handlers; } });
   }
@@ -73,14 +72,25 @@ module.exports = class Route {
   /**
    * Middlewares that creates the instance of `bundle` to be passed to next handlers.
    *
-   * @method createBundle
-   * @param req
-   * @param res
-   * @param next
+   * @method createBundleHandler
    */
-  createBundle(req, res, next) {
-    req.bundle = new Restypie.Bundle({ req, res });
-    return next();
+  createBundleHandler() {
+    switch (Restypie.routerType) {
+
+      case Restypie.ROUTER_TYPES.EXPRESS:
+        return function (req, res, next) {
+          req.bundle = new Restypie.Bundle({ req, res });
+          return next();
+        };
+
+      case Restypie.ROUTER_TYPES.KOA_ROUTER:
+        return function *(next) {
+          this.req.params = this.params; // Copy params so that we don't have to parse them
+          this.req.query = this.query;
+          this.state.bundle = new Restypie.Bundle({ req: this.req, res: this.res });
+          yield next;
+        };
+    }
   }
 
 
@@ -93,11 +103,26 @@ module.exports = class Route {
    */
   _registerHandler(handler) {
     handler = handler.bind(this);
-    if (handler.length === 1) {
-      this._handlers.push(function (req, res, next) { return handler(req.bundle, next); });
-    } else {
-      this._handlers.push(handler);
+
+    switch (Restypie.routerType) {
+
+      case Restypie.ROUTER_TYPES.EXPRESS:
+        if (handler.length === 1) {
+          this._handlers.push(function (req, res, next) { return handler(req.bundle, next); });
+        } else {
+          this._handlers.push(handler);
+        }
+        break;
+
+      case Restypie.ROUTER_TYPES.KOA_ROUTER:
+        this._handlers.push(function *(next) {
+          yield handler(this.state.bundle);
+          yield next;
+        });
+        break;
     }
+
+
   }
 
 };

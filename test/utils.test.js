@@ -194,4 +194,28 @@ describe('Utils', function () {
 
   });
 
+  describe('.missingImplementation', function () {
+
+    class Base {
+      get foo() { return Utils.missingImplementation.bind(this, 'foo'); }
+    }
+
+    class Right extends Base {
+      foo() {}
+    }
+
+    class Wrong extends Base {
+
+    }
+
+    it('should NOT throw an error if function is redefined', function () {
+      (new Right().foo());
+    });
+
+    it('should throw an error if function is not redefined', function () {
+      (new Wrong().foo).should.throw(/implement/);
+    });
+
+  });
+
 });

@@ -5,6 +5,7 @@
  **********************************************************************************************************************/
 let _ = require('lodash');
 let QS = require('querystring');
+let URL = require('url');
 
 let Restypie = require('./');
 
@@ -18,6 +19,8 @@ module.exports = class Bundle {
   get req() { return this._req; }
 
   get res() { return this._res; }
+
+  get url() { return this._url; }
 
   get body() { return this._body; }
 
@@ -71,11 +74,12 @@ module.exports = class Bundle {
   constructor(options) {
     this._req = options.req;
     this._res = options.res;
-    this._query = this._req.query;
+    this._query = 'object' === typeof this._req.query ? this._req.query : QS.parse(this._req.query);
     this._body = {};
     this._params = this._req.params;
     this._headers = {};
     this._statusCode = Restypie.Codes.Accepted;
+    this._url = URL.parse(this._req.url);
 
     switch (this._req.method) {
       case 'POST':
@@ -253,7 +257,7 @@ module.exports = class Bundle {
 
   _getNavLink(limit, offset) {
     let queryString = QS.stringify(Object.assign({}, this.query, { limit: limit, offset: offset }));
-    return this.req._parsedUrl.pathname + '?' + QS.unescape(queryString);
+    return this._url.pathname + '?' + QS.unescape(queryString);
   }
 
 };
