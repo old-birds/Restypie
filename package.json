@@ -2,18 +2,13 @@
   "name": "restypie",
   "main": "./src/index",
   "version": "0.1.2",
+  "repository": "https://github.com/SylvainEstevez/Restypie",
+  "bugs": "https://github.com/SylvainEstevez/Restypie/issues",
   "engines": {
     "node": ">=4.2.2"
   },
   "scripts": {
     "test": "grunt check"
-  },
-  "config": {
-    "blanket": {
-      "pattern": [
-        "src/"
-      ]
-    }
   },
   "typings": "index.d.ts",
   "typescript": {
@@ -57,6 +52,7 @@
     "supertest-koa-agent": "^0.2.1",
     "yuidoc-theme-blue": "^0.1.9"
   },
+  "license": "MIT",
   "author": "Sylvain Estevez",
   "contributors": [
     {
