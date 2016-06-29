@@ -147,7 +147,7 @@ module.exports = class API {
 
       case Restypie.ROUTER_TYPES.EXPRESS:
       case Restypie.ROUTER_TYPES.KOA_ROUTER:
-        this._router[def.method.toLowerCase()].apply(this._router, [def.path, ...def.handlers]);
+        this._router[def.method.toLowerCase()].apply(this._router, [def.path].concat(def.handlers));
         break;
 
     }
