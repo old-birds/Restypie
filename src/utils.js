@@ -192,62 +192,16 @@ module.exports = {
   },
 
   /**
-   * Builds a new class containing all `mixins` and allows inheritance.
-   *
-   * @method mix
+   * Returns a function that will throw when called. Useful to ensure certain methods are overridden.
+   * 
+   * @method missingImplementation
    * @static
-   * @param {...Object|constructor} mixins
-   * @return {class}
-   *
-   * @example
-   * ```javascript
-   * let Copyable = {
-   *   copy() {
-   *     return _.cloneDeep(this);
-   *   }
-   * }
-   *
-   * let Configurable = {
-   *   configure(options) {
-   *     Object.assign(this.options, options);
-   *   }
-   * }
-   *
-   * class MyClass extends Utils.mix(Copyable, Configurable) {
-   *   constructor(options) {
-   *     this.options = options || {};
-   *   }
-   * }
-   *
-   * let instance = new MyClass();
-   * instance.configure({ anOption: 'aValue' });
-   * let copy = instance.copy();
-   * ```
+   * @param {String} name
    */
-  mix: (function () {
-
-    // List of properties to not mix.
-    let excludedProperties = ['constructor', 'prototype', 'name'];
-
-    // Mixes target into source.
-    function doMix (target, source) {
-      for (let key of _.difference(Object.getOwnPropertyNames(source), excludedProperties)) {
-        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
-      }
-    }
-
-    return function mix () {
-      let mixins = _.flatten(Array.from(arguments));
-
-      class Mixins {}
-
-      for (let mixin of mixins) {
-        doMix(Mixins, mixin);
-        doMix(Mixins.prototype, mixin.prototype);
-      }
-
-      return Mixins;
+  missingImplementation(name) {
+    return function () {
+      throw new Error(`${this && this.constructor && this.constructor.name} must implement ${name}()`);
     };
-  })()
+  }
 
 };
