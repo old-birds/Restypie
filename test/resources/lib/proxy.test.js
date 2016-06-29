@@ -221,12 +221,12 @@ remoteApi
   .registerResource('Jobs', JobsResource)
   .registerResource('UserSlackTeams', UserSlackTeamsResource)
   .registerResource('SlackTeamChannels', SlackTeamChannelsResource)
-  .launch(remoteApp);
+  .launch(remoteApp, remoteServer);
 
 api
   .registerResource('Users', UsersResource)
   .registerResource('SlackTeams', SlackTeamsResource)
-  .launch(app);
+  .launch(app, server);
 
 
 describe('Resources.ProxyResource', function () {

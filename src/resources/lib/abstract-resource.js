@@ -6,10 +6,11 @@
 let _ = require('lodash');
 let Negotiator = require('negotiator');
 let Busboy = require('busboy');
+const bodyParser = require('body-parser');
 let typeIs = require('type-is');
 let formDataToObject = require('form-data-to-object');
-let https = require('https');
 let request = require('request');
+const URL = require('url');
 
 let Restypie = require('../../');
 let Utils = Restypie.Utils;
@@ -242,13 +243,14 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
    * @method getFullUrl
    * @return {String}
    */
-  getFullUrl() {
+  getFullUrl(bundle) {
     let api = this.api;
-    let app = api.app;
-    let port = app.get('port');
-    let protocol = app instanceof https.Server ? 'https' : 'http';
-    let basePath = Restypie.Url.join(protocol + '://127.0.0.1:' + port, api.path);
-    return Restypie.Url.join(basePath, this.path);
+    return URL.format({
+      protocol: bundle.url.protocol || 'http',
+      hostname: bundle.url.host || '127.0.0.1',
+      port: api.server.address().port || 80,
+      pathname: Restypie.Url.join(api.path, this.path)
+    });
   }
 
   /**
@@ -401,11 +403,10 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
    * @return {Promise}
    */
   parseBody(bundle) {
-    // TODO Allow to define parsers just like serializers
     let supported = ['application/json', 'multipart/form-data'];
     switch (typeIs(bundle.req, supported)) {
       case 'application/json':
-        return bundle.setBody(_.cloneDeep(bundle.req.body)).next();
+        return this._parseJSON(bundle);
       case 'multipart/form-data':
         return this._parseMultipart(bundle);
     }
@@ -429,7 +430,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
   parseLimit(bundle) {
     let raw = bundle.query;
 
-    if (raw.hasOwnProperty('limit')) {
+    if ('limit' in raw) {
       let rawLimit = raw.limit;
       let max = this.maxLimit;
       let parsedLimit = parseInt(rawLimit, 10);
@@ -460,7 +461,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
   parseOffset(bundle) {
     let raw = bundle.query;
 
-    if (raw.hasOwnProperty('offset')) {
+    if ('offset' in raw) {
       let rawOffset = raw.offset;
       let parsedOffset = parseInt(rawOffset, 10);
       if (!Utils.isValidNumber(parsedOffset)) {
@@ -514,7 +515,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
     let desired;
     let format;
 
-    if (raw.hasOwnProperty('format')) {
+    if ('format' in raw) {
       desired = raw.format;
       let serializer = this.getSerializerByAliasOrMimeType(raw.format);
       if (serializer) format = serializer.mimeType;
@@ -523,7 +524,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
       format = new Negotiator(bundle.req).mediaType(this.supportedFormatMimeTypes);
     }
 
-    if (!format) {
+    if (desired && !format) {
       let meta = { expected: this.supportedFormatMimeTypesAndAliases, value: desired };
       throw new Restypie.TemplateErrors.UnsupportedFormat(meta);
     }
@@ -870,11 +871,11 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
         let url;
         let qs = {};
         if (keyDef.populate.length) qs.populate = keyDef.populate.join(',');
-        let headers = _.omit(bundle.req.headers, ['Content-Type', 'Accept']); // Copy custom headers (ie, auth)
+        let headers = _.omit(bundle.req.headers, ['content-type', 'accept']); // Copy custom headers (ie, auth)
         let tasks = [];
 
         if (field.isManyRelation) {
-          url = Restypie.Url.join(resource.getFullUrl());
+          url = Restypie.Url.join(resource.getFullUrl(bundle));
           qs.limit = 0;
 
           let through = field.through;
@@ -891,7 +892,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
               return new Promise(function (resolve, reject) {
                 return request({
                   method: 'GET',
-                  url: through.getFullUrl(),
+                  url: through.getFullUrl(bundle),
                   qs: {
                     [throughKeyField.key]: object[self.primaryKeyField.key],
                     limit: 0, // All items
@@ -918,7 +919,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
             qs[toKeyField.key] = object[self.primaryKeyField.key];
           }
         } else {
-          url = Restypie.Url.join(resource.getFullUrl(), object[key]);
+          url = Restypie.Url.join(resource.getFullUrl(bundle), object[key]);
         }
 
 
@@ -974,7 +975,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
     return this.getSerializerByAliasOrMimeType(bundle.format)
       .serialize(bundle.payload)
       .then(function (content) {
-        return bundle.assignToHeaders({ 'Content-Type': bundle.format }).setPayload(content).next();
+        return bundle.assignToHeaders({ 'content-type': bundle.format }).setPayload(content).next();
       })
       .catch (function (err) {
         return bundle.setError(err).next();
@@ -992,21 +993,25 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
    * @param {Restypie.Bundle} bundle
    */
   respond(bundle) {
-    let res = bundle.res;
-    let statusCode = bundle.statusCode;
+    const res = bundle.res;
+    const statusCode = bundle.statusCode;
+    let payload = bundle.payload;
 
     // Headers
     for (let header of Object.getOwnPropertyNames(bundle.headers)) {
       res.setHeader(header, bundle.headers[header]);
     }
 
+    // Default content-type to JSON
+    if (!res.getHeader('content-type')) res.setHeader('content-type', 'application/json');
+
     // Status code
-    if (statusCode) res.status(statusCode);
+    if (statusCode) res.statusCode = statusCode;
 
     // Log request errors
     switch (true) {
       case !statusCode:
-        Restypie.Logger.error('No statusCode for request on ' + bundle.req.originalUrl);
+        Restypie.Logger.error('No statusCode for request on ' + bundle.req.url);
         break;
       case statusCode === Restypie.Codes.InternalServerError:
         Restypie.Logger.error(bundle.err.stack, bundle.err);
@@ -1016,7 +1021,10 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
         break;
     }
 
-    return res.send(bundle.payload || '');
+
+    if (typeof payload === 'object') payload = JSON.stringify(payload);
+    
+    return res.end(payload || '');
   }
 
 
@@ -1126,6 +1134,29 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
       });
 
       return bundle.req.pipe(parser);
+    });
+  }
+
+  /**
+   * Parses JSON
+   *
+   * @method _parseMultipart
+   * @param {Restypie.Bundle} bundle
+   * @return {Promise}
+   * @private
+   */
+  _parseJSON(bundle) {
+    // Body is already parsed
+    if (bundle.req.body) {
+      return bundle.setBody(bundle.req.body).next();
+    }
+
+    return new Promise((resolve, reject) => {
+      bodyParser.json()(bundle.req, bundle.res, function (err) {
+        if (err) return reject(err);
+        bundle.setBody(bundle.req.body);
+        return resolve(bundle);
+      });
     });
   }
 

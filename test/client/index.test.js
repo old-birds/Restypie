@@ -8,6 +8,7 @@ let _ = require('lodash');
 const PORT = 9999;
 
 let app = express();
+let server;
 app.set('port', PORT);
 app.use(bodyParser.json());
 
@@ -37,12 +38,15 @@ class UsersResource extends Restypie.Resources.FixturesResource {
   }
 }
 
-api.registerResource('Users', UsersResource).launch(app);
-
 describe('Restypie.Client', function () {
 
   before(function (done) {
-    return http.createServer(app).listen(PORT, done);
+    server = http.createServer(app);
+    return server.listen(PORT, done);
+  });
+
+  before(function () {
+    api.registerResource('Users', UsersResource).launch(app, server);
   });
 
   describe('constructor', function () {

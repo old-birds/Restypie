@@ -1,19 +1,14 @@
 {
   "name": "restypie",
   "main": "./src/index",
-  "version": "0.1.2",
+  "version": "0.2.0",
+  "repository": "https://github.com/SylvainEstevez/Restypie",
+  "bugs": "https://github.com/SylvainEstevez/Restypie/issues",
   "engines": {
     "node": ">=4.2.2"
   },
   "scripts": {
     "test": "grunt check"
-  },
-  "config": {
-    "blanket": {
-      "pattern": [
-        "src/"
-      ]
-    }
   },
   "typings": "index.d.ts",
   "typescript": {
@@ -21,6 +16,7 @@
   },
   "dependencies": {
     "bluebird": "^3.0.6",
+    "body-parser": "^1.15.2",
     "busboy": "~0.2.12",
     "form-data-to-object": "^0.2.0",
     "lodash": "^3.10.1",
@@ -34,7 +30,6 @@
   },
   "devDependencies": {
     "async": "^1.5.2",
-    "body-parser": "^1.14.1",
     "chai": "^3.4.1",
     "coveralls": "^2.11.9",
     "express": "^4.13.3",
@@ -47,17 +42,17 @@
     "grunt-mocha-test": "^0.12.7",
     "istanbul": "^0.4.4",
     "jshint-stylish": "^2.1.0",
+    "koa": "^1.2.0",
+    "koa-router": "^5.4.0",
     "minimist": "^1.2.0",
     "mocha": "^2.5.3",
     "mysql": "~2.9.0",
     "sequelize": "~3.14.2",
     "supertest": "^1.1.0",
+    "supertest-koa-agent": "^0.2.1",
     "yuidoc-theme-blue": "^0.1.9"
   },
-  "optionalDependencies": {
-    "mysql": "~2.9.0",
-    "sequelize": "~3.14.2"
-  },
+  "license": "MIT",
   "author": "Sylvain Estevez",
   "contributors": [
     {
