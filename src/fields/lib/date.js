@@ -78,7 +78,7 @@ module.exports = class DateField extends Restypie.Fields.AbstractField {
    */
   hydrate(value) {
     value = super.hydrate(value);
-    if (_.isDate(value)) return value;
+    if (_.isDate(value) || _.isNull(value)) return value;
     if (this.ISOFormat.test(value)) return new Date(value);
     if (TIMESTAMP_REGEX.test(value)) return new Date(parseInt(value, 10));
     throw new Restypie.TemplateErrors.BadType({ key: this.key, value, expected: this.displayType });

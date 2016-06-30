@@ -163,7 +163,7 @@ module.exports = class SequelizeResource extends Restypie.Resources.AbstractReso
 
 
   static formatFilters(filters) {
-    filters = filters || {};
+    filters = _.clone(filters || {});
     let equalityOperator = this.EQUALITY_OPERATOR;
 
     for (let key in filters) {
@@ -176,6 +176,7 @@ module.exports = class SequelizeResource extends Restypie.Resources.AbstractReso
         delete filter.nin;
       }
     }
+
 
     return filters;
   }

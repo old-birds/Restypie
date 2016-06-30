@@ -3,7 +3,8 @@
 /***********************************************************************************************************************
  * Dependencies
  **********************************************************************************************************************/
-let Restypie = require('../../');
+const Restypie = require('../../');
+const _ = require('lodash');
 
 /***********************************************************************************************************************
  * @namespace Restypie.Fields
@@ -34,6 +35,7 @@ module.exports = class BooleanField extends Restypie.Fields.AbstractField {
    */
   hydrate(value) {
     value = super.hydrate(value);
+    if (_.isNull(value)) return null;
     if (value === true || value === 'true') return true;
     if (value === false || value === 'false') return false;
     throw new Restypie.TemplateErrors.BadType({ key: this.key, value, expected: this.displayType });
@@ -47,6 +49,7 @@ module.exports = class BooleanField extends Restypie.Fields.AbstractField {
    * @return {Boolean}
    */
   dehydrate(value) {
+    if (_.isNull(value)) return value;
     return !!super.dehydrate(value);
   }
 

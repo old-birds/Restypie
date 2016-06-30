@@ -48,6 +48,7 @@ module.exports = class IntegerField extends Restypie.Fields.AbstractNumberField 
    */
   hydrate(value) {
     value = super.hydrate(value);
+    if (_.isNull(value)) return value;
     if (INTEGER_REGEX.test(value)) return parseInt(value, 10);
     throw new Restypie.TemplateErrors.BadType({ key: this.key, value, expected: this.displayType });
   }

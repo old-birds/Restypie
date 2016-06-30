@@ -75,6 +75,8 @@ class StringField extends Restypie.Fields.AbstractField {
    */
   hydrate(value) {
     value = super.hydrate(value);
+    if (_.isUndefined(value)) return '';
+    if (_.isNull(value)) return null;
     if (_.isString(value)) return value;
     if (Restypie.Utils.isValidNumber(value)) return value.toString();
     throw new Restypie.TemplateErrors.BadType({ key: this.key, value, expected: this.displayType });
