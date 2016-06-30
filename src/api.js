@@ -4,8 +4,8 @@
  * Dependencies
  **********************************************************************************************************************/
 const _ = require('lodash');
-const http = require('http');
-const https = require('https');
+const URL = require('url');
+const URLValidator = require('valid-url');
 
 let Restypie = require('./');
 
@@ -52,6 +52,13 @@ module.exports = class API {
    */
   get resources() { return this._resources; }
 
+  /**
+   *
+   * @property host
+   * @type {String}
+   */
+  get host() { return this._host; }
+
 
   /**
    * @constructor
@@ -59,7 +66,7 @@ module.exports = class API {
   constructor(options) {
     this._isLaunched = false;
     if (options.app) this._app = options.app;
-    if (options.server) this._server = options.server;
+    if (options.host) this._setHost(options.host);
     this._path = options.path || '';
     this._resources = {};
   }
@@ -72,16 +79,14 @@ module.exports = class API {
    *
    * @method launch
    */
-  launch(router, server) {
+  launch(router, host) {
     this._throwIfLaunched();
 
     router = this._router = router || this._router;
-    server = this._server = server || this._server;
+    if (host) this._setHost(host);
 
     if (!router) throw new Error('An API requires an app (see Restypie.ROUTER_TYPES for supported frameworks)');
-    if (!(server instanceof http.Server) && !(server instanceof https.Server)) {
-      throw new Error('An API requires a server');
-    }
+    if (!URLValidator.isWebUri(this._host)) throw new Error('An API requires a `host` to perform calls for population');
 
     let apiPath = this._path;
     let resources = this._resources;
@@ -142,14 +147,23 @@ module.exports = class API {
     return this;
   }
 
+  _setHost(host) {
+    if (typeof host === 'string') host = URL.parse(host);
+
+    this._host = URL.format({
+      host: host.host || null,
+      protocol: host.protocol || 'http',
+      hostname: host.hostname || '127.0.0.1',
+      port: host.port || 80
+    });
+  }
+
   _registerRoute(def) {
     switch (Restypie.routerType) {
-
       case Restypie.ROUTER_TYPES.EXPRESS:
       case Restypie.ROUTER_TYPES.KOA_ROUTER:
         this._router[def.method.toLowerCase()].apply(this._router, [def.path].concat(def.handlers));
         break;
-
     }
   }
 
