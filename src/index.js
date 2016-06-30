@@ -1,7 +1,6 @@
 'use strict';
 
-let path = require('path');
-let packageJSON = require(path.join(process.cwd(), 'package.json'));
+let packageJSON = require('../package.json');
 let _ = require('lodash');
 
 module.exports = {
