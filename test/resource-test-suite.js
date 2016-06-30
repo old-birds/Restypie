@@ -298,7 +298,7 @@ module.exports = function (options) {
     .registerResource('SlackTeams', SlackTeamsResource)
     .registerResource('UserSlackTeams', UserSlackTeamsResource)
     .registerResource('SlackTeamChannels', SlackTeamChannelsResource)
-    .launch(router, server);
+    .launch(router, { port: SERVER_PORT });
 
 
   switch (Restypie.routerType) {

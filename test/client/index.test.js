@@ -46,7 +46,7 @@ describe('Restypie.Client', function () {
   });
 
   before(function () {
-    api.registerResource('Users', UsersResource).launch(app, server);
+    api.registerResource('Users', UsersResource).launch(app, { port: PORT });
   });
 
   describe('constructor', function () {

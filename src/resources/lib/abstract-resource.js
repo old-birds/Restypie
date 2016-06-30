@@ -10,7 +10,6 @@ const bodyParser = require('body-parser');
 let typeIs = require('type-is');
 let formDataToObject = require('form-data-to-object');
 let request = require('request');
-const URL = require('url');
 
 let Restypie = require('../../');
 let Utils = Restypie.Utils;
@@ -243,14 +242,9 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
    * @method getFullUrl
    * @return {String}
    */
-  getFullUrl(bundle) {
+  getFullUrl() {
     let api = this.api;
-    return URL.format({
-      protocol: bundle.url.protocol || 'http',
-      hostname: bundle.url.host || '127.0.0.1',
-      port: api.server.address().port || 80,
-      pathname: Restypie.Url.join(api.path, this.path)
-    });
+    return Restypie.Url.join(api.host, api.path, this.path);
   }
 
   /**
