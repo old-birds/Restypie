@@ -18,7 +18,7 @@ let Restypie = require('../../');
 module.exports = class JSONSerializer extends Restypie.Serializers.AbstractSerializer {
 
   static serialize(content) {
-    if (_.isObject(content)) return Promise.resolve(content);
+    if (_.isPlainObject(content)) return Promise.resolve(content);
 
     if (_.isString(content)) {
       try {

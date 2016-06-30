@@ -29,13 +29,12 @@ module.exports = class API {
   get path() { return this._path; }
 
   /**
-   * The express application on which the routes will be attached
+   * See Restypie.ROUTER_TYPES about supported routers
    *
-   * @property server
-   * @type http.Server
+   * @property router
    * @writeOnce
    */
-  get server() { return this._server; }
+  get router() { return this._router; }
 
   /**
    *
@@ -64,8 +63,9 @@ module.exports = class API {
    * @constructor
    */
   constructor(options) {
+    options = options || {};
     this._isLaunched = false;
-    if (options.app) this._app = options.app;
+    if (options.router) this._router = options.router;
     if (options.host) this._setHost(options.host);
     this._path = options.path || '';
     this._resources = {};
@@ -85,7 +85,7 @@ module.exports = class API {
     router = this._router = router || this._router;
     if (host) this._setHost(host);
 
-    if (!router) throw new Error('An API requires an app (see Restypie.ROUTER_TYPES for supported frameworks)');
+    if (!router) throw new Error('An API requires a router (see Restypie.ROUTER_TYPES for supported frameworks)');
     if (!URLValidator.isWebUri(this._host)) throw new Error('An API requires a `host` to perform calls for population');
 
     let apiPath = this._path;
