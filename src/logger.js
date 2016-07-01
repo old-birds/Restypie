@@ -4,6 +4,7 @@ let Winston = require('winston');
 
 let Restypie = require('./');
 
+/* istanbul ignore next */
 let logger = new Winston.Logger({
   level: 'error',
   transports: [

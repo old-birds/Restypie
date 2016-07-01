@@ -78,12 +78,14 @@ module.exports = class Route {
     switch (Restypie.routerType) {
 
       case Restypie.ROUTER_TYPES.EXPRESS:
+        /* istanbul ignore next */
         return function (req, res, next) {
           req.bundle = new Restypie.Bundle({ req, res });
           return next();
         };
 
       case Restypie.ROUTER_TYPES.KOA_ROUTER:
+        /* istanbul ignore next */
         return function *(next) {
           this.req.params = this.params; // Copy params so that we don't have to parse them
           this.req.query = this.query;
@@ -107,6 +109,7 @@ module.exports = class Route {
     switch (Restypie.routerType) {
 
       case Restypie.ROUTER_TYPES.EXPRESS:
+        /* istanbul ignore next */
         if (handler.length === 1) {
           this._handlers.push(function (req, res, next) { return handler(req.bundle, next); });
         } else {
@@ -115,6 +118,7 @@ module.exports = class Route {
         break;
 
       case Restypie.ROUTER_TYPES.KOA_ROUTER:
+        /* istanbul ignore next */
         this._handlers.push(function *(next) {
           yield handler(this.state.bundle);
           yield next;
