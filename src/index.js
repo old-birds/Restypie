@@ -87,7 +87,6 @@ module.exports = {
   get Url() { return require('./url'); },
   get Operators() { return require('./operators'); },
   get Client() { return require('./client'); },
-  get Model() { return require('./model'); },
   get Query() { return require('./client/lib/query'); },
   get Logger() { return require('./logger'); }
 
