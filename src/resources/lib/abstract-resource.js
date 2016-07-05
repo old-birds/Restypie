@@ -535,13 +535,14 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
   parseFilters(bundle) {
     // TODO parse foreign keys
 
+    this.beforeParseFilters(bundle);
+
     let fieldsMap = this.fieldsByKey;
     let query = _.omit(bundle.query, RESERVED_KEYWORDS);
     let filters = {};
     let separator = this.constructor.OPERATOR_SEPARATOR;
     let equalityOperator = this.constructor.EQUALITY_OPERATOR;
 
-    this.beforeParseFilters(bundle);
 
     for (let prop in query) {
 
