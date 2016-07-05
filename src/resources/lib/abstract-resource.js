@@ -535,13 +535,14 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
   parseFilters(bundle) {
     // TODO parse foreign keys
 
+    this.beforeParseFilters(bundle);
+
     let fieldsMap = this.fieldsByKey;
     let query = _.omit(bundle.query, RESERVED_KEYWORDS);
     let filters = {};
     let separator = this.constructor.OPERATOR_SEPARATOR;
     let equalityOperator = this.constructor.EQUALITY_OPERATOR;
 
-    this.beforeParseFilters(bundle);
 
     for (let prop in query) {
 
@@ -807,18 +808,22 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
     let fields = this.readableFields;
     if (!isArray) data = [data];
 
-    data = data.map(function (object) {
-      let ret = {};
-      fields.forEach(function (field) {
-        if (object.hasOwnProperty(field.path)) {
-          let value = object[field.path];
-          ret[field.key] = field.isPresent(value) ? field.dehydrate(value) : value;
-        }
-      });
-      return ret;
-    });
+    return this.beforeDehydrate(bundle)
+      .then(function () {
+        data = data.map(function (object) {
+          let ret = {};
+          fields.forEach(function (field) {
+            if (object.hasOwnProperty(field.path)) {
+              let value = object[field.path];
+              ret[field.key] = field.isPresent(value) ? field.dehydrate(value) : value;
+            }
+          });
+          return ret;
+        });
 
-    return bundle.setData(isArray ? data : data[0]).next();
+        return bundle.setData(isArray ? data : data[0]).next();
+      }).then(this.afterDehydrate.bind(this, bundle))
+        .then(function () { return bundle.next(); });
   }
 
   /**
