@@ -46,6 +46,7 @@ module.exports = class Bundle {
   get format() { return this._format; }
 
   get filters() { return this._filters; }
+  get nestedFilters() { return this._nestedFilters; }
   get select() { return this._select; }
   get sort() { return this._sort; }
 
@@ -53,6 +54,8 @@ module.exports = class Bundle {
   get isUpdate() { return this._isUpdate; }
   get isWrite() { return this._isWrite; }
   get isDelete() { return this._isDelete; }
+  
+  get hasNestedFilters() { return !!Object.keys(this._nestedFilters || {}).length; }
 
   next(err) {
     return err ? Promise.reject(err) : Promise.resolve(this);
@@ -216,6 +219,11 @@ module.exports = class Bundle {
 
   setFilters(filters) {
     this._filters = filters;
+    return this;
+  }
+
+  setNestedFilters(filters) {
+    this._nestedFilters = filters;
     return this;
   }
 

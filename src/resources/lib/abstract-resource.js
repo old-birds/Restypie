@@ -527,53 +527,68 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
   }
 
   /**
-   * Parses the filters.
+   * Parses the filters (and nested filters).
    *
    * @method parseFilters
    * @param {Restypie.Bundle} bundle
    */
   parseFilters(bundle) {
-    // TODO parse foreign keys
-
     this.beforeParseFilters(bundle);
     
-    // WHERE to parse deep filters ?????????????????????????
-
     let fieldsMap = this.fieldsByKey;
     let query = _.omit(bundle.query, RESERVED_KEYWORDS);
     let filters = {};
+    let nestedFilters = {};
     let separator = this.constructor.OPERATOR_SEPARATOR;
+    let deepSeparator = this.constructor.DEEP_PROPERTY_SEPARATOR;
     let equalityOperator = this.constructor.EQUALITY_OPERATOR;
 
 
     for (let prop in query) {
+      
+      const parts = prop.split(deepSeparator);
+      const baseProp = parts.shift();
 
-      let couple = prop.split(separator);
-      if (couple.length > 2) {
-        throw new Restypie.TemplateErrors.UnknownPath({ key: couple.slice(0, couple.length - 1).join(separator) });
-      }
-      if (couple.length === 1) couple.push(equalityOperator);
-
-      let key = couple[0];
-      let operator = couple[1];
-      let value = query[prop];
-
-      let field = fieldsMap[key];
-      if (field) {
-        if (!field.isFilterable) throw new Restypie.TemplateErrors.NotFilterable({ key });
-
-        let operatorClass = field.getOperatorByName(operator);
-        if (!operatorClass) throw new Restypie.TemplateErrors.UnsupportedOperator({ key, operator });
-
-        filters[field.path] = filters[field.path] || {};
-
-        value = operatorClass.parse(value);
-        filters[field.path][operator] = Array.isArray(value) ?
-          value.map(field.hydrate.bind(field)) :
-          field.hydrate(value);
+      if (parts.length) { // Nested filter
+        const field = fieldsMap[baseProp];
+        if (field) {
+          if (!field.isFilterable || !field.isRelation) {
+            throw new Restypie.TemplateErrors.NotFilterable({ key: baseProp });
+          }
+          nestedFilters[field.key] = nestedFilters[field.key] || {};
+          nestedFilters[field.key][parts.join(deepSeparator)] = query[prop];
+        } else {
+          throw new Restypie.TemplateErrors.UnknownPath({ key: baseProp });
+        }
       } else {
-        throw new Restypie.TemplateErrors.UnknownPath({ key });
+        let couple = baseProp.split(separator);
+        if (couple.length > 2) {
+          throw new Restypie.TemplateErrors.UnknownPath({ key: couple.slice(0, couple.length - 1).join(separator) });
+        }
+        if (couple.length === 1) couple.push(equalityOperator);
+
+        let key = couple[0];
+        let operator = couple[1];
+        let value = query[prop];
+
+        let field = fieldsMap[key];
+        if (field) {
+          if (!field.isFilterable) throw new Restypie.TemplateErrors.NotFilterable({ key });
+
+          let operatorClass = field.getOperatorByName(operator);
+          if (!operatorClass) throw new Restypie.TemplateErrors.UnsupportedOperator({ key, operator });
+
+          filters[field.path] = filters[field.path] || {};
+
+          value = operatorClass.parse(value);
+          filters[field.path][operator] = Array.isArray(value) ?
+            value.map(field.hydrate.bind(field)) :
+            field.hydrate(value);
+        } else {
+          throw new Restypie.TemplateErrors.UnknownPath({ key });
+        }  
       }
+      
     }
 
     for (let key in filters) {
@@ -584,6 +599,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
     }
 
     bundle.setFilters(filters);
+    bundle.setNestedFilters(nestedFilters);
 
     this.afterParseFilters(bundle);
   }
@@ -1166,6 +1182,8 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
   static get OPERATOR_SEPARATOR() { return '__'; }
 
   static get EQUALITY_OPERATOR() { return 'eq'; }
+
+  static get DEEP_PROPERTY_SEPARATOR() { return '.'; }
 
   static listToArray(str) {
     if (!str) return [];
