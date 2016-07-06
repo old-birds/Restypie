@@ -16,6 +16,8 @@ let Utils = Restypie.Utils;
 
 const RESERVED_KEYWORDS = ['limit', 'offset', 'sort', 'select', 'format', 'populate'];
 
+const PRIMARY_KEY_KEYWORD = '$primaryKey';
+
 const DEFAULTS = {
   DEFAULT_LIMIT: 20,
   MAX_LIMIT: 100,
@@ -611,10 +613,13 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
    * @param {Restypie.Bundle} bundle
    */
   parseSelect(bundle) {
+    const self = this;
     let fieldsByKey = this.fieldsByKey;
     let select = this.constructor.listToArray(bundle.query.select);
     select.forEach(function (key) {
-      let field = fieldsByKey[key];
+      let field;
+      if (key === PRIMARY_KEY_KEYWORD) field = self.primaryKeyField;
+      else field = fieldsByKey[key];
       if (!field || !field.isReadable) throw new Restypie.TemplateErrors.UnknownPath({ key });
     });
     if (!select.length) select = this.defaultSelect;
