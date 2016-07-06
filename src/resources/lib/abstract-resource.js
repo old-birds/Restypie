@@ -536,6 +536,8 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
     // TODO parse foreign keys
 
     this.beforeParseFilters(bundle);
+    
+    // WHERE to parse deep filters ?????????????????????????
 
     let fieldsMap = this.fieldsByKey;
     let query = _.omit(bundle.query, RESERVED_KEYWORDS);
