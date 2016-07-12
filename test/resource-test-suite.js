@@ -106,7 +106,7 @@ module.exports = function (options) {
         slackTeams: {
           type: Restypie.Fields.ToManyField,
           to() { return api.resources.SlackTeams; },
-          isReadable: true,
+          isFilterable: true,
           through() { return api.resources.UserSlackTeams; },
           throughKey: 'user',
           otherThroughKey: 'slackTeam'
@@ -135,7 +135,7 @@ module.exports = function (options) {
         users: {
           type: Restypie.Fields.ToManyField,
           to() { return api.resources.Users; },
-          isReadable: true,
+          isFilterable: true,
           toKey: 'job'
         }
       };
@@ -180,7 +180,7 @@ module.exports = function (options) {
     get schema() {
       return {
         id: { type: 'int', isPrimaryKey: true },
-        name: { type: String, isWritable: true, isReadable: true },
+        name: { type: String, isWritable: true, isFilterable: true },
         users: {
           type: Restypie.Fields.ToManyField,
           to() { return api.resources.Users; },
@@ -347,7 +347,7 @@ module.exports = function (options) {
           return supertest(app)
             .post('/v1/slack-teams')
             .send(item)
-            .expect(Restypie.Codes.Created, function (err) {
+            .expect(Restypie.Codes.Created, function (err, res) {
               if (err) return reject(err);
               return resolve();
             });
@@ -376,7 +376,7 @@ module.exports = function (options) {
     before(function () {
       let teamsPerUser = [{
         user: 1,
-        teams: [1, 2, 3]
+        teams: [1, 2, 3, 4]
       }, {
         user: 2,
         teams: [4, 5, 6, 7, 8, 9, 10]
@@ -1093,7 +1093,8 @@ module.exports = function (options) {
       });
 
 
-      it('should deeply filter (ToOne relation)', function (done) {
+      it('should deeply filter (1-N relation)', function (done) {
+        // GET users that are Developer
         return supertest(app)
           .get('/v1/users')
           .query({ 'job.name': 'Developer' })
@@ -1106,7 +1107,35 @@ module.exports = function (options) {
             });
             return done();
           });
-      })
+      });
+
+      it('should deeply filter (N-N relation)', function (done) {
+        // GET users who subscribed to slack team named Team3
+        return supertest(app)
+          .get('/v1/users')
+          .query({ 'slackTeams.name': 'Team3' })
+          .expect(Restypie.Codes.OK, function (err, res) {
+            if (err) return done(err);
+            const data = res.body.data;
+            data.length.should.equal(2);
+            _.pluck(data, 'theId').should.deep.equal([1, 2]);
+            return done();
+          });
+      });
+
+      it('should deeply filter (N-N + 1-N relations)', function (done) {
+        // GET jobs that have users who subscribed to slack team names Team3
+        return supertest(app)
+          .get('/v1/jobs')
+          .query({ 'users.slackTeams.name': 'Team3' })
+          .expect(Restypie.Codes.OK, function (err, res) {
+            if (err) return done(err);
+            const data = res.body.data;
+            data.length.should.equal(1);
+            data[0].id.should.equal(1);
+            return done();
+          });
+      });
 
     });
 

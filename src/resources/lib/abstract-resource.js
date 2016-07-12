@@ -700,22 +700,60 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
       const field = self.fieldsByKey[key];
 
       if (field.isManyRelation) {
-        return new Promise(function (resolve, reject) {
-          request({
-            method: Restypie.Methods.GET,
-            url: field.to.getFullUrl(),
-            qs: Object.assign({}, nestedFilters[key], { select: field.toKey, limit: 0 }),
-            headers: headers,
-            json: true
-          }, function (err, res, body) {
-            if (err || res.statusCode !== Restypie.Codes.OK) {
-              return reject(err || Restypie.RestErrors.fromStatusCode(res.statusCode, res.body.message, res.body.meta));
-            }
-            acc[primaryKeyPath] = acc[primaryKeyPath] || { in: [] };
-            acc[primaryKeyPath].in = _.uniq(acc[primaryKeyPath].in.concat(body.data.map(function (item) { return item[field.toKey]; })));
-            return resolve(acc);
+        if (field.through) {
+          return new Promise(function (resolve, reject) {
+            request({
+              method: Restypie.Methods.GET,
+              url: field.to.getFullUrl(),
+              qs: Object.assign({}, nestedFilters[key], { select: PRIMARY_KEY_KEYWORD, limit: 0 }),
+              headers: headers,
+              json: true
+            }, function (err, res, body) {
+              if (err || res.statusCode !== Restypie.Codes.OK) {
+                return reject(err || Restypie.RestErrors.fromStatusCode(res.statusCode, res.body.message, res.body.meta));
+              }
+
+              const temp = body.data.map(item => item[Object.keys(item)[0]]);
+
+              return request({
+                method: Restypie.Methods.GET,
+                url: field.through.getFullUrl(),
+                qs: { [field.otherThroughKey + '__in']: Restypie.arrayToList(temp), limit: 0, select: field.throughKey },
+                headers: headers,
+                json: true
+              }, function (err, res, body) {
+                if (err || res.statusCode !== Restypie.Codes.OK) {
+                  return reject(err || Restypie.RestErrors.fromStatusCode(res.statusCode, res.body.message, res.body.meta));
+                }
+
+                acc[primaryKeyPath] = acc[primaryKeyPath] || { in: [] }; // TODO Shouldn't we exclude ids instead since results must all match every filter  ?
+                acc[primaryKeyPath].in = _.uniq(acc[primaryKeyPath].in.concat(body.data.map(function (item) { return item[field.throughKey]; })));
+                return resolve(acc);
+              });
+
+            });
           });
-        });
+        } else {
+          return new Promise(function (resolve, reject) {
+            request({
+              method: Restypie.Methods.GET,
+              url: field.to.getFullUrl(),
+              qs: Object.assign({}, nestedFilters[key], { select: field.toKey, limit: 0 }),
+              headers: headers,
+              json: true
+            }, function (err, res, body) {
+              if (err || res.statusCode !== Restypie.Codes.OK) {
+                return reject(err || Restypie.RestErrors.fromStatusCode(res.statusCode, res.body.message, res.body.meta));
+              }
+
+              acc[primaryKeyPath] = acc[primaryKeyPath] || { in: [] };
+              acc[primaryKeyPath].in = _.uniq(acc[primaryKeyPath].in.concat(body.data.map(function (item) { return item[field.toKey]; })));
+
+              return resolve(acc);
+            });
+          });
+
+        }
       } else {
         return new Promise(function (resolve, reject) {
           request({
