@@ -618,8 +618,11 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
     let select = this.constructor.listToArray(bundle.query.select);
     select.forEach(function (key) {
       let field;
-      if (key === PRIMARY_KEY_KEYWORD) field = self.primaryKeyField;
-      else field = fieldsByKey[key];
+      if (key === PRIMARY_KEY_KEYWORD) {
+        key = self.primaryKeyField.key;
+        select.splice(select.indexOf(PRIMARY_KEY_KEYWORD), 1, key);
+      }
+      field = fieldsByKey[key];
       if (!field || !field.isReadable) throw new Restypie.TemplateErrors.UnknownPath({ key });
     });
     if (!select.length) select = this.defaultSelect;
