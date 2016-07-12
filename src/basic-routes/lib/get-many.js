@@ -20,6 +20,7 @@ module.exports = class GetManyRoute extends Restypie.Route {
     let resource = this.context.resource;
 
     return resource.parseOptions(bundle)
+      .then(resource.applyNestedFilters.bind(resource))
       .then(resource.getObjects.bind(resource))
       .then(function (objects) {
         if (!Array.isArray(objects)) return Promise.reject(new Error('getObjects should return an array'));

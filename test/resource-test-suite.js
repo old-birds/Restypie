@@ -85,7 +85,13 @@ module.exports = function (options) {
           isWritableOnce: true
         },
         hasSubscribedEmails: { path: 'emails', type: Boolean, isRequired: true, isFilterable: true },
-        job: { type: 'int', isWritable: true, isFilterable: true, to() { return api.resources.Jobs; } },
+        job: {
+          type: 'int',
+          isWritable: true,
+          isFilterable: true,
+          to() { return api.resources.Jobs; },
+          filteringKey: 'job'
+        },
         profilePicture: {
           path: 'pic',
           type: Restypie.Fields.FileField,
@@ -125,7 +131,7 @@ module.exports = function (options) {
     get schema() {
       return {
         id: { type: 'int', isPrimaryKey: true },
-        name: { type: String, isWritable: true, isReadable: true },
+        name: { type: String, isWritable: true, isFilterable: true },
         users: {
           type: Restypie.Fields.ToManyField,
           to() { return api.resources.Users; },
@@ -1078,6 +1084,29 @@ module.exports = function (options) {
             return done();
           });
       });
+
+      it('Preparing tests...', function (done) {
+        return resetAndFillUsers(10, function (i) {
+          let isInferior = i < 5;
+          return { job: isInferior ? 1 : 2 };
+        }, done);
+      });
+
+
+      it('should deeply filter (ToOne relation)', function (done) {
+        return supertest(app)
+          .get('/v1/users')
+          .query({ 'job.name': 'Developer' })
+          .expect(Restypie.Codes.OK, function (err, res) {
+            if (err) return done(err);
+            const data = res.body.data;
+            data.length.should.equal(5);
+            data.forEach(function (user) {
+              user.job.should.equal(1);
+            });
+            return done();
+          });
+      })
 
     });
 

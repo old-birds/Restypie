@@ -222,6 +222,29 @@ module.exports = class Bundle {
     return this;
   }
 
+  mergeToFilters(filters) {
+    const prev = this._filters = this._filters || {};
+    for (const key in filters) {
+      const prevOperators = prev[key] = prev[key] || {};
+      const newOperators = filters[key];
+      for (const newOperator in newOperators) {
+        if (newOperator in prevOperators) {
+          switch (true) {
+            case Array.isArray(newOperators[newOperator]):
+              prevOperators[newOperator] = _.uniq(prevOperators[newOperator].concat(newOperators[newOperator]));
+              break;
+            default:
+              prevOperators[newOperator] = newOperators[newOperator];
+              break
+          }
+        } else {
+          prevOperators[newOperator] = newOperators[newOperator];
+        }
+      }
+    }
+    return this;
+  }
+
   setNestedFilters(filters) {
     this._nestedFilters = filters;
     return this;

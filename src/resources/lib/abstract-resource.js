@@ -3,13 +3,14 @@
 /***********************************************************************************************************************
  * Dependencies
  **********************************************************************************************************************/
-let _ = require('lodash');
-let Negotiator = require('negotiator');
-let Busboy = require('busboy');
+const _ = require('lodash');
+const Negotiator = require('negotiator');
+const Busboy = require('busboy');
 const bodyParser = require('body-parser');
-let typeIs = require('type-is');
-let formDataToObject = require('form-data-to-object');
-let request = require('request');
+const typeIs = require('type-is');
+const formDataToObject = require('form-data-to-object');
+const request = require('request');
+const Promise = require('bluebird');
 
 let Restypie = require('../../');
 let Utils = Restypie.Utils;
@@ -554,9 +555,12 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
       if (parts.length) { // Nested filter
         const field = fieldsMap[baseProp];
         if (field) {
-          if (!field.isFilterable || !field.isRelation) {
+          // Relations need to explicitely declare that they can be filtered
+          if (!field.isFilterable || !field.to) {
             throw new Restypie.TemplateErrors.NotFilterable({ key: baseProp });
           }
+
+          // Note: use public `key` as this will be forwarded as is to external resources
           nestedFilters[field.key] = nestedFilters[field.key] || {};
           nestedFilters[field.key][parts.join(deepSeparator)] = query[prop];
         } else {
@@ -675,6 +679,78 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
     }
     return bundle.next();
   }
+
+
+
+
+
+
+
+
+
+  applyNestedFilters(bundle) {
+    if (!bundle.hasNestedFilters) return bundle.next();
+
+    const self = this;
+    const headers = _.omit(bundle.req.headers, ['content-type', 'accept']);
+    const nestedFilters = bundle.nestedFilters;
+    const primaryKeyPath = self.primaryKeyField.path;
+
+    return Promise.reduce(Object.keys(nestedFilters), function (acc, key) {
+      const field = self.fieldsByKey[key];
+
+      if (field.isManyRelation) {
+        return new Promise(function (resolve, reject) {
+          request({
+            method: Restypie.Methods.GET,
+            url: field.to.getFullUrl(),
+            qs: Object.assign({}, nestedFilters[key], { select: field.toKey, limit: 0 }),
+            headers: headers,
+            json: true
+          }, function (err, res, body) {
+            if (err || res.statusCode !== Restypie.Codes.OK) {
+              return reject(err || Restypie.RestErrors.fromStatusCode(res.statusCode, res.body.message, res.body.meta));
+            }
+            acc[primaryKeyPath] = acc[primaryKeyPath] || { in: [] };
+            acc[primaryKeyPath].in = _.uniq(acc[primaryKeyPath].in.concat(body.data.map(function (item) { return item[field.toKey]; })));
+            return resolve(acc);
+          });
+        });
+      } else {
+        return new Promise(function (resolve, reject) {
+          request({
+            method: Restypie.Methods.GET,
+            url: field.to.getFullUrl(),
+            qs: Object.assign({}, nestedFilters[key], { select: PRIMARY_KEY_KEYWORD, limit: 0 }),
+            headers: headers,
+            json: true
+          }, function (err, res, body) {
+            if (err || res.statusCode !== Restypie.Codes.OK) {
+              return reject(err || Restypie.RestErrors.fromStatusCode(res.statusCode, res.body.message, res.body.meta));
+            }
+            acc[field.filteringPath] = acc[field.filteringPath] || { in: [] };
+            acc[field.filteringPath].in = _.uniq(acc[field.filteringPath].in.concat(body.data.map(function (item) { return item[Object.keys(item)[0]]; })));
+            return resolve(acc);
+          });
+        });
+      }
+
+    }, {}).then(function (filters) {
+      bundle.mergeToFilters(filters);
+      return bundle.next();
+    });
+
+  }
+
+
+
+
+
+
+
+
+
+
 
   /**
    * Transforms each keys and values into their internal version.
