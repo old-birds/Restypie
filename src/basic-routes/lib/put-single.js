@@ -21,7 +21,7 @@ module.exports = class PutSingleRoute extends Restypie.Route {
   handler(bundle) {
     let resource = this.context.resource;
 
-    return resource.parseOptions(bundle)
+    return resource.parseParameters(bundle)
       .then(resource.parseBody.bind(resource, bundle))
       .then(resource.hydrate.bind(resource, bundle))
       .then(function (bundle) {
