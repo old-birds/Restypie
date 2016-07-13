@@ -766,8 +766,8 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
             if (err || res.statusCode !== Restypie.Codes.OK) {
               return reject(err || Restypie.RestErrors.fromStatusCode(res.statusCode, res.body.message, res.body.meta));
             }
-            acc[field.filteringPath] = acc[field.filteringPath] || { in: [] };
-            acc[field.filteringPath].in = _.uniq(acc[field.filteringPath].in.concat(body.data.map(function (item) { return item[Object.keys(item)[0]]; })));
+            acc[field.fromKey] = acc[field.fromKey] || { in: [] };
+            acc[field.fromKey].in = _.uniq(acc[field.fromKey].in.concat(body.data.map(function (item) { return item[Object.keys(item)[0]]; })));
             return resolve(acc);
           });
         });
@@ -1058,7 +1058,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
             qs[toKeyField.key] = object[self.primaryKeyField.key];
           }
         } else {
-          url = Restypie.Url.join(resource.getFullUrl(bundle), object[key]);
+          url = Restypie.Url.join(resource.getFullUrl(bundle), object[field.fromKey]);
         }
 
 

@@ -50,6 +50,10 @@ module.exports = class AbstractField {
     return _.isString(this._toKey) ? this._toKey : this.to.primaryKeyField.key;
   }
 
+  get fromKey() {
+    return _.isString(this._fromKey) ? this._fromKey : this.key;
+  }
+
   /**
    * @constructor
    */
@@ -83,6 +87,7 @@ module.exports = class AbstractField {
       this.isPopulable = true;
       this._to = options.to;
       this._toKey = options.toKey;
+      this._fromKey = options.fromKey;
 
       if (options.hasOwnProperty('through')) {
         this._through = options.through;
