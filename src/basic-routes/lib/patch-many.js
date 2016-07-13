@@ -22,7 +22,7 @@ module.exports = class PatchSingleRoute extends Restypie.Route {
     let resource = this.context.resource;
 
     return Promise.try(function () {
-      resource.parseOptions(bundle);
+      resource.parseParameters(bundle);
       // Do not allow to update the whole table - empty filters
       if (!Object.keys(bundle.filters).length) throw new Restypie.TemplateErrors.RequestOutOfRange(bundle.filters);
     }).then(resource.parseBody.bind(resource, bundle))

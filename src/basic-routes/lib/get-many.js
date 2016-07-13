@@ -19,7 +19,7 @@ module.exports = class GetManyRoute extends Restypie.Route {
   handler(bundle) {
     let resource = this.context.resource;
 
-    return resource.parseOptions(bundle)
+    return resource.parseParameters(bundle)
       .then(resource.applyNestedFilters.bind(resource))
       .then(resource.getObjects.bind(resource))
       .then(function (objects) {

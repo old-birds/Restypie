@@ -26,7 +26,7 @@ module.exports = class GetSingleRoute extends Restypie.Route {
     return Promise.try(function () {
       pk = pkField.hydrate(bundle.params.pk);
       bundle.query[pkField.key] = pk;
-      resource.parseOptions(bundle);
+      resource.parseParameters(bundle);
     }).then(resource.getObject.bind(resource, bundle))
       .then(function (object) {
         if (!object) return bundle.next(new Restypie.TemplateErrors.ResourceNotFound({ pk }));

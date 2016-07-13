@@ -653,7 +653,7 @@ module.exports = function (options) {
       });
     });
 
-    describe.only('GET many', function () {
+    describe('GET many', function () {
       let count = 88;
 
       it('Preparing tests...', function (done) {

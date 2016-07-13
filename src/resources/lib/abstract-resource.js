@@ -15,7 +15,7 @@ const Promise = require('bluebird');
 let Restypie = require('../../');
 let Utils = Restypie.Utils;
 
-const RESERVED_KEYWORDS = ['limit', 'offset', 'sort', 'select', 'format', 'populate'];
+const RESERVED_KEYWORDS = ['limit', 'offset', 'sort', 'select', 'format', 'populate', 'options'];
 
 const PRIMARY_KEY_KEYWORD = '$primaryKey';
 
@@ -665,7 +665,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
    *
    * @param {Restypie.Bundle} bundle
    */
-  parseOptions(bundle) {
+  parseParameters(bundle) {
     try {
       this.parseLimit(bundle);
       this.parseSelect(bundle);
