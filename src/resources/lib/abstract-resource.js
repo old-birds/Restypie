@@ -396,9 +396,11 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
   parseOptions(bundle) {
     const supported = _.values(this.options);
     const queryOptions = Restypie.listToArray(bundle.query.options || '');
-    
+
     queryOptions.forEach(function (option) {
-      if (!_.contains(supported, option)) throw new Restypie.TemplateErrors.UnsupportedOption({ option });
+      if (!_.contains(supported, option)) {
+        throw new Restypie.TemplateErrors.UnsupportedOption({ option, options: supported });
+      }
     });
     
     bundle.setOptions(queryOptions);
@@ -723,7 +725,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
             request({
               method: Restypie.Methods.GET,
               url: field.to.getFullUrl(),
-              qs: Object.assign({}, nestedFilters[key], { select: PRIMARY_KEY_KEYWORD, limit: 0 }),
+              qs: Object.assign({}, nestedFilters[key], { select: PRIMARY_KEY_KEYWORD, limit: 0, options: self.options.NO_COUNT }),
               headers: headers,
               json: true
             }, function (err, res, body) {
@@ -736,7 +738,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
               return request({
                 method: Restypie.Methods.GET,
                 url: field.through.getFullUrl(),
-                qs: { [field.otherThroughKey + '__in']: Restypie.arrayToList(temp), limit: 0, select: field.throughKey },
+                qs: { [field.otherThroughKey + '__in']: Restypie.arrayToList(temp), limit: 0, select: field.throughKey, options: self.options.NO_COUNT },
                 headers: headers,
                 json: true
               }, function (err, res, body) {
@@ -756,7 +758,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
             request({
               method: Restypie.Methods.GET,
               url: field.to.getFullUrl(),
-              qs: Object.assign({}, nestedFilters[key], { select: field.toKey, limit: 0 }),
+              qs: Object.assign({}, nestedFilters[key], { select: field.toKey, limit: 0, options: self.options.NO_COUNT }),
               headers: headers,
               json: true
             }, function (err, res, body) {
@@ -776,7 +778,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
           request({
             method: Restypie.Methods.GET,
             url: field.to.getFullUrl(),
-            qs: Object.assign({}, nestedFilters[key], { select: PRIMARY_KEY_KEYWORD, limit: 0 }),
+            qs: Object.assign({}, nestedFilters[key], { select: PRIMARY_KEY_KEYWORD, limit: 0, options: self.options.NO_COUNT }),
             headers: headers,
             json: true
           }, function (err, res, body) {
@@ -1048,11 +1050,12 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
               return new Promise(function (resolve, reject) {
                 return request({
                   method: 'GET',
-                  url: through.getFullUrl(bundle),
+                  url: through.getFullUrl(),
                   qs: {
                     [throughKeyField.key]: object[self.primaryKeyField.key],
                     limit: 0, // All items
-                    select: otherThroughKeyField.key // Only what we need
+                    select: otherThroughKeyField.key, // Only what we need
+                    options: self.options.NO_COUNT
                   },
                   json: true,
                   headers: headers
@@ -1075,7 +1078,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
             qs[toKeyField.key] = object[self.primaryKeyField.key];
           }
         } else {
-          url = Restypie.Url.join(resource.getFullUrl(bundle), object[field.fromKey]);
+          url = Restypie.Url.join(resource.getFullUrl(), object[field.fromKey]);
         }
 
 
