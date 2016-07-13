@@ -31,6 +31,8 @@ module.exports = class Bundle {
   get headers() { return this._headers; }
 
   get populate() { return this._populate; }
+  
+  get options() { return this._options; }
 
   get statusCode() { return this._statusCode; }
   get limit() { return this._limit; }
@@ -155,6 +157,15 @@ module.exports = class Bundle {
   setQuery(query) {
     this._query = query;
     return this;
+  }
+  
+  setOptions(options) {
+    this._options = options || [];
+    return this;
+  }
+  
+  hasOption(option) {
+    return _.contains(this._options, option);
   }
 
   setMessage(message) {

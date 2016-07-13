@@ -31,12 +31,19 @@ module.exports = class GetManyRoute extends Restypie.Route {
       })
       .then(resource.dehydrate.bind(resource))
       .then(resource.populate.bind(resource))
-      .then(resource.countObjects.bind(resource))
-      .then(function (total) {
-        return bundle
-          .assignToMeta({ total, limit: bundle.limit, offset: bundle.offset })
-          .assignToMeta(bundle.getNavLinks(total))
-          .next();
+      .then(function (bundle) {
+        bundle.assignToMeta({ limit: bundle.limit, offset: bundle.offset });
+
+        if (!bundle.hasOption(resource.options.NO_COUNT)) {
+          return resource.countObjects(bundle).then(function (total) {
+            return bundle
+              .assignToMeta({ total })
+              .assignToMeta(bundle.getNavLinks(total))
+              .next();
+          });
+        }
+
+        return bundle.next();
       })
       .catch (function (err) {
         return bundle.setError(err).next();

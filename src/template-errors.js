@@ -214,6 +214,21 @@ module.exports = {
   },
 
   /**
+   * The option is not supported by this resource.
+   *
+   * @property UnsupportedOption
+   * @type constructor
+   * @static
+   * @extends Restypie.TemplateErrors.AbstractBadRequestError
+   * @constructor
+   */
+  UnsupportedOption: class UnknownPathError extends AbstractBadRequestError {
+    static template(meta) {
+      return `Option "${meta.options}" is not supported by this resource`;
+    }
+  },
+
+  /**
    * The path is not writable.
    *
    * @property NotWritable
@@ -357,9 +372,8 @@ module.exports = {
   
   InconsistentRequest: class InconsistentRequestError extends AbstractBadRequestError {
     static template(meta) {
-      let message = `Request is not consistent, values for path "${meta.key}" don't match :` +
+      return `Request is not consistent, values for path "${meta.key}" don't match :` +
         `"${meta.filterValue}" is different than "${meta.bodyValue}".`;
-      return message;
     }
   }
 

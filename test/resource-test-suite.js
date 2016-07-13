@@ -1106,6 +1106,33 @@ module.exports = function (options) {
           });
       });
 
+      it('should count corresponding objects', function (done) {
+        return supertest(app)
+          .get('/v1/users')
+          .expect(Restypie.Codes.OK, function (err, res) {
+            if (err) return done(err);
+            const body = res.body;
+            should.exist(body.meta);
+            should.exist(body.meta.total);
+            body.meta.total.should.be.a('number');
+            body.meta.total.should.be.above(0);
+            return done();
+          });
+      });
+
+      it('should NOT count corresponding objects (NO_COUNT)', function (done) {
+        return supertest(app)
+          .get('/v1/users')
+          .query({ options: 'noCount' })
+          .expect(Restypie.Codes.OK, function (err, res) {
+            if (err) return done(err);
+            const body = res.body;
+            should.exist(body.meta);
+            should.not.exist(body.meta.total);
+            return done();
+          });
+      });
+
       it('Preparing tests...', function (done) {
         return resetAndFillUsers(10, function (i) {
           let isInferior = i < 5;

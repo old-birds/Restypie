@@ -154,6 +154,12 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
   
   get upsertPaths() { return []; }
 
+  get options() {
+    return {
+      NO_COUNT: 'noCount'
+    };
+  }
+
   /**
    * Fields to be selected by default. By default select all readable fields.
    *
@@ -385,6 +391,17 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
       if (serializer.mimeType === type || _.includes(serializer.aliases, type)) return serializer;
     }
     return null;
+  }
+  
+  parseOptions(bundle) {
+    const supported = _.values(this.options);
+    const queryOptions = Restypie.listToArray(bundle.query.options || '');
+    
+    queryOptions.forEach(function (option) {
+      if (!_.contains(supported, option)) throw new Restypie.TemplateErrors.UnsupportedOption({ option });
+    });
+    
+    bundle.setOptions(queryOptions);
   }
 
   /**
@@ -667,6 +684,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
    */
   parseParameters(bundle) {
     try {
+      this.parseOptions(bundle);
       this.parseLimit(bundle);
       this.parseSelect(bundle);
       this.parseOffset(bundle);
