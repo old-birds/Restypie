@@ -748,7 +748,6 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
 
               acc[primaryKeyPath] = acc[primaryKeyPath] || { in: [] };
               acc[primaryKeyPath].in = _.uniq(acc[primaryKeyPath].in.concat(body.data.map(function (item) { return item[field.toKey]; })));
-
               return resolve(acc);
             });
           });

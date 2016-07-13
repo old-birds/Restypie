@@ -90,7 +90,13 @@ module.exports = function (options) {
           isWritable: true,
           isFilterable: true,
           to() { return api.resources.Jobs; },
-          filteringKey: 'job'
+          fromKey: 'job'
+        },
+        otherJobPopulation: {
+          type: Restypie.Fields.ToOneField,
+          isReadable: true,
+          to() { return api.resources.Jobs; },
+          fromKey: 'job'
         },
         profilePicture: {
           path: 'pic',
@@ -647,7 +653,7 @@ module.exports = function (options) {
       });
     });
 
-    describe('GET many', function () {
+    describe.only('GET many', function () {
       let count = 88;
 
       it('Preparing tests...', function (done) {
@@ -707,6 +713,21 @@ module.exports = function (options) {
                   return cb();
                 });
             }, done);
+          });
+      });
+
+      it('should populate otherJobPopulation', function (done) {
+        return supertest(app)
+          .get('/v1/users')
+          .query({ populate: 'otherJobPopulation,job' })
+          .expect(Restypie.Codes.OK, function (err, res) {
+            if (err) return done(err);
+            const data = res.body.data;
+            data.should.be.an('array');
+            data.forEach(function (item) {
+              item.otherJobPopulation.should.deep.equal(item.job);
+            });
+            return done();
           });
       });
 

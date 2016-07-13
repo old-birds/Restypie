@@ -39,7 +39,6 @@ module.exports = class GetManyRoute extends Restypie.Route {
           .next();
       })
       .catch (function (err) {
-        // console.log(err.stack);
         return bundle.setError(err).next();
       })
       .then(resource.serialize.bind(resource))
