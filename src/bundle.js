@@ -31,6 +31,8 @@ module.exports = class Bundle {
   get headers() { return this._headers; }
 
   get populate() { return this._populate; }
+  
+  get options() { return this._options; }
 
   get statusCode() { return this._statusCode; }
   get limit() { return this._limit; }
@@ -46,6 +48,7 @@ module.exports = class Bundle {
   get format() { return this._format; }
 
   get filters() { return this._filters; }
+  get nestedFilters() { return this._nestedFilters; }
   get select() { return this._select; }
   get sort() { return this._sort; }
 
@@ -53,6 +56,8 @@ module.exports = class Bundle {
   get isUpdate() { return this._isUpdate; }
   get isWrite() { return this._isWrite; }
   get isDelete() { return this._isDelete; }
+  
+  get hasNestedFilters() { return !!Object.keys(this._nestedFilters || {}).length; }
 
   next(err) {
     return err ? Promise.reject(err) : Promise.resolve(this);
@@ -153,6 +158,15 @@ module.exports = class Bundle {
     this._query = query;
     return this;
   }
+  
+  setOptions(options) {
+    this._options = options || [];
+    return this;
+  }
+  
+  hasOption(option) {
+    return _.contains(this._options, option);
+  }
 
   setMessage(message) {
     this._message = message;
@@ -216,6 +230,31 @@ module.exports = class Bundle {
 
   setFilters(filters) {
     this._filters = filters;
+    return this;
+  }
+
+  mergeToFilters(filters) {
+    const prev = this._filters = this._filters || {};
+    for (const key in filters) {
+      const prevOperators = prev[key] = prev[key] || {};
+      const newOperators = filters[key];
+      for (const newOperator in newOperators) {
+        if (newOperator in prevOperators) {
+          if (Array.isArray(newOperators[newOperator])) {
+            prevOperators[newOperator] = _.uniq(prevOperators[newOperator].concat(newOperators[newOperator]));
+          } else {
+            prevOperators[newOperator] = newOperators[newOperator];
+          }
+        } else {
+          prevOperators[newOperator] = newOperators[newOperator];
+        }
+      }
+    }
+    return this;
+  }
+
+  setNestedFilters(filters) {
+    this._nestedFilters = filters;
     return this;
   }
 
