@@ -222,9 +222,9 @@ module.exports = {
    * @extends Restypie.TemplateErrors.AbstractBadRequestError
    * @constructor
    */
-  UnsupportedOption: class UnknownPathError extends AbstractBadRequestError {
+  UnsupportedOption: class UnsupportedOptionError extends AbstractBadRequestError {
     static template(meta) {
-      return `Option "${meta.options}" is not supported by this resource`;
+      return `Option "${meta.option}" is not supported by this resource. Supported options are : ${meta.options.join(', ')}`;
     }
   },
 
