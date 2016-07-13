@@ -392,7 +392,14 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
     }
     return null;
   }
-  
+
+  /**
+   * Parses options.
+   *
+   * @method parseOptions
+   * @param {Restypie.Bundle} bundle
+   *
+   */
   parseOptions(bundle) {
     const supported = _.values(this.options);
     const queryOptions = Restypie.listToArray(bundle.query.options || '');
@@ -402,7 +409,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
         throw new Restypie.TemplateErrors.UnsupportedOption({ option, options: supported });
       }
     });
-    
+
     bundle.setOptions(queryOptions);
   }
 
@@ -700,14 +707,14 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
     return bundle.next();
   }
 
-
-
-
-
-
-
-
-
+  /**
+   * Augments existing root filters to include nested ones.
+   *
+   * @method applyNestedFilters
+   * @async
+   * @param {Restypie.Bundle} bundle
+   * @returns {Promise}
+   */
   applyNestedFilters(bundle) {
     if (!bundle.hasNestedFilters) return bundle.next();
 
@@ -725,12 +732,16 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
             request({
               method: Restypie.Methods.GET,
               url: field.to.getFullUrl(),
-              qs: Object.assign({}, nestedFilters[key], { select: PRIMARY_KEY_KEYWORD, limit: 0, options: self.options.NO_COUNT }),
+              qs: Object.assign({}, nestedFilters[key], {
+                select: PRIMARY_KEY_KEYWORD,
+                limit: 0,
+                options: self.options.NO_COUNT
+              }),
               headers: headers,
               json: true
             }, function (err, res, body) {
               if (err || res.statusCode !== Restypie.Codes.OK) {
-                return reject(err || Restypie.RestErrors.fromStatusCode(res.statusCode, res.body.message, res.body.meta));
+                return reject(err || Restypie.RestErrors.fromStatusCode(res.statusCode, body.message, body.meta));
               }
 
               const temp = body.data.map(item => item[Object.keys(item)[0]]);
@@ -738,16 +749,23 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
               return request({
                 method: Restypie.Methods.GET,
                 url: field.through.getFullUrl(),
-                qs: { [field.otherThroughKey + '__in']: Restypie.arrayToList(temp), limit: 0, select: field.throughKey, options: self.options.NO_COUNT },
+                qs: {
+                  [field.otherThroughKey + '__in']: Restypie.arrayToList(temp),
+                  limit: 0,
+                  select: field.throughKey,
+                  options: self.options.NO_COUNT
+                },
                 headers: headers,
                 json: true
               }, function (err, res, body) {
                 if (err || res.statusCode !== Restypie.Codes.OK) {
-                  return reject(err || Restypie.RestErrors.fromStatusCode(res.statusCode, res.body.message, res.body.meta));
+                  return reject(err || Restypie.RestErrors.fromStatusCode(res.statusCode, body.message, body.meta));
                 }
 
-                acc[primaryKeyPath] = acc[primaryKeyPath] || { in: [] }; // TODO Shouldn't we exclude ids instead since results must all match every filter  ?
-                acc[primaryKeyPath].in = _.uniq(acc[primaryKeyPath].in.concat(body.data.map(function (item) { return item[field.throughKey]; })));
+                // FIXME Shouldn't we exclude ids instead since results must all match every filter  ?
+                const ids = body.data.map(function (item) { return item[field.throughKey]; });
+                acc[primaryKeyPath] = acc[primaryKeyPath] || { in: [] };
+                acc[primaryKeyPath].in = _.uniq(acc[primaryKeyPath].in.concat(ids));
                 return resolve(acc);
               });
 
@@ -758,16 +776,21 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
             request({
               method: Restypie.Methods.GET,
               url: field.to.getFullUrl(),
-              qs: Object.assign({}, nestedFilters[key], { select: field.toKey, limit: 0, options: self.options.NO_COUNT }),
+              qs: Object.assign({}, nestedFilters[key], {
+                select: field.toKey,
+                limit: 0,
+                options: self.options.NO_COUNT
+              }),
               headers: headers,
               json: true
             }, function (err, res, body) {
               if (err || res.statusCode !== Restypie.Codes.OK) {
-                return reject(err || Restypie.RestErrors.fromStatusCode(res.statusCode, res.body.message, res.body.meta));
+                return reject(err || Restypie.RestErrors.fromStatusCode(res.statusCode, body.message, body.meta));
               }
 
+              const ids = body.data.map(function (item) { return item[field.toKey]; });
               acc[primaryKeyPath] = acc[primaryKeyPath] || { in: [] };
-              acc[primaryKeyPath].in = _.uniq(acc[primaryKeyPath].in.concat(body.data.map(function (item) { return item[field.toKey]; })));
+              acc[primaryKeyPath].in = _.uniq(acc[primaryKeyPath].in.concat(ids));
               return resolve(acc);
             });
           });
@@ -778,15 +801,21 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
           request({
             method: Restypie.Methods.GET,
             url: field.to.getFullUrl(),
-            qs: Object.assign({}, nestedFilters[key], { select: PRIMARY_KEY_KEYWORD, limit: 0, options: self.options.NO_COUNT }),
+            qs: Object.assign({}, nestedFilters[key], {
+              select: PRIMARY_KEY_KEYWORD,
+              limit: 0,
+              options: self.options.NO_COUNT
+            }),
             headers: headers,
             json: true
           }, function (err, res, body) {
             if (err || res.statusCode !== Restypie.Codes.OK) {
               return reject(err || Restypie.RestErrors.fromStatusCode(res.statusCode, res.body.message, res.body.meta));
             }
+
+            const ids = body.data.map(function (item) { return item[Object.keys(item)[0]]; });
             acc[field.fromKey] = acc[field.fromKey] || { in: [] };
-            acc[field.fromKey].in = _.uniq(acc[field.fromKey].in.concat(body.data.map(function (item) { return item[Object.keys(item)[0]]; })));
+            acc[field.fromKey].in = _.uniq(acc[field.fromKey].in.concat(ids));
             return resolve(acc);
           });
         });
@@ -798,16 +827,6 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
     });
 
   }
-
-
-
-
-
-
-
-
-
-
 
   /**
    * Transforms each keys and values into their internal version.

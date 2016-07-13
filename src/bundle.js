@@ -240,13 +240,10 @@ module.exports = class Bundle {
       const newOperators = filters[key];
       for (const newOperator in newOperators) {
         if (newOperator in prevOperators) {
-          switch (true) {
-            case Array.isArray(newOperators[newOperator]):
-              prevOperators[newOperator] = _.uniq(prevOperators[newOperator].concat(newOperators[newOperator]));
-              break;
-            default:
-              prevOperators[newOperator] = newOperators[newOperator];
-              break
+          if (Array.isArray(newOperators[newOperator])) {
+            prevOperators[newOperator] = _.uniq(prevOperators[newOperator].concat(newOperators[newOperator]));
+          } else {
+            prevOperators[newOperator] = newOperators[newOperator];
           }
         } else {
           prevOperators[newOperator] = newOperators[newOperator];

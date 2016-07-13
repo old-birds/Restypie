@@ -224,7 +224,8 @@ module.exports = {
    */
   UnsupportedOption: class UnsupportedOptionError extends AbstractBadRequestError {
     static template(meta) {
-      return `Option "${meta.option}" is not supported by this resource. Supported options are : ${meta.options.join(', ')}`;
+      const options = meta.options.join(', ');
+      return `Option "${meta.option}" is not supported by this resource. Supported options are : ${options}`;
     }
   },
 
