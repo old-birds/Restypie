@@ -40,6 +40,7 @@ module.exports = class DateField extends Restypie.Fields.AbstractField {
   get supportedOperators() {
     return [
       Restypie.Operators.Eq,
+      Restypie.Operators.Ne,
       Restypie.Operators.Gt,
       Restypie.Operators.Gte,
       Restypie.Operators.Lt,
