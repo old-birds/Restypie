@@ -87,6 +87,7 @@ module.exports = class Route {
       case Restypie.ROUTER_TYPES.KOA_ROUTER:
         /* istanbul ignore next */
         return function *(next) {
+          if (this.request.body) this.req.body = this.request.body;
           this.req.params = this.params; // Copy params so that we don't have to parse them
           this.req.query = this.query;
           this.state.bundle = new Restypie.Bundle({ req: this.req, res: this.res });
