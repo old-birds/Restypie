@@ -154,10 +154,24 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
   
   get upsertPaths() { return []; }
 
+  /**
+   * Supported options/flags for this resource.
+   *
+   * @attribute options
+   * @type Object
+   * 
+   * @example
+   * ```javascript
+   * class MyResource extends Restypie.Resources.FixturesResource {
+   *   get options() { return Object.assign({ MY_OPTION: 'my_option }, super.options); }
+   * }
+   * ```
+   */
   get options() {
-    return {
+    // FIXME find a solution to not be able to override some basic options like NO_COUNT
+    return Object.freeze({ // Freezing so that options can't be overridden
       NO_COUNT: 'noCount'
-    };
+    });
   }
 
   /**
@@ -762,7 +776,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
                   return reject(err || Restypie.RestErrors.fromStatusCode(res.statusCode, body.message, body.meta));
                 }
 
-                // FIXME Shouldn't we exclude ids instead since results must all match every filter  ?
+                // FIXME Shouldn't we exclude ids instead since results must all match every filter ?
                 const ids = body.data.map(function (item) { return item[field.throughKey]; });
                 acc[primaryKeyPath] = acc[primaryKeyPath] || { in: [] };
                 acc[primaryKeyPath].in = _.uniq(acc[primaryKeyPath].in.concat(ids));
