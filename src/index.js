@@ -84,7 +84,7 @@ const Restypie = module.exports = {
     switch (operator) {
       case 'in': return { in: _.intersection(left, right) };
       case 'nin': return { nin: _.uniq(left.concat(right)) };
-      case 'eq': return { in: [left, right] };
+      case 'eq': return left === right ? { eq: left } : { in: [] }; // Can't be equal to 2 different values
       case 'ne': return { nin: [left, right] };
       case 'gt':
       case 'gte':
