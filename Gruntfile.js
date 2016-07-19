@@ -41,7 +41,7 @@ module.exports = function (grunt) {
       coveralls: {
         src: ['./test/**/*.test.js'],
         options: {
-          quiet: true,
+          // quiet: true,
           coverage: true,
           recursive: true,
           require: [

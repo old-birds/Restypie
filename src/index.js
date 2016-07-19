@@ -80,6 +80,83 @@ const Restypie = module.exports = {
     return qs;
   },
 
+  mergeValuesForOperator(operator, left, right) {
+    switch (operator) {
+      case 'in': return { in: _.intersection(left, right) };
+      case 'nin': return { nin: _.uniq(left.concat(right)) };
+      case 'eq': return { in: [left, right] };
+      case 'ne': return { nin: [left, right] };
+      case 'gt':
+      case 'gte':
+        return { [operator]: left > right ? left : right };
+      case 'lt':
+      case 'lte':
+        return { [operator]: left < right ? left : right };
+      default:
+        throw new Error(`Don't know how to merge values for operator ${operator}`);
+    }
+  },
+  
+  mergeFilters(left, right) {
+    right = _.cloneDeep(right); // We want to modify `left`, do not risk to modify `right`
+
+    const keys = _.uniq(Object.keys(left).concat(Object.keys(right)));
+
+    keys.forEach(function (key) {
+      const leftFilter = left[key];
+      const rightFilter = right[key];
+
+      if (!rightFilter) return; // Do nothing if nothing to merge
+
+      if (!leftFilter) { // Just copy, nothing to merge
+        left[key] = rightFilter;
+        return;
+      }
+
+      const operators = _.uniq(Object.keys(leftFilter).concat(Object.keys(rightFilter)));
+
+      // Merge by operator
+      operators.forEach(function (operator) {
+        const leftValue = leftFilter[operator];
+        const rightValue = rightFilter[operator];
+
+        if (!rightValue) return; // Do nothing if nothing to merge
+
+        if (!leftValue) { // Just copy, nothing to merge
+          leftFilter[operator] = rightValue;
+          return;
+        }
+
+        let newFilter = Restypie.mergeValuesForOperator(operator, leftValue, rightValue);
+        const newOperator = Object.keys(newFilter)[0];
+
+        if (newOperator !== operator && newOperator in leftFilter) {
+          console.log(newOperator, leftFilter[newOperator], newFilter[newOperator]);
+          newFilter = Restypie.mergeValuesForOperator(newOperator, leftFilter[newOperator], newFilter[newOperator]);
+          console.log(newFilter);
+        }
+
+        Object.assign(leftFilter, newFilter);
+      });
+
+      // Special cases
+
+      if (leftFilter.in && leftFilter.eq) {
+        leftFilter.in = _.uniq(leftFilter.in.concat(leftFilter.eq));
+        delete leftFilter.eq;
+      }
+
+      if (leftFilter.nin && leftFilter.ne) {
+        leftFilter.nin = _.uniq(leftFilter.nin.concat(leftFilter.ne));
+        delete leftFilter.ne;
+      }
+
+      if (leftFilter.in && leftFilter.nin) _.pullAll(leftFilter.in, leftFilter.nin);
+    });
+
+    return left;
+  },
+
   get API() { return require('./api'); },
   get Route() { return require('./route'); },
   get Resources() { return require('./resources'); },
