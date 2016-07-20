@@ -97,7 +97,7 @@ describe('Restypie', function () {
         Restypie.mergeValuesForOperator('nin', [1, 2, 3], [3, 4]).should.deep.equal({ nin: [1, 2, 3, 4] });
       });
 
-      it('should contenate even if empty array', function () {
+      it('should concatenate even if empty array', function () {
         Restypie.mergeValuesForOperator('nin', [1, 2, 3, 4], []).should.deep.equal({ nin: [1, 2, 3, 4] });
       });
 
