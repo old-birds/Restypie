@@ -159,7 +159,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
    *
    * @attribute options
    * @type Object
-   * 
+   *
    * @example
    * ```javascript
    * class MyResource extends Restypie.Resources.FixturesResource {
@@ -787,6 +787,11 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
           });
         } else {
           return new Promise(function (resolve, reject) {
+
+            // TODO Instead of `nestedFilters[key]` :
+            // Check if bundle.query includes this.primaryKeyField.key
+            // And include [fromKey]__[operator for primary key] = value
+
             request({
               method: Restypie.Methods.GET,
               url: field.to.getFullUrl(),
