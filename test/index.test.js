@@ -105,7 +105,7 @@ describe('Restypie', function () {
 
     describe('eq', function () {
       it('should turn filter into in', function () {
-        Restypie.mergeValuesForOperator('eq', 1, 2).should.deep.equal({ in: [1, 2] });
+        Restypie.mergeValuesForOperator('eq', 1, 2).should.deep.equal({ in: [] });
       });
     });
 
