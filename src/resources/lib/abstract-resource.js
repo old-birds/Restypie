@@ -153,6 +153,8 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
   get supportsUpserts() { return false; }
   
   get upsertPaths() { return []; }
+  
+  get routerType() { return this.api.routerType; }
 
   /**
    * Supported options/flags for this resource.
@@ -205,11 +207,11 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
     
     if (!Array.isArray(this.routes)) throw new TypeError('Property `routes` should be an array');
     
-    // Create the routes
-    this._createRoutes();
-
     // Keep a reference to the api, do not allow to modify it
     Object.defineProperty(this, 'api', { get() { return api; } });
+
+    // Create the routes
+    this._createRoutes();
 
     // Validate properties
     if (!_.isString(this.path)) throw new TypeError('Property `path` should be a string');

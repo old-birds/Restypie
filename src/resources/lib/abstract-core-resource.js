@@ -29,6 +29,7 @@ module.exports = class AbstractCoreResource {
    */
   get fieldsByPath() { return _.indexBy(this.fields, 'path'); }
 
+  get routerType() { return null; }
 
 
   constructor() {
@@ -51,7 +52,7 @@ module.exports = class AbstractCoreResource {
    */
   _createRoute(Route) {
     Restypie.Utils.isSubclassOf(Route, Restypie.Route, true);
-    return new Route({ resource: this });
+    return new Route({ resource: this, routerType: this.routerType });
   }
 
   /**

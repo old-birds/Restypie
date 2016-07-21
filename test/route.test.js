@@ -11,7 +11,7 @@ describe('Restypie.Route', function () {
         }
       }
 
-      const route = new RightRoute(); // Should not throw
+      const route = new RightRoute({ routerType: Restypie.RouterTypes.EXPRESS }); // Should not throw
       route.method.should.equal(Restypie.Methods.GET);
     });
 
@@ -24,7 +24,7 @@ describe('Restypie.Route', function () {
         }
       }
 
-      const route = new RightRoute(); // Should not throw
+      const route = new RightRoute({ routerType: Restypie.RouterTypes.EXPRESS }); // Should not throw
       route.method.should.equal(Restypie.Methods.POST);
     });
 
@@ -35,7 +35,7 @@ describe('Restypie.Route', function () {
         }
       }
       (function () {
-        new WrongRoute();
+        new WrongRoute({ routerType: Restypie.RouterTypes.EXPRESS });
       }).should.throw(/path/);
     });
 
@@ -44,7 +44,7 @@ describe('Restypie.Route', function () {
         get path() { return 'foo'; }
       }
       (function () {
-        new WrongRoute();
+        new WrongRoute({ routerType: Restypie.RouterTypes.EXPRESS });
       }).should.throw(/handler/);
     });
 
@@ -57,7 +57,7 @@ describe('Restypie.Route', function () {
         get method() { return 'WEIRD_VERB'; }
       }
       (function () {
-        new WrongRoute();
+        new WrongRoute({ routerType: Restypie.RouterTypes.EXPRESS });
       }).should.throw(/method/);
     });
 
@@ -70,7 +70,7 @@ describe('Restypie.Route', function () {
         }
       }
 
-      const route = new RightRoute();
+      const route = new RightRoute({ routerType: Restypie.RouterTypes.EXPRESS });
       route.path;
       route.method;
       route.context;
@@ -89,15 +89,13 @@ describe('Restypie.Route', function () {
     }
 
     it('should create an express compatible handler', function () {
-      Restypie.setRouterType(Restypie.ROUTER_TYPES.EXPRESS);
-      const route = new RightRoute();
+      const route = new RightRoute({ routerType: Restypie.RouterTypes.EXPRESS });
       const bundleHandler = route._handlers[0];
       bundleHandler.length.should.equal(3); // req, res, next
     });
     
     it('should create a koa-router compatible handler', function () {
-      Restypie.setRouterType(Restypie.ROUTER_TYPES.KOA_ROUTER);
-      const route = new RightRoute();
+      const route = new RightRoute({ routerType: Restypie.RouterTypes.KOA_ROUTER });
       const bundleHandler = route._handlers[0];
       bundleHandler.length.should.equal(1); // next
       (bundleHandler.constructor.name === 'GeneratorFunction').should.equal(true);
