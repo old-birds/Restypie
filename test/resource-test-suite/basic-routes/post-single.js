@@ -1,8 +1,6 @@
 'use strict';
 
 const Path = require('path');
-const Restypie = require('../../../');
-const Utils = require('../utils');
 
 module.exports = function(Fixtures, supertest, app, api) {
   
