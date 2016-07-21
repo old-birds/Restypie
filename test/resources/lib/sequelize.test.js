@@ -1,15 +1,14 @@
 'use strict';
 
 const Sequelize = require('sequelize');
-const _ = require('lodash');
 
-let db = new Sequelize('restypie_test', 'root', '', {
+const db = new Sequelize('restypie_test', 'root', '', {
   host: 'localhost',
   dialect: 'mariadb',
   logging: false
 });
 
-let User = db.define('User', {
+const User = db.define('User', {
   id: {
     type: Sequelize.INTEGER.UNSIGNED,
     primaryKey: true,
@@ -73,61 +72,70 @@ let User = db.define('User', {
 
 describe('Resources.SequelizeResource', function () {
 
-  for (const routerType of _.values(Restypie.ROUTER_TYPES)) {
-
-    before(function () {
-      Restypie.setRouterType(routerType);
-    });
-
-    before(function () {
-      return User.sync({force: true});
-    });
-
-    let testData;
-
-
-    testData = require('../../resource-test-suite')({
-      resource: class UsersResource extends Restypie.Resources.SequelizeResource {
-        get model() {
-          return User;
-        }
-      }
-    });
-
-    it('should map min validation error', function () {
-      return testData.api.resources.Users.createObject({
-        body: {
-          fName : 'Sequelize',
-          lName : 'Sequelize',
-          email : 'sequelizewrongdate@example.com',
-          year  : 1850, // Too small
-          pw    : 'Passw0rd',
-          emails: true,
-          gender: 'male'
-        }
-      }).catch(function (err) {
-        err.code.should.equal('OutOfRangeError');
-        err.meta.key.should.equal('yearOfBirth');
-        return Promise.resolve();
-      });
-    });
-
-    it('should map min validation error', function () {
-      return testData.api.resources.Users.createObject({
-        body: {
-          fName : 'Sequelize',
-          lName : 'Sequelize',
-          email : 'sequelizewrongdate@example.com',
-          year  : new Date().getFullYear() + 10, // Too big
-          pw    : 'Passw0rd',
-          emails: true,
-          gender: 'male'
-        }
-      }).catch(function (err) {
-        err.code.should.equal('OutOfRangeError');
-        err.meta.key.should.equal('yearOfBirth');
-        return Promise.resolve();
-      });
-    });
+  class SequelizeResource extends Restypie.Resources.SequelizeResource {
+    get model() { return User; }
   }
+
+  const before = function () {
+    return User.sync({ force: true });
+  };
+
+  describe('Using Express', function () {
+    require('../../resource-test-suite')({
+      before,
+      routerType: Restypie.RouterTypes.EXPRESS,
+      resource: SequelizeResource
+    });
+  });
+
+  describe('Using Koa-Router', function () {
+    require('../../resource-test-suite')({
+      before,
+      routerType: Restypie.RouterTypes.KOA_ROUTER,
+      resource: SequelizeResource
+    });
+  });
+
+  // describe('Own tests', function () {
+  //
+  //   // FIXME those tests should use their own data
+  //
+  //   it('should map min validation error', function () {
+  //     return api.resources.users.createObject({
+  //       body: {
+  //         fName : 'Sequelize',
+  //         lName : 'Sequelize',
+  //         email : 'sequelizewrongdate@example.com',
+  //         year  : 1850, // Too small
+  //         pw    : 'Passw0rd',
+  //         emails: true,
+  //         gender: 'male'
+  //       }
+  //     }).catch(function (err) {
+  //       err.code.should.equal('OutOfRangeError');
+  //       err.meta.key.should.equal('yearOfBirth');
+  //       return Promise.resolve();
+  //     });
+  //   });
+  //
+  //   it('should map min validation error', function () {
+  //     return api.resources.users.createObject({
+  //       body: {
+  //         fName : 'Sequelize',
+  //         lName : 'Sequelize',
+  //         email : 'sequelizewrongdate@example.com',
+  //         year  : new Date().getFullYear() + 10, // Too big
+  //         pw    : 'Passw0rd',
+  //         emails: true,
+  //         gender: 'male'
+  //       }
+  //     }).catch(function (err) {
+  //       err.code.should.equal('OutOfRangeError');
+  //       err.meta.key.should.equal('yearOfBirth');
+  //       return Promise.resolve();
+  //     });
+  //   });
+  //
+  // });
+
 });

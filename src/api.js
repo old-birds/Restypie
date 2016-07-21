@@ -124,6 +124,34 @@ module.exports = class API {
   }
 
   /**
+   * Performs operations for the api to be able to launch again. Especially useful for tests purpose.
+   *
+   * @method reset
+   * @chainable
+   */
+  reset() {
+    this._resources = {};
+    this._isLaunched = false;
+    this._path = '';
+    this._router = null;
+    this._host = null;
+    return this;
+  }
+
+  /**
+   * Set the api path.
+   * 
+   * @method setPath
+   * @param {String} path
+   * @chainable
+   */
+  setPath(path) {
+    this._throwIfLaunched();
+    this._path = path;
+    return this;
+  }
+
+  /**
    * Register a single resource.
    *
    * @method registerResource

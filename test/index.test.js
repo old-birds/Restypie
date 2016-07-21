@@ -11,20 +11,6 @@ describe('Restypie', function () {
 
   });
 
-  describe('.setRouterType()', function () {
-    it('should set router type', function () {
-      Restypie.setRouterType(Restypie.ROUTER_TYPES.KOA_ROUTER);
-      Restypie.routerType.should.equal(Restypie.ROUTER_TYPES.KOA_ROUTER);
-      // Back to default just in case
-      Restypie.setRouterType(Restypie.ROUTER_TYPES.EXPRESS);
-    });
-    it('should throw if router type is not supported', function () {
-      (function () {
-        Restypie.setRouterType('unsupported');
-      }).should.throw(/Unsupported/);
-    });
-  });
-
   describe('.listToArray()', function () {
     it('should convert a string list to an array', function () {
       Restypie.listToArray('1,2,3').should.deep.equal(['1', '2', '3']);
