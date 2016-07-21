@@ -1,15 +1,17 @@
 'use strict';
 
+const _ = require('lodash');
+
+const Utils = require('./');
+
+let UUID = 0;
+
 const ReturnTypes = {
   RES: 'res',
   BODY: 'body',
   DATA: 'data',
   META: 'meta'
 };
-
-const Utils = require('./');
-
-let UUID = 0;
 
 module.exports = function (supertest, app) {
 
@@ -54,6 +56,7 @@ module.exports = function (supertest, app) {
       return new Promise((resolve, reject) => {
         supertest(app)
           .get(Restypie.Url.join(path, id))
+          .query(Restypie.stringify(_.pick(options, Restypie.RESERVED_WORDS)))
           .expect(options.statusCode || Restypie.Codes.OK, (err, res) => {
             if (err) return reject(err);
             return resolve(Fixtures.extractReturn(res, options));

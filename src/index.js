@@ -17,6 +17,8 @@ const Restypie = module.exports = {
     EXPRESS: 'express'
   },
   
+  RESERVED_WORDS: ['limit', 'offset', 'sort', 'select', 'format', 'populate', 'options'],
+  
   isSupportedRouterType(type) {
     return _.contains(_.values(Restypie.RouterTypes), type);
   },

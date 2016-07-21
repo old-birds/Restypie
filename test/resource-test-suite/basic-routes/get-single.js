@@ -24,30 +24,32 @@ module.exports = function (Fixtures, supertest, app) {
       });
     });
 
-    // it('should return only selected fields', function () {
-    //   return Fixtures.generateUser().then((user) => {
-    //
-    //   })
-    //
-    //   return supertest(app)
-    //     .get('/v1/users')
-    //     .expect(Restypie.Codes.OK, function (err, res) {
-    //       if (err) return done(err);
-    //       let user = res.body.data[0];
-    //
-    //       return supertest(app)
-    //         .get('/v1/users/' + user.theId + '?' + QS.stringify({ select: 'theId,firstName' }))
-    //         .expect(Restypie.Codes.OK, function (err, res) {
-    //           if (err) return done(err);
-    //           let data = res.body.data;
-    //           should.exist(data);
-    //           data.should.have.keys(['theId', 'firstName']);
-    //           return done();
-    //         });
-    //
-    //     });
-    // });
-    //
+    it('should return only selected fields', function () {
+      return Fixtures.generateUser().then((user) => {
+        return Fixtures.getUser(user.theId, { select: ['theId', 'firstName'] });
+      }).then((user) => {
+        user.should.have.keys(['theId', 'firstName']);
+      });
+    
+      // return supertest(app)
+      //   .get('/v1/users')
+      //   .expect(Restypie.Codes.OK, function (err, res) {
+      //     if (err) return done(err);
+      //     let user = res.body.data[0];
+      //
+      //     return supertest(app)
+      //       .get('/v1/users/' + user.theId + '?' + QS.stringify({ select: 'theId,firstName' }))
+      //       .expect(Restypie.Codes.OK, function (err, res) {
+      //         if (err) return done(err);
+      //         let data = res.body.data;
+      //         should.exist(data);
+      //         data.should.have.keys(['theId', 'firstName']);
+      //         return done();
+      //       });
+      //
+      //   });
+    });
+    
     // it('should populate foreign key', function (done) {
     //   return supertest(app)
     //     .get('/v1/users')
