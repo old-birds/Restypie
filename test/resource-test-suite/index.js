@@ -93,7 +93,7 @@ module.exports = function (options) {
    ****************************************/
 
   require('./basic-routes/post-single')(Fixtures, supertest, app, api);
-  // require('./basic-routes/get-single')(Fixtures, supertest, app, api);
+  require('./basic-routes/get-single')(Fixtures, supertest, app, api);
 
   /****************************************
    * END tests

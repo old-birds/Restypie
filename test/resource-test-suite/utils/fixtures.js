@@ -9,20 +9,18 @@ const ReturnTypes = {
 
 const Utils = require('./');
 
+let UUID = 0;
+
 module.exports = function (supertest, app) {
 
   return class Fixtures {
-
-    static deleteResource(path, id, options) {
-      options = options || {};
-      return new Promise((resolve, reject) => {
-        supertest(app)
-          .delete(Restypie.Url.join(path, id))
-          .expect(options.statusCode || Restypie.Codes.NoContent, (err, res) => {
-            if (err) return reject(err);
-            return resolve(Fixtures.extractReturn(res, options));
-          });
-      });
+    
+    static uuid() {
+      return ++UUID;
+    }
+    
+    static getRandomBoolean() {
+      return !(Math.random() > 0.5);
     }
 
     static createResource(path, data, options) {
@@ -42,6 +40,33 @@ module.exports = function (supertest, app) {
       return new Promise((resolve, reject) => {
         req
           .expect(options.statusCode || Restypie.Codes.Created, (err, res) => {
+            if (err) return reject(err);
+            if (Restypie.Codes.isErrorCode(res.statusCode) && options.rejectOnError) {
+              return reject(Fixtures.extractReturn(res));
+            }
+            return resolve(Fixtures.extractReturn(res, options));
+          });
+      });
+    }
+
+    static getResource(path, id, options) {
+      options = options || {};
+      return new Promise((resolve, reject) => {
+        supertest(app)
+          .get(Restypie.Url.join(path, id))
+          .expect(options.statusCode || Restypie.Codes.OK, (err, res) => {
+            if (err) return reject(err);
+            return resolve(Fixtures.extractReturn(res, options));
+          });
+      });
+    }
+
+    static deleteResource(path, id, options) {
+      options = options || {};
+      return new Promise((resolve, reject) => {
+        supertest(app)
+          .delete(Restypie.Url.join(path, id))
+          .expect(options.statusCode || Restypie.Codes.NoContent, (err, res) => {
             if (err) return reject(err);
             return resolve(Fixtures.extractReturn(res, options));
           });
@@ -65,12 +90,40 @@ module.exports = function (supertest, app) {
 
     }
 
+    static createUser(data, options) {
+      return Fixtures.createResource('/v1/users', data, options);
+    }
+
+    static generateUser(generator) {
+      const uuid = Fixtures.uuid();
+      const data = Object.assign({
+        firstName: `John-${uuid}`,
+        lastName: `Doe-${uuid}`,
+        email: `john.doe.${uuid}@example.com`,
+        yearOfBirth: Fixtures.getRandomBoolean() ? 1986 : 1988,
+        password: 'Passw0rd',
+        hasSubscribedEmails: Fixtures.getRandomBoolean(),
+        gender: Fixtures.getRandomBoolean() ? 'male' : 'female'
+      }, Fixtures.parameterToGenerator(generator)());
+      
+      return Fixtures.createUser(data, { rejectOnError: true });
+    }
+
+    static getUser(id, options) {
+      return Fixtures.getResource('/v1/users', id, options);
+    }
+
     static deleteUser(id, options) {
       return Fixtures.deleteResource('/v1/users', id, options);
     }
 
-    static createUser(data, options) {
-      return Fixtures.createResource('/v1/users', data, options);
+    static parameterToGenerator(generator) {
+      const original = generator;
+      if (typeof original !== 'function') {
+        if (original) generator = () => { return original; };
+        else generator = () => {};
+      }
+      return generator;
     }
 
     static extractReturn(res, options) {

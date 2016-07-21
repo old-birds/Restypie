@@ -1,7 +1,5 @@
 'use strict';
 
-const Restypie = require('../../../');
-
 module.exports = function (options) {
 
   const api = options.api;
