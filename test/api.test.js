@@ -1,7 +1,7 @@
 'use strict';
 
 
-describe.skip('Restypie.API', function () {
+describe('Restypie.API', function () {
 
   describe('constructor', function () {
     it('should instantiate a new API with no options', function () {

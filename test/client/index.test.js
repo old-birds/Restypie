@@ -86,7 +86,7 @@ describe('Restypie.Client', function () {
       });
     });
 
-    it.skip('should create multiple users', function () {
+    it('should create multiple users', function () {
       return client.create([{ name: 'Jane' }, { name: 'Diane' }]).then(function (created) {
         created.should.have.lengthOf(2);
         should.exist(created.find((item) => item.name === 'Jane'));
@@ -97,7 +97,7 @@ describe('Restypie.Client', function () {
 
   });
 
-  describe.skip('#findById', function () {
+  describe('#findById', function () {
     let client = new Restypie.Client({ host: 'http://localhost:' + PORT, version: 'v1', path: 'users' });
 
     let users = [
@@ -138,7 +138,7 @@ describe('Restypie.Client', function () {
 
   });
 
-  describe.skip('#findOne', function () {
+  describe('#findOne', function () {
 
     let client = new Restypie.Client({ host: 'http://localhost:' + PORT, version: 'v1', path: 'users' });
 
@@ -175,7 +175,7 @@ describe('Restypie.Client', function () {
 
   });
 
-  describe.skip('#find', function () {
+  describe('#find', function () {
 
     let client = new Restypie.Client({ host: 'http://localhost:' + PORT, version: 'v1', path: 'users' });
 
@@ -217,7 +217,7 @@ describe('Restypie.Client', function () {
 
   });
 
-  describe.skip('#updateById', function () {
+  describe('#updateById', function () {
 
     let client = new Restypie.Client({ host: 'http://localhost:' + PORT, version: 'v1', path: 'users' });
 
@@ -270,7 +270,7 @@ describe('Restypie.Client', function () {
 
   });
 
-  describe.skip('#deleteById', function () {
+  describe('#deleteById', function () {
 
     let client = new Restypie.Client({ host: 'http://localhost:' + PORT, version: 'v1', path: 'users' });
 

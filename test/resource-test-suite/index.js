@@ -93,6 +93,7 @@ module.exports = function (options) {
    ****************************************/
 
   require('./basic-routes/post-single')(supertest, app, api); // TODO we should pass fixtures here
+  // require('./basic-routes/get-single')(supertest, app, api); // TODO we should pass fixtures here
 
   /****************************************
    * END tests
