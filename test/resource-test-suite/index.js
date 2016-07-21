@@ -85,15 +85,15 @@ module.exports = function (options) {
   }
 
   beforeEach(function () {
-    return Fixtures.dropUsers();
+    return Fixtures.resetUsers();
   });
 
   /****************************************
    * BEGIN tests
    ****************************************/
 
-  require('./basic-routes/post-single')(supertest, app, api); // TODO we should pass fixtures here
-  // require('./basic-routes/get-single')(supertest, app, api); // TODO we should pass fixtures here
+  require('./basic-routes/post-single')(Fixtures, supertest, app, api);
+  // require('./basic-routes/get-single')(Fixtures, supertest, app, api);
 
   /****************************************
    * END tests

@@ -4,12 +4,12 @@ const Path = require('path');
 const Restypie = require('../../../');
 const Utils = require('../utils');
 
-module.exports = function(supertest, app, api) {
+module.exports = function(Fixtures, supertest, app, api) {
   
   describe('POST single', function () {
     
-    it('should create a user (no profile picture)', function (done) {
-      let user = {
+    it('should create a user (no profile picture)', function () {
+      const data = {
         firstName: 'John',
         lastName: 'Doe',
         email: 'john.doe@example.com',
@@ -18,27 +18,20 @@ module.exports = function(supertest, app, api) {
         hasSubscribedEmails: true,
         gender: 'male'
       };
-
-      return supertest(app)
-        .post('/v1/users')
-        .send(user)
-        .expect(Restypie.Codes.Created, function (err, res) {
-          if (err) return done(err);
-          let stored = res.body.data;
-          should.exist(stored);
-          stored.theId.should.be.a('number');
-          stored.firstName.should.equal(user.firstName);
-          stored.lastName.should.equal(user.lastName);
-          stored.yearOfBirth.should.equal(user.yearOfBirth);
-          stored.luckyNumber.should.equal(7);
-          should.not.exist(stored.password);
-          return done();
-        });
-
+      
+      return Fixtures.createUser(data).then((user) => {
+        should.exist(user);
+        user.theId.should.be.a('number');
+        user.firstName.should.equal(data.firstName);
+        user.lastName.should.equal(data.lastName);
+        user.yearOfBirth.should.equal(data.yearOfBirth);
+        user.luckyNumber.should.equal(7);
+        should.not.exist(user.password);
+      });
     });
 
-    it('should create a user (with a profile picture)', function (done) {
-      let user = {
+    it('should create a user (with a profile picture)', function () {
+      const data = {
         firstName: 'John',
         lastName: 'Doe',
         email: 'john.doe2@example.com',
@@ -48,54 +41,41 @@ module.exports = function(supertest, app, api) {
         gender: 'male'
       };
 
-      let req = supertest(app).post('/v1/users');
-
-      Utils.fillMultipartFields(req, user);
-
-      return req
-        .attach('profilePicture', Path.resolve(__dirname, '../fixtures/profile-picture.png'))
-        .expect(Restypie.Codes.Created, function (err, res) {
-          if (err) return done(err);
-          let stored = res.body.data;
-          should.exist(stored);
-          stored.theId.should.be.a('number');
-          stored.firstName.should.equal(user.firstName);
-          stored.lastName.should.equal(user.lastName);
-          stored.yearOfBirth.should.equal(user.yearOfBirth);
-          stored.profilePicture.should.be.a('string');
-          stored.hasSubscribedEmails.should.be.a('boolean');
-          should.not.exist(stored.password);
-          return done();
-        });
+      return Fixtures.createUser(data, {
+        attach: { profilePicture: Path.resolve(__dirname, '../fixtures/profile-picture.png') }
+      }).then((user) => {
+        should.exist(user);
+        user.theId.should.be.a('number');
+        user.firstName.should.equal(data.firstName);
+        user.lastName.should.equal(data.lastName);
+        user.yearOfBirth.should.equal(data.yearOfBirth);
+        user.profilePicture.should.be.a('string');
+        user.hasSubscribedEmails.should.be.a('boolean');
+        should.not.exist(user.password);
+      });
     });
 
-    it('should not create a user (missing firstName)', function (done) {
-      let user = {
+    it('should NOT create a user (missing firstName)', function () {
+      return Fixtures.createUser({
         lastName: 'Doe',
         yearOfBirth: 1986,
         email: 'john.doe3@example.com',
         password: 'Passw0rd',
         hasSubscribedEmails: true,
         gender: 'male'
-      };
-
-      return supertest(app)
-        .post('/v1/users')
-        .send(user)
-        .expect(Restypie.Codes.BadRequest, function (err, res) {
-          if (err) return done(err);
-          let body = res.body;
-          body.error.should.equal(true);
-          body.message.should.be.a('string');
-          body.code.should.be.a('string');
-          body.meta.should.be.an('object');
-          body.meta.key.should.equal('firstName');
-          return done();
-        });
+      }, {
+        statusCode: Restypie.Codes.BadRequest
+      }).then((body) => {
+        body.error.should.equal(true);
+        body.message.should.be.a('string');
+        body.code.should.be.a('string');
+        body.meta.should.be.an('object');
+        body.meta.key.should.equal('firstName');
+      });
     });
 
-    it('should not create a user (yearOfBirth is not an integer)', function (done) {
-      let user = {
+    it('should NOT create a user (yearOfBirth is not an integer)', function () {
+      return Fixtures.createUser({
         firstName: 'John',
         lastName: 'Doe',
         email: 'john.doe4@example.com',
@@ -103,25 +83,19 @@ module.exports = function(supertest, app, api) {
         password: 'Passw0rd',
         hasSubscribedEmails: true,
         gender: 'male'
-      };
-
-      return supertest(app)
-        .post('/v1/users')
-        .send(user)
-        .expect(Restypie.Codes.BadRequest, function (err, res) {
-          if (err) return done(err);
-          let body = res.body;
-          body.error.should.equal(true);
-          body.message.should.be.a('string');
-          body.code.should.be.a('string');
-          body.meta.should.be.an('object');
-          body.meta.key.should.equal('yearOfBirth');
-          return done();
-        });
+      }, {
+        statusCode: Restypie.Codes.BadRequest
+      }).then((body) => {
+        body.error.should.equal(true);
+        body.message.should.be.a('string');
+        body.code.should.be.a('string');
+        body.meta.should.be.an('object');
+        body.meta.key.should.equal('yearOfBirth');
+      });
     });
 
-    it('should not create a user (password is not strong enough)', function (done) {
-      let user = {
+    it('should NOT create a user (password is not strong enough)', function () {
+      return Fixtures.createUser({
         firstName: 'John',
         lastName: 'Doe',
         email: 'john.doe5@example.com',
@@ -129,25 +103,19 @@ module.exports = function(supertest, app, api) {
         password: 'passw0rd',
         hasSubscribedEmails: true,
         gender: 'male'
-      };
-
-      return supertest(app)
-        .post('/v1/users')
-        .send(user)
-        .expect(Restypie.Codes.BadRequest, function (err, res) {
-          if (err) return done(err);
-          let body = res.body;
-          body.error.should.equal(true);
-          body.message.should.be.a('string');
-          body.code.should.be.a('string');
-          body.meta.should.be.an('object');
-          body.meta.key.should.equal('password');
-          return done();
-        });
+      }, {
+        statusCode: Restypie.Codes.BadRequest
+      }).then((body) => {
+        body.error.should.equal(true);
+        body.message.should.be.a('string');
+        body.code.should.be.a('string');
+        body.meta.should.be.an('object');
+        body.meta.key.should.equal('password');
+      });
     });
 
-    it('should not create a user (yearOfBirth is out of range)', function (done) {
-      let user = {
+    it('should NOT create a user (yearOfBirth is out of range)', function () {
+      return Fixtures.createUser({
         firstName: 'John',
         lastName: 'Doe',
         email: 'john.doe6@example.com',
@@ -155,25 +123,19 @@ module.exports = function(supertest, app, api) {
         password: 'Passw0rd',
         hasSubscribedEmails: true,
         gender: 'male'
-      };
-
-      return supertest(app)
-        .post('/v1/users')
-        .send(user)
-        .expect(Restypie.Codes.Forbidden, function (err, res) {
-          if (err) return done(err);
-          let body = res.body;
-          body.error.should.equal(true);
-          body.message.should.be.a('string');
-          body.code.should.be.a('string');
-          body.meta.should.be.an('object');
-          body.meta.key.should.equal('yearOfBirth');
-          return done();
-        });
+      }, {
+        statusCode: Restypie.Codes.Forbidden
+      }).then((body) => {
+        body.error.should.equal(true);
+        body.message.should.be.a('string');
+        body.code.should.be.a('string');
+        body.meta.should.be.an('object');
+        body.meta.key.should.equal('yearOfBirth');
+      });
     });
 
-    it('should not create a user (profile picture is too large)', function (done) {
-      let user = {
+    it('should NOT create a user (profile picture is too large)', function () {
+      return Fixtures.createUser({
         firstName: 'John',
         lastName: 'Doe',
         email: 'john.doe7@example.com',
@@ -181,27 +143,20 @@ module.exports = function(supertest, app, api) {
         password: 'Passw0rd',
         hasSubscribedEmails: true,
         gender: 'male'
-      };
-
-      let req = supertest(app).post('/v1/users');
-      Utils.fillMultipartFields(req, user);
-
-      return req
-        .attach('profilePicture', Path.resolve(__dirname, '../fixtures/big-profile-picture.jpg'))
-        .expect(Restypie.Codes.Forbidden, function (err, res) {
-          if (err) return done(err);
-          let body = res.body;
-          body.error.should.equal(true);
-          body.message.should.be.a('string');
-          body.code.should.be.a('string');
-          body.meta.should.be.an('object');
-          body.meta.key.should.equal('profilePicture');
-          return done();
-        });
+      }, {
+        statusCode: Restypie.Codes.Forbidden,
+        attach: { profilePicture: Path.resolve(__dirname, '../fixtures/big-profile-picture.jpg') }
+      }).then((body) => {
+        body.error.should.equal(true);
+        body.message.should.be.a('string');
+        body.code.should.be.a('string');
+        body.meta.should.be.an('object');
+        body.meta.key.should.equal('profilePicture');
+      });
     });
 
-    it('should not create a user (readOnly cannot be written)', function (done) {
-      let user = {
+    it('should NOT create a user (readOnly cannot be written)', function () {
+      return Fixtures.createUser({
         theId: 1,
         readOnly: 1,
         firstName: 'John',
@@ -211,27 +166,21 @@ module.exports = function(supertest, app, api) {
         password: 'Passw0rd',
         hasSubscribedEmails: true,
         gender: 'male'
-      };
-
-      return supertest(app)
-        .post('/v1/users')
-        .send(user)
-        .expect(Restypie.Codes.Forbidden, function (err, res) {
-          if (err) return done(err);
-          let body = res.body;
-          body.error.should.equal(true);
-          body.message.should.be.a('string');
-          body.code.should.be.a('string');
-          body.meta.should.be.an('object');
-          body.meta.key.should.equal('readOnly');
-          return done();
-        });
+      }, {
+        statusCode: Restypie.Codes.Forbidden
+      }).then((body) => {
+        body.error.should.equal(true);
+        body.message.should.be.a('string');
+        body.code.should.be.a('string');
+        body.meta.should.be.an('object');
+        body.meta.key.should.equal('readOnly');
+      });
     });
 
-    it('should not create a user (duplicate email)', function (done) {
+    it('should NOT create a user (duplicate email)', function () {
       if (!api.resources.users.supportsUniqueConstraints) return this.skip();
 
-      let user = {
+      const data = {
         firstName: 'John',
         lastName: 'Doe',
         email: 'john.doe@example.com',
@@ -241,27 +190,15 @@ module.exports = function(supertest, app, api) {
         gender: 'male'
       };
 
-      return supertest(app)
-        .post('/v1/users')
-        .send(user)
-        .expect(Restypie.Codes.Created, function (err) {
-          if (err) return done(err);
-
-          return supertest(app)
-            .post('/v1/users')
-            .send(user)
-            .expect(Restypie.Codes.Conflict, function (err, res) {
-              if (err) return done(err);
-              let body = res.body;
-              body.error.should.equal(true);
-              body.message.should.be.a('string');
-              body.code.should.be.a('string');
-              body.meta.should.be.an('object');
-              body.meta.keys.should.deep.equal({ email: 'john.doe@example.com' });
-              return done();
-            });
-        });
-
+      return Fixtures.createUser(data).then(() => { // First one should be created
+        return Fixtures.createUser(data, { statusCode: Restypie.Codes.Conflict }); // Second one should not
+      }).then((body) => {
+        body.error.should.equal(true);
+        body.message.should.be.a('string');
+        body.code.should.be.a('string');
+        body.meta.should.be.an('object');
+        body.meta.keys.should.deep.equal({ email: 'john.doe@example.com' });
+      });
     });
   });
   

@@ -1,5 +1,7 @@
 'use strict';
 
+const QS = require('querystring');
+
 module.exports = function (supertest, app, fixtures) {
   describe('GET single', function () {
 
