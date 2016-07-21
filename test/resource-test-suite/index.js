@@ -16,9 +16,11 @@ const SERVER_PORT = 3333;
  *
  * @param {Object} options
  * @param {constructor} options.resource A Restypie.Resources.AbstractResource subclass
+ * @param {constructor} options.routerType Which router type to run the tests against
  * @param {Object} [options.port=3333] The port for the server
  **********************************************************************************************************************/
 module.exports = function (options) {
+
   Restypie.Utils.isSubclassOf(options.resource, Restypie.Resources.AbstractResource, true);
   Restypie.assertSupportedRouterType(options.routerType);
 
@@ -53,9 +55,7 @@ module.exports = function (options) {
 
   }
 
-
   const Fixtures = require('./utils/fixtures')(supertest, app);
-
 
   api
     .registerResources({
@@ -68,7 +68,7 @@ module.exports = function (options) {
     .launch(router, { port: SERVER_PORT });
 
 
-  switch (Restypie.routerType) {
+  switch (options.routerType) {
     case Restypie.RouterTypes.KOA_ROUTER:
       app.use(router.routes());
       break;
@@ -92,7 +92,7 @@ module.exports = function (options) {
    * BEGIN tests
    ****************************************/
 
-  require('./endpoints/post-single')(supertest, app, api);
+  require('./basic-routes/post-single')(supertest, app, api); // TODO we should pass fixtures here
 
   /****************************************
    * END tests
