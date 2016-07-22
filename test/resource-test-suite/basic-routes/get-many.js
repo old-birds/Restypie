@@ -483,64 +483,74 @@ module.exports = function (Fixtures, api) {
       });
     });
 
-  //   it('Preparing tests...', function (done) {
-  //     return resetAndFillUsers(10, function (i) {
-  //       let isInferior = i < 5;
-  //       return { job: isInferior ? 1 : 2 };
-  //     }, done);
-  //   });
-  //
-  //
-  //   it('should deeply filter (1-N relation)', function (done) {
-  //     // GET users that are Developer
-  //     return supertest(app)
-  //       .get('/v1/users')
-  //       .query({ 'job.name': 'Developer' })
-  //       .expect(Restypie.Codes.OK, function (err, res) {
-  //         if (err) return done(err);
-  //         const data = res.body.data;
-  //         data.length.should.equal(5);
-  //         data.forEach(function (user) {
-  //           user.job.should.equal(1);
-  //         });
-  //         return done();
-  //       });
-  //   });
-  //
-  //   it('should deeply filter (N-N relation)', function (done) {
-  //     // GET users who subscribed to slack team named Team3
-  //     return supertest(app)
-  //       .get('/v1/users')
-  //       .query({ 'slackTeams.name': 'Team3' })
-  //       .expect(Restypie.Codes.OK, function (err, res) {
-  //         if (err) return done(err);
-  //         const data = res.body.data;
-  //         data.length.should.equal(2);
-  //         _.pluck(data, 'theId').should.deep.equal([1, 2]);
-  //         return done();
-  //       });
-  //   });
-  //
-  //   it('should deeply filter (N-N + 1-N relations)', function (done) {
-  //     // GET jobs that have users who subscribed to slack team names Team3
-  //     return supertest(app)
-  //       .get('/v1/jobs')
-  //       .query({ 'users.slackTeams.name': 'Team3' })
-  //       .expect(Restypie.Codes.OK, function (err, res) {
-  //         if (err) return done(err);
-  //         const data = res.body.data;
-  //         console.log(data);
-  //         data.length.should.equal(1);
-  //         data[0].id.should.equal(1);
-  //         return done();
-  //       });
-  //   });
-  //
-  // });
-  //
-  //
-  //
+    it('should deeply filter (1-N relation)', function () {
+      const usersCount = 4;
 
+      return Fixtures.generateJob({ name: 'Developer' }).then((job) => {
+        return Promise.props({
+          job,
+          users: Fixtures.generateUsers(usersCount, { job: job.id }),
+          otherUsers: Fixtures.generateUsers(5)
+        });
+      }).then((results) => {
+        return Fixtures.getUsers({ 'job.name': 'Developer' }).then((users) => {
+          users.should.have.lengthOf(usersCount);
+          users.forEach((user) => {
+            should.exist(results.users.find((item) => item.theId === user.theId));
+            user.job.should.equal(results.job.id);
+          });
+        });
+      });
+    });
+
+    it('should deeply filter (N-N relation)', function () {
+      const usersCount = 4;
+
+      return Promise.props({
+        users: Fixtures.generateUsers(usersCount),
+        slackTeam: Fixtures.generateSlackTeam({ name: 'Team3' }),
+        otherUsers: Fixtures.generateUsers(5),
+        otherSlackTeams: Fixtures.generateSlackTeams(5)
+      }).then((results) => {
+        return Fixtures.generateUserSlackTeams(usersCount, (index) => {
+          return { user: results.users[index].theId, slackTeam: results.slackTeam.id };
+        }).then(() => {
+          return Fixtures.getUsers({ 'slackTeams.name': 'Team3' }).then((users) => {
+            users.should.have.lengthOf(usersCount);
+            users.forEach((user) => {
+              should.exist(results.users.find((item) => item.theId === user.theId));
+            });
+          });
+        });
+      });
+    });
+
+    it('should deeply filter (N-N + 1-N relations)', function () {
+      const usersCount = 4;
+
+      return Promise.props({
+        jobs: Fixtures.generateJobs(2),
+        slackTeam: Fixtures.generateSlackTeam({ name: 'Team3' }),
+        otherUsers: Fixtures.generateUsers(5),
+        otherSlackTeams: Fixtures.generateSlackTeams(5)
+      }).then((results) => {
+        return Fixtures.generateUsers(usersCount, (index) => {
+          return { job: results.jobs[Math.floor(index / 2)].id }
+        }).then((users) => {
+          return Fixtures.generateUserSlackTeams(usersCount, (index) => {
+            return {
+              user: users[index].theId,
+              slackTeam: index < usersCount / 2 ? results.slackTeam.id : results.otherSlackTeams[index].id
+            };
+          }).then(() => {
+            return Fixtures.getJobs({ 'users.slackTeams.name': 'Team3' }).then((jobs) => {
+              jobs.should.have.lengthOf(1);
+              jobs[0].should.deep.equal(results.jobs[0]);
+            });
+          });
+        })
+      });
+    });
 
   });
 
