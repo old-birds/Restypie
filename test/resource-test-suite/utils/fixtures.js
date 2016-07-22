@@ -243,6 +243,10 @@ module.exports = function (supertest, app) {
       return Fixtures.createResource('/v1/slack-teams', data, options);
     }
 
+    static getSlackTeam(id, options) {
+      return Fixtures.getResource('/v1/slack-teams', id, options);
+    }
+
     static generateSlackTeam(generator) {
       const data = Object.assign({
         name: `Team-${Fixtures.uuid()}`

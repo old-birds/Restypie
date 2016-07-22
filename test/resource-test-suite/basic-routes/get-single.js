@@ -79,16 +79,14 @@ module.exports = function (Fixtures) {
         user: Fixtures.generateUser(),
         slackTeam: Fixtures.generateSlackTeam()
       }).then((results) => {
-        return Promise.props({
-          user: results.user,
-          slackTeam: results.slackTeam,
+        return Promise.props(Object.assign({
           userSlackTeam: Fixtures.generateUserSlackTeam({
             user: results.user.theId,
             slackTeam: results.slackTeam.id
           }),
           channels: Fixtures.generateSlackTeamChannels(channelsCount, { slackTeam: results.slackTeam.id }),
           otherChannels: Fixtures.generateSlackTeamChannels(3) // To make sure not all are returned
-        }).then((results) => {
+        }, results)).then((results) => {
           return Fixtures.getUser(results.user.theId, { populate: ['slackTeams.channels'] }).then((populated) => {
             should.exist(populated.slackTeams);
             populated.slackTeams.should.be.an('array');
@@ -103,144 +101,79 @@ module.exports = function (Fixtures) {
           });
         });
       });
-
-
-
-    //   let userId = 1;
-    //   return supertest(app)
-    //     .get('/v1/users/' + userId + '?' + QS.stringify({ populate: 'slackTeams.channels' }))
-    //     .expect(Restypie.Codes.OK, function (err, res) {
-    //       if (err) return done(err);
-    //       let data = res.body.data;
-    //       should.exist(data.slackTeams);
-    //       data.slackTeams.should.be.an('array');
-    //       return supertest(app)
-    //         .get('/v1/user-slack-teams?' + QS.stringify({ user: userId, limit: 1 }))
-    //         .end(function (err, res) {
-    //           if (err) return done(err);
-    //           data.slackTeams.length.should.equal(res.body.meta.total);
-    //
-    //           return async.each(data.slackTeams, function (team, cb) {
-    //             let channels = team.channels;
-    //             should.exist(channels);
-    //             channels.should.be.an('array');
-    //             return supertest(app)
-    //               .get('/v1/slack-team-channels?' + QS.stringify({ slackTeam: team.id, limit: 1 }))
-    //               .end(function (err, res) {
-    //                 if (err) return cb(err);
-    //                 channels.length.should.equal(res.body.meta.total);
-    //                 return cb();
-    //               });
-    //           }, done);
-    //         });
-    //     });
     });
     
-    // it('should populate slackTeams.channels.slackTeam', function (done) {
-    //   let userId = 1;
-    //   return supertest(app)
-    //     .get('/v1/users/' + userId + '?' + QS.stringify({ populate: 'slackTeams.channels.slackTeam' }))
-    //     .expect(Restypie.Codes.OK, function (err, res) {
-    //       if (err) return done(err);
-    //       let data = res.body.data;
-    //       should.exist(data.slackTeams);
-    //       data.slackTeams.should.be.an('array');
-    //       return supertest(app)
-    //         .get('/v1/user-slack-teams?' + QS.stringify({ user: userId, limit: 1 }))
-    //         .end(function (err, res) {
-    //           if (err) return done(err);
-    //           data.slackTeams.length.should.equal(res.body.meta.total);
-    //
-    //           return async.each(data.slackTeams, function (team, cb) {
-    //             let channels = team.channels;
-    //             should.exist(channels);
-    //             channels.should.be.an('array');
-    //             return supertest(app)
-    //               .get('/v1/slack-team-channels?' + QS.stringify({ slackTeam: team.id, limit: 1 }))
-    //               .end(function (err, res) {
-    //                 if (err) return cb(err);
-    //                 channels.length.should.equal(res.body.meta.total);
-    //                 channels.forEach(function (channel) {
-    //                   should.exist(channel.slackTeam);
-    //                   channel.slackTeam.should.be.an('object');
-    //                   channel.slackTeam.id.should.equal(team.id);
-    //                 });
-    //                 return cb();
-    //               });
-    //           }, done);
-    //         });
-    //     });
-    // });
-    //
-    // it('should populate users on slack-teams', function (done) {
-    //   let teamId = 1;
-    //   return supertest(app)
-    //     .get('/v1/slack-teams/' + teamId + '?' + QS.stringify({ populate: 'users' }))
-    //     .expect(Restypie.Codes.OK, function (err, res) {
-    //       if (err) return done(err);
-    //       let data = res.body.data;
-    //       should.exist(data.users);
-    //       data.users.should.be.an('array');
-    //       return supertest(app)
-    //         .get('/v1/user-slack-teams?' + QS.stringify({ slackTeam: teamId, limit: 1 }))
-    //         .end(function (err, res) {
-    //           if (err) return done(err);
-    //           data.users.length.should.equal(res.body.meta.total);
-    //           return done();
-    //         });
-    //     });
-    // });
-    //
-    // it('should not populate a field that is not selected', function (done) {
-    //   return supertest(app)
-    //     .get('/v1/users')
-    //     .expect(Restypie.Codes.OK, function (err, res) {
-    //       if (err) return done(err);
-    //       let user = res.body.data[0];
-    //
-    //       return supertest(app)
-    //         .get('/v1/users/' + user.theId + '?' + QS.stringify({ populate: 'job', select: 'theId, firstName' }))
-    //         .expect(Restypie.Codes.OK, function (err, res) {
-    //           if (err) return done(err);
-    //           let data = res.body.data;
-    //           should.not.exist(data.job);
-    //           data.should.have.keys(['theId', 'firstName']);
-    //           return done();
-    //         });
-    //
-    //     });
-    // });
-    //
-    // it('should send back a 404', function (done) {
-    //   let id = Date.now();
-    //
-    //   return supertest(app)
-    //     .get('/v1/users/' + id)
-    //     .expect(Restypie.Codes.NotFound, function (err, res) {
-    //       if (err) return done(err);
-    //       let data = res.body;
-    //       data.error.should.equal(true);
-    //       data.meta.should.should.be.an('object');
-    //       data.meta.pk.should.equal(id);
-    //       return done();
-    //     });
-    // });
-    //
-    // it('should not be able to parse the id', function (done) {
-    //   let id = 'foo';
-    //
-    //   return supertest(app)
-    //     .get('/v1/users/' + id)
-    //     .expect(Restypie.Codes.BadRequest, function (err, res) {
-    //       if (err) return done(err);
-    //       let data = res.body;
-    //       data.error.should.equal(true);
-    //       data.meta.should.should.be.an('object');
-    //       data.meta.key.should.equal('theId');
-    //       data.meta.value.should.equal(id);
-    //       return done();
-    //     });
-    // });
+    it('should populate slackTeams.channels.slackTeam', function () {
+      return Promise.props({
+        user: Fixtures.generateUser(),
+        slackTeams: Fixtures.generateSlackTeams(2)
+      }).then((results) => {
+        return Promise.props(Object.assign({
+          userSlackTeams: Fixtures.generateUserSlackTeams(2, (index) => {
+            return { user: results.user.theId, slackTeam: results.slackTeams[index].id };
+          }),
+          channels: Fixtures.generateSlackTeamChannels(4, (index) => {
+            return { slackTeam: results.slackTeams[index < 2 ? 0 : 1].id };
+          })
+        }, results)).then((results) => {
+          return Fixtures.getUser(results.user.theId, {
+            populate: ['slackTeams.channels.slackTeam']
+          }).then((populated) => {
+            populated.slackTeams.should.be.an('array').and.have.lengthOf(2);
+            populated.slackTeams.forEach((slackTeam) => {
+              slackTeam.channels.should.be.an('array').and.have.lengthOf(2);
+              slackTeam.channels.forEach((channel) => {
+                channel.slackTeam.should.be.an('object');
+                channel.slackTeam.id.should.equal(slackTeam.id);
+              });
+            });
+          });
+        });
+      });
+    });
+
+    it('should populate users on slack-teams', function () {
+      const usersCount = 4;
+
+      return Promise.props({
+        slackTeam: Fixtures.generateSlackTeam(),
+        users: Fixtures.generateUsers(usersCount)
+      }).then((results) => {
+        return Promise.props(Object.assign({
+          userSlackTeams: Fixtures.generateUserSlackTeams(usersCount, (index) => {
+            return { user: results.users[index].theId, slackTeam: results.slackTeam.id };
+          })
+        }, results)).then((results) => {
+          return Fixtures.getSlackTeam(results.slackTeam.id, { populate: ['users'] }).then((slackTeam) => {
+            should.exist(slackTeam.users);
+            slackTeam.users.should.be.an('array').and.have.lengthOf(usersCount);
+          });
+        });
+      });
+    });
+
+    it('should not populate a field that is not selected', function () {
+      return Fixtures.generateUser().then((user) => {
+        return Fixtures.getUser(user.theId, { populate: ['job'], select: ['theId', 'firstName'] }).then((populated) => {
+          should.not.exist(populated.job);
+          populated.should.have.keys(['theId', 'firstName']);
+        });
+      });
+    });
+
+    it('should send back a 404', function () {
+      return Fixtures.getUser(1, { statusCode: Restypie.Codes.NotFound });
+    });
+
+    it('should NOT be able to parse the id', function () {
+      const wrongId = 'foo';
+      return Fixtures.getUser(wrongId, { statusCode: Restypie.Codes.BadRequest }).then((body) => {
+        body.error.should.equal(true);
+        body.meta.should.should.be.an('object');
+        body.meta.key.should.equal('theId');
+        body.meta.value.should.equal(wrongId);
+      });
+    });
 
   });
 };
