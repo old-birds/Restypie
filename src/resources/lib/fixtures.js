@@ -15,6 +15,7 @@ let Restypie = require('../../');
  **********************************************************************************************************************/
 module.exports = class FixturesResource extends Restypie.Resources.AbstractResource {
 
+  get initialFixtures() { return []; }
   get fixtures() { return this._fixtures; }
   get size() { return this._fixtures.length; }
 
@@ -30,7 +31,7 @@ module.exports = class FixturesResource extends Restypie.Resources.AbstractResou
 
   resetObjects() {
     this._id = 0;
-    this._fixtures = [];
+    this._fixtures = this.initialFixtures;
   }
 
   filterObjects(bundle) {

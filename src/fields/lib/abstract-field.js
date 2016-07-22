@@ -97,8 +97,6 @@ module.exports = class AbstractField {
         if (!this.otherThroughKey) throw new Error('ManyToMany relation defined without a `otherThroughKey`');
       }
     }
-    
-    this.filteringPath = this.filteringPath || this.path;
   }
 
   /**
