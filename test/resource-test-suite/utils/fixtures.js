@@ -1,6 +1,7 @@
 'use strict';
 
 const _ = require('lodash');
+const Promise = require('bluebird');
 
 const Utils = require('./');
 
@@ -16,15 +17,62 @@ const ReturnTypes = {
 module.exports = function (supertest, app) {
 
   return class Fixtures {
-    
+
+    /*******************************************************************************************************************
+     * Utils
+     */
+    static get ReturnTypes() { return ReturnTypes; }
+
     static uuid() {
       return ++UUID;
     }
-    
+
     static getRandomBoolean() {
       return !(Math.random() > 0.5);
     }
 
+    static parameterToGenerator(generator) {
+      const original = generator;
+      if (typeof original !== 'function') {
+        if (original) generator = () => { return original; };
+        else generator = () => {};
+      }
+      return generator;
+    }
+
+    static extractReturn(res, options) {
+      options = options || {};
+
+      let returnType = options.return;
+
+      if (!returnType && Restypie.Codes.isErrorCode(res.statusCode)) returnType = ReturnTypes.BODY;
+
+      switch (returnType) {
+        case ReturnTypes.RES: return res;
+        case ReturnTypes.BODY: return res.body;
+        case ReturnTypes.DATA: return res.body && res.body.data;
+        case ReturnTypes.META: return res.body && res.body.meta;
+        default: return res.body && res.body.data;
+      }
+    }
+
+
+    /*******************************************************************************************************************
+     * General
+     */
+    static reset() {
+      return Promise.all([
+        Fixtures.resetJobs(),
+        Fixtures.resetSlackTeamChannels(),
+        Fixtures.resetSlackTeams(),
+        Fixtures.resetUserSlackTeams(),
+        Fixtures.resetUsers()
+      ]);
+    }
+
+    /*******************************************************************************************************************
+     * Generic resources
+     */
     static createResource(path, data, options) {
       options = options || {};
 
@@ -76,21 +124,46 @@ module.exports = function (supertest, app) {
       });
     }
 
-    static resetUsers() {
+    static resetResources(path) {
       return new Promise((resolve, reject) => {
         supertest(app)
-          .get('/v1/users')
-          .query({ limit: 0, select: 'theId' })
+          .get(path)
+          .query({ limit: 0, select: '$primaryKey' })
           .expect(Restypie.Codes.OK, (err, res) => {
             if (err) return reject(err);
             return Promise
-              .all(res.body.data.map((user) => Fixtures.deleteUser(user.theId)))
+              .all(res.body.data.map((resource) => {
+                Fixtures.deleteResource(path, resource[Object.keys(resource)[0]])
+              }))
               .catch(reject)
               .then(resolve);
           });
-        
-      });
 
+      });
+    }
+
+    static generateResources(count, generator, method) {
+      generator = Fixtures.parameterToGenerator(generator);
+
+      let index = -1;
+      const results = [];
+      return (function loop() {
+        if (++index < count) {
+          return method(generator(index)).then((item) => {
+            results.push(item);
+            return loop();
+          });
+        }
+
+        return Promise.resolve(results);
+      })();
+    }
+
+    /*******************************************************************************************************************
+     * Users
+     */
+    static resetUsers() {
+      return Fixtures.resetResources('/v1/users');
     }
 
     static createUser(data, options) {
@@ -99,6 +172,7 @@ module.exports = function (supertest, app) {
 
     static generateUser(generator) {
       const uuid = Fixtures.uuid();
+      
       const data = Object.assign({
         firstName: `John-${uuid}`,
         lastName: `Doe-${uuid}`,
@@ -109,7 +183,18 @@ module.exports = function (supertest, app) {
         gender: Fixtures.getRandomBoolean() ? 'male' : 'female'
       }, Fixtures.parameterToGenerator(generator)());
       
-      return Fixtures.createUser(data, { rejectOnError: true });
+      const pre = {};
+      
+      if (!data.job) pre.job = Fixtures.generateJob();
+      
+      return Promise.props(pre).then((results) => {
+        if (results.job) data.job = results.job.id;
+        return Fixtures.createUser(data, { rejectOnError: true });
+      });
+    }
+
+    static generateUsers(count, generator) {
+      return Fixtures.generateResources(count, generator, Fixtures.generateUser);
     }
 
     static getUser(id, options) {
@@ -120,33 +205,126 @@ module.exports = function (supertest, app) {
       return Fixtures.deleteResource('/v1/users', id, options);
     }
 
-    static parameterToGenerator(generator) {
-      const original = generator;
-      if (typeof original !== 'function') {
-        if (original) generator = () => { return original; };
-        else generator = () => {};
-      }
-      return generator;
+    /*******************************************************************************************************************
+     * Jobs
+     */
+    static resetJobs() {
+      return Fixtures.resetResources('/v1/jobs');
     }
 
-    static extractReturn(res, options) {
-      options = options || {};
-      
-      let returnType = options.return;
-      
-      if (!returnType && Restypie.Codes.isErrorCode(res.statusCode)) returnType = ReturnTypes.BODY;
-
-      switch (returnType) {
-        case ReturnTypes.RES: return res;
-        case ReturnTypes.BODY: return res.body;
-        case ReturnTypes.DATA: return res.body && res.body.data;
-        case ReturnTypes.META: return res.body && res.body.meta;
-        default: return res.body && res.body.data;
-      }
+    static createJob(data, options) {
+      return Fixtures.createResource('/v1/jobs', data, options);
     }
 
-    static get ReturnTypes() { return ReturnTypes; }
+    static getJob(id, options) {
+      return Fixtures.getResource('/v1/jobs', id, options);
+    }
 
+    static generateJob(generator) {
+      const data = Object.assign({
+        name: `Developer-${Fixtures.uuid()}`
+      }, Fixtures.parameterToGenerator(generator)());
+
+      return Fixtures.createJob(data, { rejectOnError: true });
+    }
+
+    /*******************************************************************************************************************
+     * SlackTeams
+     */
+    static resetSlackTeams() {
+      return Fixtures.resetResources('/v1/slack-teams');
+    }
+
+    static deleteSlackTeam(id, options) {
+      return Fixtures.deleteResource('/v1/slack-teams', id, options);
+    }
+    
+    static createSlackTeam(data, options) {
+      return Fixtures.createResource('/v1/slack-teams', data, options);
+    }
+
+    static generateSlackTeam(generator) {
+      const data = Object.assign({
+        name: `Team-${Fixtures.uuid()}`
+      }, Fixtures.parameterToGenerator(generator)());
+
+      return Fixtures.createSlackTeam(data, { rejectOnError: true });
+    }
+
+    static generateSlackTeams(count, generator) {
+      return Fixtures.generateResources(count, generator, Fixtures.generateSlackTeam);
+    }
+
+    /*******************************************************************************************************************
+     * UserSlackTeams
+     */
+    static resetUserSlackTeams() {
+      return Fixtures.resetResources('/v1/user-slack-teams');
+    }
+
+    static deleteUserSlackTeam(id, options) {
+      return Fixtures.deleteResource('/v1/user-slack-teams', id, options);
+    }
+
+    static createUserSlackTeam(data, options) {
+      return Fixtures.createResource('/v1/user-slack-teams', data, options);
+    }
+
+    static generateUserSlackTeam(generator) {
+      const data = Object.assign({}, Fixtures.parameterToGenerator(generator)());
+
+      const pre = {};
+      
+      if (!data.user) pre.user = Fixtures.generateUser();
+      if (!data.slackTeam) pre.slackTeam = Fixtures.generateSlackTeam();
+      
+      return Promise.props(pre).then((results) => {
+        if (results.user) data.user = results.user.theId;
+        if (results.slackTeam) data.slackTeam = results.slackTeam.id;
+        return Fixtures.createUserSlackTeam(data, { rejectOnError: true });
+      });
+
+    }
+
+    static generateUserSlackTeams(count, generator) {
+      return Fixtures.generateResources(count, generator, Fixtures.generateUserSlackTeam);
+    }
+
+    /*******************************************************************************************************************
+     * SlackTeamChannels
+     */
+    static resetSlackTeamChannels() {
+      return Fixtures.resetResources('/v1/slack-team-channels');
+    }
+
+    static deleteSlackTeamChannel(id, options) {
+      return Fixtures.deleteResource('/v1/slack-team-channels', id, options);
+    }
+
+    static createSlackTeamChannel(data, options) {
+      return Fixtures.createResource('/v1/slack-team-channels', data, options);
+    }
+
+    static generateSlackTeamChannel(generator) {
+      const data = Object.assign({
+        name: `Channel-${Fixtures.uuid()}`
+      }, Fixtures.parameterToGenerator(generator)());
+
+      const pre = {};
+
+      if (!data.slackTeam) pre.slackTeam = Fixtures.generateSlackTeam();
+
+      return Promise.props(pre).then((results) => {
+        if (results.slackTeam) data.slackTeam = results.slackTeam.id;
+        return Fixtures.createSlackTeamChannel(data, { rejectOnError: true });
+      });
+    }
+
+    static generateSlackTeamChannels(count, generator) {
+      return Fixtures.generateResources(count, generator, Fixtures.generateSlackTeamChannel);
+    }
+    
   };
+
 
 };

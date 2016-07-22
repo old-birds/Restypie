@@ -2,7 +2,7 @@
 
 const Path = require('path');
 
-module.exports = function(Fixtures, supertest, app, api) {
+module.exports = function(Fixtures, api) {
   
   describe('POST single', function () {
     

@@ -1,15 +1,10 @@
 'use strict';
 
-const QS = require('querystring');
+const Promise = require('bluebird');
 
-module.exports = function (Fixtures, supertest, app) {
+module.exports = function (Fixtures) {
+
   describe('GET single', function () {
-
-
-    // it('Preparing tests...', function (done) {
-    //   // TODO create user using fixtures in each test
-    //   return resetAndFillUsers(1, done);
-    // });
 
     it('should retrieve the user by id', function () {
       return Fixtures.generateUser().then((user) => {
@@ -30,86 +25,87 @@ module.exports = function (Fixtures, supertest, app) {
       }).then((user) => {
         user.should.have.keys(['theId', 'firstName']);
       });
-    
-      // return supertest(app)
-      //   .get('/v1/users')
-      //   .expect(Restypie.Codes.OK, function (err, res) {
-      //     if (err) return done(err);
-      //     let user = res.body.data[0];
-      //
-      //     return supertest(app)
-      //       .get('/v1/users/' + user.theId + '?' + QS.stringify({ select: 'theId,firstName' }))
-      //       .expect(Restypie.Codes.OK, function (err, res) {
-      //         if (err) return done(err);
-      //         let data = res.body.data;
-      //         should.exist(data);
-      //         data.should.have.keys(['theId', 'firstName']);
-      //         return done();
-      //       });
-      //
-      //   });
     });
     
-    // it('should populate foreign key', function (done) {
-    //   return supertest(app)
-    //     .get('/v1/users')
-    //     .expect(Restypie.Codes.OK, function (err, res) {
-    //       if (err) return done(err);
-    //       let user = res.body.data[0];
-    //
-    //       return supertest(app)
-    //         .get('/v1/users/' + user.theId + '?' + QS.stringify({ populate: 'job' }))
-    //         .expect(Restypie.Codes.OK, function (err, res) {
-    //           if (err) return done(err);
-    //           let data = res.body.data;
-    //           should.exist(data.job);
-    //           data.job.should.be.an('object');
-    //           data.job.should.have.keys(['id', 'name']);
-    //           return done();
-    //         });
-    //
-    //     });
-    // });
-    //
-    // it('should populate users on jobs resource', function (done) {
-    //   let jobId = 1;
-    //   return supertest(app)
-    //     .get('/v1/jobs/' + jobId + '?' + QS.stringify({ populate: 'users' }))
-    //     .expect(Restypie.Codes.OK, function (err, res) {
-    //       if (err) return done(err);
-    //       let data = res.body.data;
-    //       should.exist(data.users);
-    //       data.users.should.be.an('array');
-    //       return supertest(app)
-    //         .get('/v1/users?' + QS.stringify({ job: jobId, limit: 1 }))
-    //         .end(function (err, res) {
-    //           if (err) return done(err);
-    //           data.users.length.should.equal(res.body.meta.total);
-    //           return done();
-    //         });
-    //     });
-    // });
-    //
-    // it('should populate slackTeams', function (done) {
-    //   let userId = 1;
-    //   return supertest(app)
-    //     .get('/v1/users/' + userId + '?' + QS.stringify({ populate: 'slackTeams' }))
-    //     .expect(Restypie.Codes.OK, function (err, res) {
-    //       if (err) return done(err);
-    //       let data = res.body.data;
-    //       should.exist(data.slackTeams);
-    //       data.slackTeams.should.be.an('array');
-    //       return supertest(app)
-    //         .get('/v1/user-slack-teams?' + QS.stringify({ user: userId, limit: 1 }))
-    //         .end(function (err, res) {
-    //           if (err) return done(err);
-    //           data.slackTeams.length.should.equal(res.body.meta.total);
-    //           return done();
-    //         });
-    //     });
-    // });
-    //
-    // it('should populate slackTeams.channels', function (done) {
+    it('should populate job', function () {
+      return Fixtures.generateUser().then((user) => {
+        return Fixtures.getUser(user.theId, { populate: ['job'] }).then((populated) => {
+          should.exist(populated.job);
+          populated.job.should.be.an('object');
+          populated.job.should.have.keys(['id', 'name']);
+        });
+      });
+    });
+
+    it('should populate users on jobs resource', function () {
+      const usersCount = 2;
+
+      return Fixtures.generateJob().then((job) => {
+        return Fixtures.generateUsers(usersCount, { job: job.id }).then((users) => {
+          return Fixtures.getJob(job.id, { populate: ['users'] }).then((populated) => {
+            should.exist(populated.users);
+            populated.users.should.be.an('array');
+            populated.users.should.have.lengthOf(usersCount);
+            users.forEach((user) => should.exist(populated.users.find((item) => item.theId === user.theId)));
+          });
+        });
+      });
+    });
+
+    it('should populate slackTeams', function () {
+      const userSlackTeamsCount = 2;
+
+      return Fixtures.generateUser().then((user) => {
+        return Promise.props({
+          slackTeams: Fixtures.generateSlackTeams(2), // Generate 2 additional to check not all are returned
+          userSlackTeams: Fixtures.generateUserSlackTeams(userSlackTeamsCount, { user: user.theId })
+        }).then((results) => {
+          return Fixtures.getUser(user.theId, { populate: ['slackTeams'] }).then((populated) => {
+            should.exist(populated.slackTeams);
+            populated.slackTeams.should.be.an('array');
+            populated.slackTeams.should.have.lengthOf(userSlackTeamsCount);
+            results.userSlackTeams.forEach((userSlackTeam) => {
+              should.exist(populated.slackTeams.find((item) => item.id === userSlackTeam.slackTeam));
+            });
+          });
+        });
+      });
+    });
+
+    it('should populate slackTeams.channels', function () {
+      const channelsCount = 4;
+
+      return Promise.props({
+        user: Fixtures.generateUser(),
+        slackTeam: Fixtures.generateSlackTeam()
+      }).then((results) => {
+        return Promise.props({
+          user: results.user,
+          slackTeam: results.slackTeam,
+          userSlackTeam: Fixtures.generateUserSlackTeam({
+            user: results.user.theId,
+            slackTeam: results.slackTeam.id
+          }),
+          channels: Fixtures.generateSlackTeamChannels(channelsCount, { slackTeam: results.slackTeam.id }),
+          otherChannels: Fixtures.generateSlackTeamChannels(3) // To make sure not all are returned
+        }).then((results) => {
+          return Fixtures.getUser(results.user.theId, { populate: ['slackTeams.channels'] }).then((populated) => {
+            should.exist(populated.slackTeams);
+            populated.slackTeams.should.be.an('array');
+            populated.slackTeams.should.have.lengthOf(1);
+            const slackTeam = populated.slackTeams[0];
+            should.exist(slackTeam.channels);
+            slackTeam.channels.should.be.an('array');
+            slackTeam.channels.should.have.lengthOf(channelsCount);
+            results.channels.forEach((channel) => {
+              should.exist(slackTeam.channels.find((item) => item.id === channel.id));
+            });
+          });
+        });
+      });
+
+
+
     //   let userId = 1;
     //   return supertest(app)
     //     .get('/v1/users/' + userId + '?' + QS.stringify({ populate: 'slackTeams.channels' }))
@@ -138,8 +134,8 @@ module.exports = function (Fixtures, supertest, app) {
     //           }, done);
     //         });
     //     });
-    // });
-    //
+    });
+    
     // it('should populate slackTeams.channels.slackTeam', function (done) {
     //   let userId = 1;
     //   return supertest(app)
