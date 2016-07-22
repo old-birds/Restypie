@@ -112,6 +112,24 @@ module.exports = function (supertest, app) {
       });
     }
 
+    static getResources(path, filters, options) {
+      filters = filters || {};
+      options = options || {};
+      
+      return new Promise((resolve, reject) => {
+        supertest(app)
+          .get(path)
+          .query(Object.assign(
+            Restypie.stringify({ filters }),
+            Restypie.stringify(_.pick(options, Restypie.RESERVED_WORDS))
+          ))
+          .expect(options.statusCode || Restypie.Codes.OK, (err, res) => {
+            if (err) return reject(err);
+            return resolve(Fixtures.extractReturn(res, options));
+          });
+      });
+    }
+
     static deleteResource(path, id, options) {
       options = options || {};
       return new Promise((resolve, reject) => {
@@ -201,6 +219,10 @@ module.exports = function (supertest, app) {
       return Fixtures.getResource('/v1/users', id, options);
     }
 
+    static getUsers(filters, options) {
+      return Fixtures.getResources('/v1/users', filters, options);
+    }
+
     static deleteUser(id, options) {
       return Fixtures.deleteResource('/v1/users', id, options);
     }
@@ -220,12 +242,20 @@ module.exports = function (supertest, app) {
       return Fixtures.getResource('/v1/jobs', id, options);
     }
 
+    static getJobs(filters, options) {
+      return Fixtures.getResources('/v1/jobs', filters, options);
+    }
+
     static generateJob(generator) {
       const data = Object.assign({
         name: `Developer-${Fixtures.uuid()}`
       }, Fixtures.parameterToGenerator(generator)());
 
       return Fixtures.createJob(data, { rejectOnError: true });
+    }
+
+    static generateJobs(count, generator) {
+      return Fixtures.generateResources(count, generator, Fixtures.generateJob);
     }
 
     /*******************************************************************************************************************
@@ -245,6 +275,10 @@ module.exports = function (supertest, app) {
 
     static getSlackTeam(id, options) {
       return Fixtures.getResource('/v1/slack-teams', id, options);
+    }
+
+    static getSlackTeams(filters, options) {
+      return Fixtures.getResources('/v1/slack-teams', filters, options);
     }
 
     static generateSlackTeam(generator) {

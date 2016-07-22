@@ -42,6 +42,7 @@ const Restypie = module.exports = {
     options.populate = options.populate || [];
     options.select = options.select || [];
     options.filters = options.filters || {};
+    options.options = options.options || [];
 
     let qs = {};
 
@@ -72,6 +73,7 @@ const Restypie = module.exports = {
     if (options.populate.length) qs.populate = this.arrayToList(options.populate);
     if (options.select.length) qs.select = this.arrayToList(options.select);
     if (options.sort.length) qs.sort = this.arrayToList(options.sort);
+    if (options.options.length) qs.options = this.arrayToList(options.options);
 
     return qs;
   },
