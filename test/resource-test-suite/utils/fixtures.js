@@ -14,7 +14,7 @@ const ReturnTypes = {
   META: 'meta'
 };
 
-module.exports = function (supertest, app) {
+module.exports = function (supertest, app, api) {
 
   return class Fixtures {
 
@@ -62,11 +62,11 @@ module.exports = function (supertest, app) {
      */
     static reset() {
       return Promise.all([
-        Fixtures.resetJobs(),
-        Fixtures.resetSlackTeamChannels(),
-        Fixtures.resetSlackTeams(),
-        Fixtures.resetUserSlackTeams(),
-        Fixtures.resetUsers()
+        api.resources.jobs.reset(),
+        api.resources.slackTeamChannels.reset(),
+        api.resources.userSlackTeams.reset(),
+        api.resources.slackTeams.reset(),
+        api.resources.users.reset()
       ]);
     }
 
@@ -142,24 +142,6 @@ module.exports = function (supertest, app) {
       });
     }
 
-    static resetResources(path) {
-      return new Promise((resolve, reject) => {
-        supertest(app)
-          .get(path)
-          .query({ limit: 0, select: '$primaryKey' })
-          .expect(Restypie.Codes.OK, (err, res) => {
-            if (err) return reject(err);
-            return Promise
-              .all(res.body.data.map((resource) => {
-                Fixtures.deleteResource(path, resource[Object.keys(resource)[0]])
-              }))
-              .catch(reject)
-              .then(resolve);
-          });
-
-      });
-    }
-
     static generateResources(count, generator, method) {
       generator = Fixtures.parameterToGenerator(generator);
 
@@ -180,10 +162,6 @@ module.exports = function (supertest, app) {
     /*******************************************************************************************************************
      * Users
      */
-    static resetUsers() {
-      return Fixtures.resetResources('/v1/users');
-    }
-
     static createUser(data, options) {
       return Fixtures.createResource('/v1/users', data, options);
     }
@@ -230,10 +208,6 @@ module.exports = function (supertest, app) {
     /*******************************************************************************************************************
      * Jobs
      */
-    static resetJobs() {
-      return Fixtures.resetResources('/v1/jobs');
-    }
-
     static createJob(data, options) {
       return Fixtures.createResource('/v1/jobs', data, options);
     }
@@ -261,10 +235,6 @@ module.exports = function (supertest, app) {
     /*******************************************************************************************************************
      * SlackTeams
      */
-    static resetSlackTeams() {
-      return Fixtures.resetResources('/v1/slack-teams');
-    }
-
     static deleteSlackTeam(id, options) {
       return Fixtures.deleteResource('/v1/slack-teams', id, options);
     }
@@ -296,10 +266,6 @@ module.exports = function (supertest, app) {
     /*******************************************************************************************************************
      * UserSlackTeams
      */
-    static resetUserSlackTeams() {
-      return Fixtures.resetResources('/v1/user-slack-teams');
-    }
-
     static deleteUserSlackTeam(id, options) {
       return Fixtures.deleteResource('/v1/user-slack-teams', id, options);
     }

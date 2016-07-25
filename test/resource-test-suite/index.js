@@ -55,7 +55,7 @@ module.exports = function (options) {
 
   }
 
-  const Fixtures = require('./utils/fixtures')(supertest, app);
+  const Fixtures = require('./utils/fixtures')(supertest, app, api);
 
   api
     .registerResources({

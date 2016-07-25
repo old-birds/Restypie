@@ -7,6 +7,8 @@ const Restypie = module.exports = {
 
   VERSION: packageJSON.version,
 
+  TEST_ENV: 'restypie-test',
+
   OPERATOR_SEPARATOR: '__',
   EQUALITY_OPERATOR: 'eq',
   LIST_SEPARATOR: ',',
