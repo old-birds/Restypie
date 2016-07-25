@@ -155,6 +155,57 @@ module.exports = function (supertest, app, api) {
       });
     }
 
+    static updateResources(path, filters, updates, options) {
+      options = options || {};
+
+      let returnIds;
+      let primaryKey;
+      
+      function doUpdate() {
+        
+        const req = supertest(app)
+          .patch(path)
+          .query(Restypie.stringify({ filters }));
+        
+        if (options.attach) {
+          Utils.fillMultipartFields(req, updates);
+          for (const name in options.attach) {
+            req.attach(name, options.attach[name]);
+          }
+        } else {
+          req.send(updates);
+        }
+        
+        return new Promise((resolve, reject) => {
+          req
+            .expect(options.statusCode || Restypie.Codes.NoContent, (err, res) => {
+              if (err) return reject(err);
+              if (Restypie.Codes.isErrorCode(res.statusCode)) return resolve(Fixtures.extractReturn(res));
+              if (options.return) {
+                return Fixtures.getResources(path, { [primaryKey]: { in: returnIds } }, {
+                  limit: 0
+                }).then(resolve).catch(reject);
+              }
+              return resolve();
+            });
+        });
+      }
+
+      if (options.return) {
+        return Fixtures.getResources(path, filters, { limit: 0, select: ['$primaryKey'] }).then((resources) => {
+          returnIds = resources.map((resource) => {
+            primaryKey = Object.keys(resource)[0];
+            return resource[primaryKey];
+          });
+
+          return doUpdate();
+        });
+      } else {
+        return doUpdate(); 
+      }
+
+    }
+
     static deleteResource(path, id, options) {
       options = options || {};
       return new Promise((resolve, reject) => {
@@ -232,6 +283,10 @@ module.exports = function (supertest, app, api) {
     
     static updateUser(id, updates, options) {
       return Fixtures.updateResource('/v1/users', id, updates, options);
+    }
+    
+    static updateUsers(filters, updates, options) {
+      return Fixtures.updateResources('/v1/users', filters, updates, options);
     }
 
     /*******************************************************************************************************************
