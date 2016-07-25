@@ -12,7 +12,7 @@ let server;
 app.set('port', PORT);
 app.use(bodyParser.json());
 
-let api = new Restypie.API({ path: 'v1' });
+let api = new Restypie.API({ path: 'v1', routerType: Restypie.RouterTypes.EXPRESS });
 
 class PostRoute extends Restypie.BasicRoutes.PostRoute {
   get allowsMany() { return true; }

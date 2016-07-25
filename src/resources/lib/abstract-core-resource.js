@@ -14,6 +14,22 @@ module.exports = class AbstractCoreResource {
   get primaryKeyField() { return this._primaryKeyField; }
 
   /**
+   * Shortcut to get the resource's primary key path.
+   *
+   * @attribute primaryKeyPath
+   * @type String
+   */
+  get primaryKeyPath() { return this._primaryKeyField.path; }
+
+  /**
+   * Shortcut to get the resource's primary key key.
+   *
+   * @attribute primaryKeyKey
+   * @type String
+   */
+  get primaryKeyKey() { return this._primaryKeyField.key; }
+
+  /**
    * All the fields, mapped by `key`.
    *
    * @attribute fieldsByKey
@@ -29,6 +45,7 @@ module.exports = class AbstractCoreResource {
    */
   get fieldsByPath() { return _.indexBy(this.fields, 'path'); }
 
+  get routerType() { return null; }
 
 
   constructor() {
@@ -51,7 +68,7 @@ module.exports = class AbstractCoreResource {
    */
   _createRoute(Route) {
     Restypie.Utils.isSubclassOf(Route, Restypie.Route, true);
-    return new Route({ resource: this });
+    return new Route({ resource: this, routerType: this.routerType });
   }
 
   /**

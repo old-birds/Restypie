@@ -58,17 +58,24 @@ module.exports = class API {
    */
   get host() { return this._host; }
 
+  /**
+   *
+   * @property routerType
+   * @returns {String}
+   */
+  get routerType() { return this._routerType; }
+
 
   /**
    * @constructor
    */
   constructor(options) {
     options = options || {};
-    this._isLaunched = false;
+    this.reset();
+    if (options.routerType) this._setRouterType(options.routerType);
     if (options.router) this._router = options.router;
     if (options.host) this._setHost(options.host);
-    this._path = options.path || '';
-    this._resources = {};
+    if (options.path) this.setPath(options.path);
   }
 
 
@@ -85,7 +92,7 @@ module.exports = class API {
     router = this._router = router || this._router;
     if (host) this._setHost(host);
 
-    if (!router) throw new Error('An API requires a router (see Restypie.ROUTER_TYPES for supported frameworks)');
+    if (!router) throw new Error('An API requires a router (see Restypie.RouterTypes for supported frameworks)');
     if (!URLValidator.isWebUri(this._host)) throw new Error('An API requires a `host` to perform calls for population');
 
     let apiPath = this._path;
@@ -97,6 +104,7 @@ module.exports = class API {
       let resourcePath = resource.path;
       return acc.concat(resource.routes.map(function (route) {
         return {
+          routerType: route.routerType,
           method: route.method,
           path: Restypie.Url.join('/', apiPath, resourcePath, route.path).replace(/\/$/, ''),
           handlers: route.handlers
@@ -112,6 +120,34 @@ module.exports = class API {
     // The API is now launched and couldn't be launched again
     this._isLaunched = true;
 
+    return this;
+  }
+
+  /**
+   * Performs operations for the api to be able to launch again. Especially useful for tests purpose.
+   *
+   * @method reset
+   * @chainable
+   */
+  reset() {
+    this._resources = {};
+    this._isLaunched = false;
+    this._path = '';
+    this._router = null;
+    this._host = null;
+    return this;
+  }
+
+  /**
+   * Set the api path.
+   * 
+   * @method setPath
+   * @param {String} path
+   * @chainable
+   */
+  setPath(path) {
+    this._throwIfLaunched();
+    this._path = path;
     return this;
   }
 
@@ -147,6 +183,14 @@ module.exports = class API {
     return this;
   }
 
+  _setRouterType(routerType) {
+    this._throwIfLaunched();
+
+    Restypie.assertSupportedRouterType(routerType);
+    this._routerType = routerType;
+    return this;
+  }
+
   _setHost(host) {
     if (typeof host === 'string') host = URL.parse(host);
 
@@ -159,9 +203,12 @@ module.exports = class API {
   }
 
   _registerRoute(def) {
-    switch (Restypie.routerType) {
-      case Restypie.ROUTER_TYPES.EXPRESS:
-      case Restypie.ROUTER_TYPES.KOA_ROUTER:
+    const routerType = def.routerType || this._routerType;
+    Restypie.assertSupportedRouterType(routerType);
+
+    switch (routerType) {
+      case Restypie.RouterTypes.EXPRESS:
+      case Restypie.RouterTypes.KOA_ROUTER:
         this._router[def.method.toLowerCase()].apply(this._router, [def.path].concat(def.handlers));
         break;
     }

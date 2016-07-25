@@ -73,7 +73,7 @@ module.exports = function (grunt) {
             './test/common.js'
           ]
         },
-        src: ['./test/**/*.test.js']
+        src: args.file || ['./test/**/*.test.js']
       }
     },
 

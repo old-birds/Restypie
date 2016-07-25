@@ -22,9 +22,8 @@ remoteApp.set('port', 8889);
 let remoteServer = http.createServer(remoteApp);
 remoteApp.use(bodyParser.json());
 
-let api = new Restypie.API({ path: '/v1' });
-let remoteApi = new Restypie.API({ path: '/v2' });
-
+let api = new Restypie.API({ path: '/v1', routerType: Restypie.RouterTypes.EXPRESS });
+let remoteApi = new Restypie.API({ path: '/v2', routerType: Restypie.RouterTypes.EXPRESS });
 
 class RemoteJobsResource extends Restypie.Resources.ProxyResource {
   get targetUrl() { return 'http://localhost:8889/v2/jobs'; }

@@ -3,25 +3,32 @@
 let packageJSON = require('../package.json');
 let _ = require('lodash');
 
-module.exports = {
+const Restypie = module.exports = {
 
   VERSION: packageJSON.version,
+
+  TEST_ENV: 'restypie-test',
 
   OPERATOR_SEPARATOR: '__',
   EQUALITY_OPERATOR: 'eq',
   LIST_SEPARATOR: ',',
   get LIST_SEPARATOR_REG() { return new RegExp('\\\s*' + this.LIST_SEPARATOR + '\\\s*', 'g'); },
 
-  ROUTER_TYPES: {
+  RouterTypes: {
     KOA_ROUTER: 'koa-router',
     EXPRESS: 'express'
   },
-
-  routerType: 'express',
-
-  setRouterType(type) {
-    if (!_.includes(_.values(this.ROUTER_TYPES), type)) throw new Error(`Unsupported router type : ${type}`);
-    this.routerType = type;
+  
+  RESERVED_WORDS: ['limit', 'offset', 'sort', 'select', 'format', 'populate', 'options'],
+  
+  isSupportedRouterType(type) {
+    return _.contains(_.values(Restypie.RouterTypes), type);
+  },
+  
+  assertSupportedRouterType(type) {
+    if (!Restypie.isSupportedRouterType(type)) {
+      throw new Error(`"routerType" should be one of : ${_.values(Restypie.RouterTypes).join(', ')}`);
+    }
   },
 
   listToArray(str) {
@@ -37,6 +44,7 @@ module.exports = {
     options.populate = options.populate || [];
     options.select = options.select || [];
     options.filters = options.filters || {};
+    options.options = options.options || [];
 
     let qs = {};
 
@@ -67,6 +75,7 @@ module.exports = {
     if (options.populate.length) qs.populate = this.arrayToList(options.populate);
     if (options.select.length) qs.select = this.arrayToList(options.select);
     if (options.sort.length) qs.sort = this.arrayToList(options.sort);
+    if (options.options.length) qs.options = this.arrayToList(options.options);
 
     return qs;
   },
