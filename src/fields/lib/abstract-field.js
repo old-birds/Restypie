@@ -75,6 +75,9 @@ module.exports = class AbstractField {
     if (this.isWritableOnce) this.isRequired = true;
     if (this.isRequired) this.isWritable = true;
     if (this.isPrimaryKey && !options.hasOwnProperty('isFilterable')) this.isFilterable = true;
+    if (this.isPrimaryKey && !this.isFilterable) {
+      Restypie.Logger.warn(`isPrimaryKey implies isFilterable for key ${this.key}`);
+    }
     if (this.isFilterable) this.isReadable = true;
     this.isUpdatable = this.isWritableOnce ? false : this.isWritable;
 
