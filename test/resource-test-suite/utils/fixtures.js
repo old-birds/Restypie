@@ -205,6 +205,23 @@ module.exports = function (supertest, app, api) {
       }
 
     }
+    
+    static upsertResource(path, filters, data, options) {
+      options = options || {};
+      if (!options.statusCode) throw new Error('options.statusCode must be provided');
+      
+      return new Promise((resolve, reject) => {
+        supertest(app)
+          .put(path)
+          .query(Restypie.stringify({ filters }))
+          .send(data)
+          .expect(options.statusCode, (err, res) => {
+            if (err) return reject(err);
+            return resolve(Fixtures.extractReturn(res, options));
+          });
+      });
+      
+    }
 
     static deleteResource(path, id, options) {
       options = options || {};
@@ -283,6 +300,10 @@ module.exports = function (supertest, app, api) {
     
     static updateUser(id, updates, options) {
       return Fixtures.updateResource('/v1/users', id, updates, options);
+    }
+    
+    static upsertUser(filters, data, options) {
+      return Fixtures.upsertResource('/v1/users', filters, data, options);
     }
     
     static updateUsers(filters, updates, options) {

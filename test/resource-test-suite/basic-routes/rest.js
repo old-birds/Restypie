@@ -159,76 +159,7 @@
 
 
 
-describe('PUT', function () {
 
-  it('Preparing tests...', function (done) {
-    if (!UsersResource.prototype.supportsUpserts) return this.skip();
-    return resetAndFillUsers(0, done);
-  });
-
-  it('should create a user', function (done) {
-    if (!UsersResource.prototype.supportsUpserts) return this.skip();
-    return supertest(app)
-      .put('/v1/users?' + QS.stringify({ email: 'john.doe@example.com' }))
-      .send({
-        firstName: 'John',
-        lastName: 'Doe',
-        yearOfBirth: 1986,
-        password: 'Passw0rd',
-        job: 1,
-        hasSubscribedEmails: true,
-        gender: 'male'
-      })
-      .expect(Restypie.Codes.Created, function (err, res) {
-        if (err) return done(err);
-        let data = res.body.data;
-        should.exist(data);
-        data.should.be.an('object');
-        data.email.should.equal('john.doe@example.com');
-        return done();
-      });
-  });
-
-  it('should update the created user', function (done) {
-    if (!UsersResource.prototype.supportsUpserts) return this.skip();
-    return supertest(app)
-      .put('/v1/users?' + QS.stringify({ email: 'john.doe@example.com' }))
-      .send({
-        firstName: 'John',
-        lastName: 'Doe',
-        yearOfBirth: 1988,
-        password: 'Passw0rd',
-        job: 1,
-        hasSubscribedEmails: true,
-        gender: 'male'
-      })
-      .expect(Restypie.Codes.OK, function (err, res) {
-        if (err) return done(err);
-        let data = res.body.data;
-        should.exist(data);
-        data.should.be.an('object');
-        data.yearOfBirth.should.equal(1988);
-        return done();
-      });
-  });
-
-  it('should NOT create a user (no upsert keys)', function (done) {
-    if (!UsersResource.prototype.supportsUpserts) return this.skip();
-    return supertest(app)
-      .put('/v1/users?' + QS.stringify({ firstName: 'John' }))
-      .send({
-        email: 'john2.doe@example.com',
-        firstName: 'John',
-        lastName: 'Doe',
-        yearOfBirth: 1986,
-        password: 'Passw0rd',
-        job: 1,
-        hasSubscribedEmails: true,
-        gender: 'male'
-      })
-      .expect(Restypie.Codes.Forbidden, done);
-  });
-});
 
 
 describe('DELETE single', function () {
