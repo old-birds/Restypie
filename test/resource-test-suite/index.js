@@ -98,6 +98,7 @@ module.exports = function (options) {
   require('./basic-routes/patch-single')(Fixtures, api, supertest, app);
   require('./basic-routes/patch-many')(Fixtures, api, supertest, app);
   require('./basic-routes/put')(Fixtures, api, supertest, app);
+  require('./basic-routes/delete-single')(Fixtures, api, supertest, app);
 
   /****************************************
    * END tests
