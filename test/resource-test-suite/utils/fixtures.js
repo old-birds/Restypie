@@ -129,6 +129,31 @@ module.exports = function (supertest, app, api) {
           });
       });
     }
+    
+    static updateResource(path, id, updates, options) {
+      options = options || {};
+
+      const req = supertest(app).patch(Restypie.Url.join(path, id));
+
+      if (options.attach) {
+        Utils.fillMultipartFields(req, updates);
+        for (const name in options.attach) {
+          req.attach(name, options.attach[name]);
+        }
+      } else {
+        req.send(updates);
+      }
+
+      return new Promise((resolve, reject) => {
+        req
+          .expect(options.statusCode || Restypie.Codes.NoContent, (err, res) => {
+            if (err) return reject(err);
+            if (Restypie.Codes.isErrorCode(res.statusCode)) return resolve(Fixtures.extractReturn(res));
+            if (options.return) return Fixtures.getResource(path, id).then(resolve).catch(reject);
+            return resolve();
+          });
+      });
+    }
 
     static deleteResource(path, id, options) {
       options = options || {};
@@ -203,6 +228,10 @@ module.exports = function (supertest, app, api) {
 
     static deleteUser(id, options) {
       return Fixtures.deleteResource('/v1/users', id, options);
+    }
+    
+    static updateUser(id, updates, options) {
+      return Fixtures.updateResource('/v1/users', id, updates, options);
     }
 
     /*******************************************************************************************************************

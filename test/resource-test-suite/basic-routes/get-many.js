@@ -1,7 +1,6 @@
 'use strict';
 
 const Promise = require('bluebird');
-const _ = require('lodash');
 
 module.exports = function (Fixtures, api) {
 
@@ -454,7 +453,7 @@ module.exports = function (Fixtures, api) {
       });
     });
 
-    it.skip('should count corresponding objects', function () {
+    it('should count corresponding objects', function () {
       const defaultLimit = api.resources.users.defaultLimit;
       const usersCount = defaultLimit * 4;
 
@@ -468,7 +467,7 @@ module.exports = function (Fixtures, api) {
       });
     });
 
-    it.skip('should NOT count corresponding objects (NO_COUNT)', function () {
+    it('should NOT count corresponding objects (NO_COUNT)', function () {
       const usersCount = 6;
 
       return Fixtures.generateUsers(usersCount, (index) => {
