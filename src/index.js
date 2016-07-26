@@ -9,6 +9,20 @@ const Restypie = module.exports = {
 
   TEST_ENV: 'restypie-test',
 
+  INTERNAL_HEADER_NAME: 'x-restypie-signature',
+
+  isInternalRequest(headers) {
+    // TODO check user-agent ?
+    // TODO perform some kind of signature check
+    const header = headers[Restypie.INTERNAL_HEADER_NAME];
+    return !!header;
+  },
+
+  getHeaderSignature() {
+    // TODO generate a real secure signature. Allow for custom ones ?
+    return { [Restypie.INTERNAL_HEADER_NAME]: Date.now() };
+  },
+
   OPERATOR_SEPARATOR: '__',
   EQUALITY_OPERATOR: 'eq',
   LIST_SEPARATOR: ',',
