@@ -54,11 +54,11 @@ const Restypie = module.exports = {
 
   stringify(options) {
     options = options || {};
-    options.sort = options.sort || [];
-    options.populate = options.populate || [];
-    options.select = options.select || [];
+    options.sort = Restypie.Utils.makeArray(options.sort);
+    options.populate = Restypie.Utils.makeArray(options.populate);
+    options.select = Restypie.Utils.makeArray(options.select);
     options.filters = options.filters || {};
-    options.options = options.options || [];
+    options.options = Restypie.Utils.makeArray(options.options);
 
     let qs = {};
 
