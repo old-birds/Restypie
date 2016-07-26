@@ -6,7 +6,7 @@ let Restypie = require('./');
 
 /* istanbul ignore next */
 let logger = new Winston.Logger({
-  level: 'error',
+  level: process.env.RESTYPIE_DEBUG || 'error',
   transports: [
     new Winston.transports.Console({
       timestamp() { return new Date().toISOString(); },

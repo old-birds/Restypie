@@ -551,6 +551,14 @@ module.exports = function (Fixtures, api) {
       });
     });
 
+    it('should NOT be able to retrieve users with limit=0 (isGetAllAllowed=false)', function () {
+      return Fixtures.getUsers({}, { limit: 0, statusCode: Restypie.Codes.Forbidden });
+    });
+
+    it('should be able to retrieve users with limit=0 (Restypie sign)', function () {
+      return Fixtures.getUsers({}, { limit: 0, forceGetAllAllowed: true });
+    });
+
   });
 
 };

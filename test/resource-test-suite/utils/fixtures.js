@@ -119,6 +119,7 @@ module.exports = function (supertest, app, api) {
       return new Promise((resolve, reject) => {
         supertest(app)
           .get(path)
+          .set(options.forceGetAllAllowed ? Restypie.getHeaderSignature() : {})
           .query(Object.assign(
             Restypie.stringify({ filters }),
             Restypie.stringify(_.pick(options, Restypie.RESERVED_WORDS))
@@ -183,6 +184,7 @@ module.exports = function (supertest, app, api) {
               if (Restypie.Codes.isErrorCode(res.statusCode)) return resolve(Fixtures.extractReturn(res));
               if (options.return) {
                 return Fixtures.getResources(path, { [primaryKey]: { in: returnIds } }, {
+                  forceGetAllAllowed: true,
                   limit: 0
                 }).then(resolve).catch(reject);
               }
@@ -192,14 +194,15 @@ module.exports = function (supertest, app, api) {
       }
 
       if (options.return) {
-        return Fixtures.getResources(path, filters, { limit: 0, select: ['$primaryKey'] }).then((resources) => {
-          returnIds = resources.map((resource) => {
-            primaryKey = Object.keys(resource)[0];
-            return resource[primaryKey];
+        return Fixtures.getResources(path, filters, { limit: 0, select: ['$primaryKey'], forceGetAllAllowed: true })
+          .then((resources) => {
+            returnIds = resources.map((resource) => {
+              primaryKey = Object.keys(resource)[0];
+              return resource[primaryKey];
+            });
+  
+            return doUpdate();
           });
-
-          return doUpdate();
-        });
       } else {
         return doUpdate(); 
       }

@@ -79,6 +79,7 @@ module.exports = class FixturesResource extends Restypie.Resources.AbstractResou
 
   getObject(bundle, keepInstance) {
     let object = this.filterObjects(bundle)[0];
+    keepInstance = keepInstance === true;
     return Promise.resolve(keepInstance ? object : object ? _.pick(object, bundle.select) : object);
   }
 
@@ -129,11 +130,7 @@ module.exports = class FixturesResource extends Restypie.Resources.AbstractResou
     return Promise.resolve();
   }
 
-
-  reset() {
-    if (process.env.NODE_ENV !== Restypie.TEST_ENV) {
-      throw new Error('reset() is only intended to be used for Restypie internal testing');
-    }
+  __reset() {
     this.resetObjects();
     return Promise.resolve();
   }

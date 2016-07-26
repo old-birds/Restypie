@@ -207,7 +207,7 @@ describe('Restypie.Client', function () {
       });
     });
 
-    it('should retrieve all users (limit=0)', function () {
+    it.skip('should retrieve all users (limit=0)', function () {
       return client.find({ limit: 0 }).then(function (users) {
         should.exist(users);
         users.should.have.lengthOf(users.length);
