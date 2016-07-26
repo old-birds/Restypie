@@ -46,11 +46,11 @@ module.exports = class Client {
     });
   }
 
-  find(params) {
+  find(filters, params) {
     params = params || {};
     return new Query({
       method: Restypie.Methods.GET,
-      filters: params.filters,
+      filters: filters,
       limit: params.limit,
       offset: params.offset,
       populate: params.populate,
@@ -76,11 +76,11 @@ module.exports = class Client {
     });
   }
 
-  findOne(params) {
+  findOne(filters, params) {
     params = params || {};
     return new Query({
       method: Restypie.Methods.GET,
-      filters: params.filters,
+      filters: filters,
       limit: 1,
       offset: 0,
       sort: params.sort,

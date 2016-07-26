@@ -40,7 +40,7 @@ class UsersResource extends Restypie.Resources.FixturesResource {
   }
 }
 
-describe('Restypie.Client', function () {
+describe.only('Restypie.Client', function () {
 
   before(function (done) {
     server = http.createServer(app);
@@ -179,7 +179,7 @@ describe('Restypie.Client', function () {
         { name: 'Diane' }
       ]).then(function (users) {
         const original = users[0];
-        return client.findOne({ filters: { name: original.name } }).then(function (found) {
+        return client.findOne({ name: original.name }).then(function (found) {
           found.id.should.equal(original.id);
           found.name.should.equal(original.name);
         });
@@ -188,7 +188,7 @@ describe('Restypie.Client', function () {
 
     it('should return no user', function () {
       const client = new Restypie.Client({ host: HOST, version: 'v1', path: 'users' });
-      return client.findOne({ filters: { name: 'foo' } }).then(function (found) {
+      return client.findOne({ name: 'foo' }).then(function (found) {
         should.not.exist(found);
       });
     });
@@ -200,7 +200,7 @@ describe('Restypie.Client', function () {
         .matchHeader('x-custom-header', 'someValue')
         .get('/v1/users?name=foo&limit=1')
         .reply(Restypie.Codes.OK, { data: {} });
-      return client.findOne({ filters: { name: 'foo' } }).then(() => {
+      return client.findOne({ name: 'foo' }).then(() => {
         nock.cleanAll();
       });
     });
@@ -225,7 +225,7 @@ describe('Restypie.Client', function () {
     it('should retrieve 10 users (specified limit)', function () {
       const client = new Restypie.Client({ host: HOST, version: 'v1', path: 'users' });
       return client.create(usersData).then(() => {
-        return client.find({ limit: 10 }).then(function (users) {
+        return client.find(null, { limit: 10 }).then(function (users) {
           should.exist(users);
           users.should.have.lengthOf(10);
         });
