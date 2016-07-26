@@ -3,7 +3,8 @@
 /***********************************************************************************************************************
  * Dependencies
  **********************************************************************************************************************/
-let Restypie = require('../../');
+const Restypie = require('../../');
+const Promise = require('bluebird');
 
 /***********************************************************************************************************************
  * @namespace Restypie.BasicRoutes
@@ -19,7 +20,17 @@ module.exports = class GetManyRoute extends Restypie.Route {
   handler(bundle) {
     let resource = this.context.resource;
 
-    return resource.parseParameters(bundle)
+    return Promise.try(function () {
+      resource.parseOptions(bundle);
+      resource.parseLimit(bundle);
+      resource.parseSelect(bundle);
+      resource.parseOffset(bundle);
+      resource.parseFormat(bundle);
+      resource.parseFilters(bundle);
+      resource.parsePopulate(bundle);
+      resource.parseSort(bundle);
+      return bundle.next();
+    })
       .then(resource.applyNestedFilters.bind(resource))
       .then(resource.getObjects.bind(resource))
       .then(function (objects) {

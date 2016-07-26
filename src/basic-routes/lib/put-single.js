@@ -3,7 +3,7 @@
 /***********************************************************************************************************************
  * Dependencies
  **********************************************************************************************************************/
-let Promise = require('bluebird'); 
+const Promise = require('bluebird');
  
 let Restypie = require('../../');
 
@@ -21,7 +21,10 @@ module.exports = class PutSingleRoute extends Restypie.Route {
   handler(bundle) {
     let resource = this.context.resource;
 
-    return resource.parseParameters(bundle)
+    return Promise.try(function () {
+      resource.parseFilters(bundle);
+      return bundle.next();
+    })
       .then(resource.parseBody.bind(resource, bundle))
       .then(resource.hydrate.bind(resource, bundle))
       .then(function (bundle) {

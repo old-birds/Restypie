@@ -3,7 +3,7 @@
 /***********************************************************************************************************************
  * Dependencies
  **********************************************************************************************************************/
-let Promise = require('bluebird');
+const Promise = require('bluebird');
 
 let Restypie = require('../../');
 
@@ -27,6 +27,7 @@ module.exports = class DeleteSingleRoute extends Restypie.Route {
       pk = pkField.hydrate(bundle.params.pk);
       bundle.setQuery({ [pkField.key]: pk });
       resource.parseFilters(bundle);
+      return bundle.next();
     }).then(resource.deleteObject.bind(resource, bundle))
       .then(function (count) {
         if (!Restypie.Utils.isValidNumber(count)) {

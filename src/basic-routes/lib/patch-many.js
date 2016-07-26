@@ -3,7 +3,7 @@
 /***********************************************************************************************************************
  * Dependencies
  **********************************************************************************************************************/
-let Promise = require('bluebird');
+const Promise = require('bluebird');
 
 let Restypie = require('../../');
 
@@ -22,9 +22,12 @@ module.exports = class PatchSingleRoute extends Restypie.Route {
     let resource = this.context.resource;
 
     return Promise.try(function () {
-      resource.parseParameters(bundle);
+      resource.parseFormat(bundle);
+      resource.parseFilters(bundle);
+      resource.parseSort(bundle);
       // Do not allow to update the whole table - empty filters
       if (!Object.keys(bundle.filters).length) throw new Restypie.TemplateErrors.RequestOutOfRange(bundle.filters);
+      return bundle.next();
     }).then(resource.parseBody.bind(resource, bundle))
       .then(resource.hydrate.bind(resource))
       .then(resource.validate.bind(resource))
