@@ -99,9 +99,7 @@ module.exports = class Client {
       method: Restypie.Methods.DELETE,
       url: Restypie.Url.join(this.url, id),
       headers: Object.assign({}, this._defaultHeaders, params.headers)
-    }).run().then(() => {
-      return Promise.resolve();
-    });
+    }).run().then(() => undefined);
   }
 
   updateById(id, updates, params) {
@@ -111,9 +109,7 @@ module.exports = class Client {
       body: updates,
       url: Restypie.Url.join(this.url, id),
       headers: Object.assign({ 'Content-Type': 'application/json' }, this._defaultHeaders, params.headers)
-    }).run().then(() => {
-      return Promise.resolve();
-    });
+    }).run().then(() => undefined);
   }
   
   update(filters, updates, params) {
@@ -124,9 +120,7 @@ module.exports = class Client {
       filters,
       url: this.url,
       headers: Object.assign({ 'Content-Type': 'application/json' }, this._defaultHeaders, params.headers)
-    }).run().then(() => {
-      return Promise.resolve();
-    });
+    }).run().then(() => undefined);
   }
 
   count(filters, params) {

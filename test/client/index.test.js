@@ -7,10 +7,9 @@ const _ = require('lodash');
 const nock = require('nock');
 
 const PORT = 9999;
-const HOST = 'http://localhost:' + PORT;
 
-let app = express();
-let server;
+const app = express();
+const server = http.createServer(app);
 app.set('port', PORT);
 app.use(bodyParser.json());
 
@@ -29,6 +28,7 @@ class UsersResource extends Restypie.Resources.FixturesResource {
       Restypie.BasicRoutes.GetSingleRoute,
       Restypie.BasicRoutes.GetManyRoute,
       Restypie.BasicRoutes.PatchSingleRoute,
+      Restypie.BasicRoutes.PatchManyRoute,
       Restypie.BasicRoutes.DeleteSingleRoute
     ];
   }
@@ -36,15 +36,14 @@ class UsersResource extends Restypie.Resources.FixturesResource {
     return {
       id: { type: 'int', isPrimaryKey: true },
       name: { type: String, isRequired: true, isFilterable: true },
-      isAdmin: { type: Boolean, isWritable: true, isReadable: true, defaultValue: false }
+      isAdmin: { type: Boolean, isWritable: true, isFilterable: true, defaultValue: false }
     };
   }
 }
 
-describe.only('Restypie.Client', function () {
+describe('Restypie.Client', function () {
 
   before(function (done) {
-    server = http.createServer(app);
     return server.listen(PORT, done);
   });
 
@@ -361,12 +360,77 @@ describe.only('Restypie.Client', function () {
 
   });
 
-  // describe('#update', function () {
-  //
-  //   it('should update users', function () {
-  //     const client =
-  //   });
-  // });
+  describe('#update', function () {
+
+    it('should update users', function () {
+      const client = usersResource.createClient();
+      return client.create([
+        { name: 'John', isAdmin: false },
+        { name: 'John', isAdmin: false },
+        { name: 'John', isAdmin: false },
+        { name: 'Jane', isAdmin: true },
+        { name: 'Hugo', isAdmin: true }
+      ]).then(() => {
+        return client.update({ name: 'John' }, { isAdmin: true });
+      }).then(() => {
+        return client.find({ name: 'John' }).then((updated) => {
+          updated.forEach((user) => user.isAdmin.should.equal(true));
+        });
+      });
+    });
+
+    it('should have sent default headers', function () {
+      const defaultHeaders = { 'x-custom-header': 'someValue' };
+      const client = usersResource.createClient({ defaultHeaders });
+      nock(client.host)
+        .matchHeader('x-custom-header', 'someValue')
+        .patch('/v1/users')
+        .reply(Restypie.Codes.OK);
+      return client.update({}, {}).then(() => {
+        nock.cleanAll();
+      });
+    });
+  });
+
+  describe('#count', function () {
+
+    it('should count users (all)', function () {
+      const client = usersResource.createClient();
+      const count = 17;
+      const users = [];
+      _.times(count, (n) => users.push({ name: n }));
+      return client.create(users).then(() => {
+        return client.count().then((retrieved) => {
+          retrieved.should.equal(count);
+        });
+      });
+    });
+
+    it('should count users (filtered)', function () {
+      const client = usersResource.createClient();
+      const count = 17;
+      const users = [];
+      _.times(count, (i) => users.push({ name: i, isAdmin: i < count / 2 }));
+      return client.create(users).then(() => {
+        return client.count({ isAdmin: true }).then((retrieved) => {
+          retrieved.should.equal(Math.ceil(count / 2));
+        });
+      });
+    });
+
+    it('should have sent default headers', function () {
+      const defaultHeaders = { 'x-custom-header': 'someValue' };
+      const client = usersResource.createClient({ defaultHeaders });
+      nock(client.host)
+        .matchHeader('x-custom-header', 'someValue')
+        .get('/v1/users?limit=1')
+        .reply(Restypie.Codes.OK, { meta: {} });
+      return client.count().then(() => {
+        nock.cleanAll();
+      });
+    });
+
+  });
 
 
 });
