@@ -15,6 +15,7 @@ app.set('port', PORT);
 app.use(bodyParser.json());
 
 const api = new Restypie.API({ path: 'v1', routerType: Restypie.RouterTypes.EXPRESS });
+let usersResource;
 
 class PostRoute extends Restypie.BasicRoutes.PostRoute {
   get allowsMany() { return true; }
@@ -52,7 +53,8 @@ describe.only('Restypie.Client', function () {
   });
 
   beforeEach(function () {
-    api.resources.Users.resetObjects();
+    usersResource = api.getResourceByName('Users');
+    usersResource.resetObjects();
   });
 
   describe('constructor', function () {
@@ -78,11 +80,18 @@ describe.only('Restypie.Client', function () {
       let client = new Restypie.Client({ host: 'http://localhost:8888', path: 'users' });
       client.url.should.equal('http://localhost:8888/users');
     });
-    
+
     it('should instantiate a new client with default headers', function () {
       const defaultHeaders = { 'x-custom-header': 'someValue' };
       const client = new Restypie.Client({ host: 'http://localhost:8888', path: 'users', defaultHeaders });
       client.defaultHeaders.should.deep.equal(defaultHeaders);
+    });
+
+    it('should call getters', function () {
+      const client = new Restypie.Client({ host: 'http://localhost:8888', version: 'v1', path: 'users' });
+      client.host;
+      client.path;
+      client.version;
     });
 
   });
@@ -90,7 +99,7 @@ describe.only('Restypie.Client', function () {
   describe('#create', function () {
 
     it('should create a user', function () {
-      const client = new Restypie.Client({ host: 'http://localhost:' + PORT, version: 'v1', path: 'users' });
+      const client = usersResource.createClient();
       return client.create({ name: 'John' }).then(function (created) {
         created.should.have.keys(['id', 'name']);
         created.name.should.equal('John');
@@ -98,7 +107,7 @@ describe.only('Restypie.Client', function () {
     });
 
     it('should create multiple users', function () {
-      const client = new Restypie.Client({ host: 'http://localhost:' + PORT, version: 'v1', path: 'users' });
+      const client = usersResource.createClient();
       return client.create([{ name: 'Jane' }, { name: 'Diane' }]).then(function (created) {
         created.should.have.lengthOf(2);
         should.exist(created.find((item) => item.name === 'Jane'));
@@ -108,13 +117,8 @@ describe.only('Restypie.Client', function () {
 
     it('should have sent default headers', function () {
       const defaultHeaders = { 'x-custom-header': 'someValue' };
-      const client = new Restypie.Client({
-        host: HOST,
-        version: 'v1',
-        path: 'users',
-        defaultHeaders
-      });
-      nock(HOST)
+      const client = usersResource.createClient({ defaultHeaders });
+      nock(client.host)
         .matchHeader('x-custom-header', 'someValue')
         .post('/v1/users')
         .reply(Restypie.Codes.OK, { data: {} });
@@ -128,7 +132,7 @@ describe.only('Restypie.Client', function () {
   describe('#findById', function () {
 
     it('should retrieve a user by id', function () {
-      const client = new Restypie.Client({ host: HOST, version: 'v1', path: 'users' });
+      const client = usersResource.createClient();
 
       return client.create([
         { name: 'Jane' },
@@ -145,7 +149,8 @@ describe.only('Restypie.Client', function () {
     });
 
     it('should send back a 404', function () {
-      const client = new Restypie.Client({ host: HOST, version: 'v1', path: 'users' });
+      const client = usersResource.createClient();
+
       return client.findById(999).then(function () {
         return Promise.reject(new Error('Should have thrown'));
       }, function (err) {
@@ -157,8 +162,8 @@ describe.only('Restypie.Client', function () {
 
     it('should have sent default headers', function () {
       const defaultHeaders = { 'x-custom-header': 'someValue' };
-      const client = new Restypie.Client({ host: HOST, version: 'v1', path: 'users', defaultHeaders });
-      nock(HOST)
+      const client = usersResource.createClient({ defaultHeaders });
+      nock(client.host)
         .matchHeader('x-custom-header', 'someValue')
         .get('/v1/users/1')
         .reply(Restypie.Codes.OK, { data: {} });
@@ -172,7 +177,7 @@ describe.only('Restypie.Client', function () {
   describe('#findOne', function () {
 
     it('should return the right user', function () {
-      const client = new Restypie.Client({ host: HOST, version: 'v1', path: 'users' });
+      const client = usersResource.createClient();
       return client.create([
         { name: 'Jane' },
         { name: 'John' },
@@ -187,7 +192,7 @@ describe.only('Restypie.Client', function () {
     });
 
     it('should return no user', function () {
-      const client = new Restypie.Client({ host: HOST, version: 'v1', path: 'users' });
+      const client = usersResource.createClient();
       return client.findOne({ name: 'foo' }).then(function (found) {
         should.not.exist(found);
       });
@@ -195,8 +200,8 @@ describe.only('Restypie.Client', function () {
 
     it('should have sent default headers', function () {
       const defaultHeaders = { 'x-custom-header': 'someValue' };
-      const client = new Restypie.Client({ host: HOST, version: 'v1', path: 'users', defaultHeaders });
-      nock(HOST)
+      const client = usersResource.createClient({ defaultHeaders });
+      nock(client.host)
         .matchHeader('x-custom-header', 'someValue')
         .get('/v1/users?name=foo&limit=1')
         .reply(Restypie.Codes.OK, { data: {} });
@@ -213,7 +218,7 @@ describe.only('Restypie.Client', function () {
     _.times(100, (i) => usersData.push({ name: i.toString() }));
 
     it('should retrieve 20 users (default limit)', function () {
-      const client = new Restypie.Client({ host: HOST, version: 'v1', path: 'users' });
+      const client = usersResource.createClient();
       return client.create(usersData).then(() => {
         return client.find().then(function (users) {
           should.exist(users);
@@ -223,7 +228,7 @@ describe.only('Restypie.Client', function () {
     });
 
     it('should retrieve 10 users (specified limit)', function () {
-      const client = new Restypie.Client({ host: HOST, version: 'v1', path: 'users' });
+      const client = usersResource.createClient();
       return client.create(usersData).then(() => {
         return client.find(null, { limit: 10 }).then(function (users) {
           should.exist(users);
@@ -234,8 +239,8 @@ describe.only('Restypie.Client', function () {
 
     it('should have sent default headers', function () {
       const defaultHeaders = { 'x-custom-header': 'someValue' };
-      const client = new Restypie.Client({ host: HOST, version: 'v1', path: 'users', defaultHeaders });
-      nock(HOST)
+      const client = usersResource.createClient({ defaultHeaders });
+      nock(client.host)
         .matchHeader('x-custom-header', 'someValue')
         .get('/v1/users')
         .reply(Restypie.Codes.OK, { data: {} });
@@ -245,6 +250,7 @@ describe.only('Restypie.Client', function () {
     });
 
     it.skip('should retrieve all users (limit=0)', function () {
+      const client = usersResource.createClient();
       return client.find({ limit: 0 }).then(function (users) {
         should.exist(users);
         users.should.have.lengthOf(users.length);
@@ -256,7 +262,7 @@ describe.only('Restypie.Client', function () {
   describe('#updateById', function () {
 
     it('should update a user', function () {
-      const client = new Restypie.Client({ host: HOST, version: 'v1', path: 'users' });
+      const client = usersResource.createClient();
       return client.create([
         { name: 'Jane' },
         { name: 'John' },
@@ -273,7 +279,7 @@ describe.only('Restypie.Client', function () {
     });
 
     it('should NOT update a user (isAdmin is not a boolean)', function () {
-      const client = new Restypie.Client({ host: HOST, version: 'v1', path: 'users' });
+      const client = usersResource.createClient();
       return client.updateById(1, { isAdmin: 'foo' }).then(() => {
         return Promise.reject(new Error('should have thrown'));
       }, function (err) {
@@ -283,7 +289,7 @@ describe.only('Restypie.Client', function () {
     });
 
     it('should send back a 404', function () {
-      const client = new Restypie.Client({ host: HOST, version: 'v1', path: 'users' });
+      const client = usersResource.createClient();
       return client.updateById(999, { name: 'foo' }).then(() => {
         return Promise.reject(new Error('should have thrown'));
       }).catch(function (err) {
@@ -294,8 +300,8 @@ describe.only('Restypie.Client', function () {
 
     it('should have sent default headers', function () {
       const defaultHeaders = { 'x-custom-header': 'someValue' };
-      const client = new Restypie.Client({ host: HOST, version: 'v1', path: 'users', defaultHeaders });
-      nock(HOST)
+      const client = usersResource.createClient({ defaultHeaders });
+      nock(client.host)
         .matchHeader('x-custom-header', 'someValue')
         .patch('/v1/users/1')
         .reply(Restypie.Codes.NoContent);
@@ -309,7 +315,7 @@ describe.only('Restypie.Client', function () {
   describe('#deleteById', function () {
 
     it('should delete a user', function () {
-      const client = new Restypie.Client({ host: HOST, version: 'v1', path: 'users' });
+      const client = usersResource.createClient();
 
       return client.create([
         { name: 'Jane' },
@@ -330,7 +336,7 @@ describe.only('Restypie.Client', function () {
     });
 
     it('should send back a 404', function () {
-      const client = new Restypie.Client({ host: HOST, version: 'v1', path: 'users' });
+      const client = usersResource.createClient();
 
       return client.deleteById(999).then(function () {
         return Promise.reject(new Error('User should not exist'));
@@ -343,8 +349,8 @@ describe.only('Restypie.Client', function () {
 
     it('should have sent default headers', function () {
       const defaultHeaders = { 'x-custom-header': 'someValue' };
-      const client = new Restypie.Client({ host: HOST, version: 'v1', path: 'users', defaultHeaders });
-      nock(HOST)
+      const client = usersResource.createClient({ defaultHeaders });
+      nock(client.host)
         .matchHeader('x-custom-header', 'someValue')
         .delete('/v1/users/1')
         .reply(Restypie.Codes.OK);
@@ -354,6 +360,13 @@ describe.only('Restypie.Client', function () {
     });
 
   });
+
+  // describe('#update', function () {
+  //
+  //   it('should update users', function () {
+  //     const client =
+  //   });
+  // });
 
 
 });

@@ -182,6 +182,10 @@ module.exports = class API {
     });
     return this;
   }
+  
+  getResourceByName(name) {
+    return this._resources[name];
+  }
 
   _setRouterType(routerType) {
     this._throwIfLaunched();

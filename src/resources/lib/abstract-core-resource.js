@@ -1,7 +1,8 @@
 'use strict';
 
-let Restypie = require('../../');
-let _ = require('lodash');
+const Restypie = require('../../');
+const _ = require('lodash');
+const Url = require('url');
 
 module.exports = class AbstractCoreResource {
 
@@ -117,6 +118,16 @@ module.exports = class AbstractCoreResource {
     this.fields = fields;
   }
 
+  createClient(options, isRestypie) {
+    options = options || {};
+    const url = Url.parse(this.getFullUrl());
+    const defaultHeaders = Object.assign(isRestypie ? Restypie.getHeaderSignature() : {}, options.defaultHeaders);
+    return new Restypie.Client(Object.assign({}, options, {
+      defaultHeaders,
+      host: Url.format({ host: url.host, protocol: url.protocol }),
+      path: url.pathname
+    }));
+  }
 
   /**
    * Ensures that the resource has one (and only one) primary key field.
