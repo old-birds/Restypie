@@ -223,7 +223,8 @@ describe('Restypie', function () {
         reMerge: { ne: 2 },
         fancy1: { gte: 15, in: [3, 4, 5], ne: 3, nin: [4, 5] },
         excludeAll: { gt: 16 },
-        removingNe: { ne: 3 }
+        removingNe: { ne: 3 },
+        sameIds: { in: [1, 1] }
       };
       
       const final = {
@@ -239,7 +240,8 @@ describe('Restypie', function () {
         excludeAll: { in: [] },
         inToEq: { eq: 1 },
         removingNe: { in: [1, 2], ne: 3 },
-        unusedNin: {}
+        unusedNin: {},
+        sameIds: { eq: 1 }
       };
 
       Restypie.mergeFilters(left, right).should.deep.equal(final);
