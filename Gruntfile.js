@@ -28,7 +28,7 @@ module.exports = function (grunt) {
      */
     mocha_istanbul: {
       coverage: {
-        src: ['./test/**/*.test.js'],
+        src: args.file || ['./test/**/*.test.js'],
         options: {
           quiet: true,
           recursive: true,

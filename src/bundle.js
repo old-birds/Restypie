@@ -234,8 +234,7 @@ module.exports = class Bundle {
   }
 
   mergeToFilters(filters) {
-    this._filters = this._filters || {};
-    Restypie.mergeFilters(this._filters, filters);
+    this.setFilters(Restypie.mergeFilters(this._filters || {}, filters));
     return this;
   }
 
