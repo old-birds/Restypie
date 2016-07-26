@@ -5,12 +5,20 @@ let Restypie = require('../');
 
 module.exports = class Client {
 
-  get url() { return Restypie.Url.join(this.host, this.version, this.path); }
+  get url() { return Restypie.Url.join(this._host, this._version, this._path); }
+  get defaultHeaders() { return this._defaultHeaders; }
+  get host() { return this._host; }
+  get path() { return this._path; }
+  get version() { return this._version; }
 
   constructor(options) {
-    Object.assign(this, options);
-    if (typeof this.host !== 'string') throw new Error('`options.host` is mandatory');
-    if (typeof this.path !== 'string') throw new Error('`options.path` is mandatory');
+    options = options || {};
+    this._host = options.host;
+    this._path = options.path;
+    if (typeof this._host !== 'string') throw new Error('`options.host` is mandatory');
+    if (typeof this._path !== 'string') throw new Error('`options.path` is mandatory');
+    this._version = options.version || '';
+    this._defaultHeaders = options.defaultHeaders || {};
   }
 
   create(props, params) {
@@ -25,8 +33,11 @@ module.exports = class Client {
         method: Restypie.Methods.POST,
         body: object,
         url: this.url,
-        headers: Object.assign({ 'Accept': 'application/json', 'Content-Type': 'application/json' }, params.headers)
-      }).run().then(function (body) {
+        headers: Object.assign({
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }, this._defaultHeaders, params.headers)
+      }).run().then((body) => {
         results.push(body.data);
         return Promise.resolve();
       });
@@ -46,7 +57,7 @@ module.exports = class Client {
       select: params.select,
       sort: params.sort,
       url: this.url,
-      headers: Object.assign({ 'Accept': 'application/json' }, params.headers)
+      headers: Object.assign({ 'Accept': 'application/json' }, this._defaultHeaders, params.headers)
     }).run().then((body) => {
       return Promise.resolve(body.data);
     });
@@ -59,7 +70,7 @@ module.exports = class Client {
       populate: params.populate,
       select: params.select,
       url: Restypie.Url.join(this.url, id),
-      headers: Object.assign({ 'Accept': 'application/json' }, params.headers)
+      headers: Object.assign({ 'Accept': 'application/json' }, this._defaultHeaders, params.headers)
     }).run().then((body) => {
       return Promise.resolve(body.data);
     });
@@ -76,7 +87,7 @@ module.exports = class Client {
       populate: params.populate,
       select: params.select,
       url: this.url,
-      headers: Object.assign({ 'Accept': 'application/json' }, params.headers)
+      headers: Object.assign({ 'Accept': 'application/json' }, this._defaultHeaders, params.headers)
     }).run().then((body) => {
       return Promise.resolve(body.data[0]);
     });
@@ -87,7 +98,7 @@ module.exports = class Client {
     return new Query({
       method: Restypie.Methods.DELETE,
       url: Restypie.Url.join(this.url, id),
-      headers: params.headers
+      headers: Object.assign({}, this._defaultHeaders, params.headers)
     }).run().then(() => {
       return Promise.resolve();
     });
@@ -99,7 +110,7 @@ module.exports = class Client {
       method: Restypie.Methods.PATCH,
       body: updates,
       url: Restypie.Url.join(this.url, id),
-      headers: Object.assign({ 'Content-Type': 'application/json' }, params.headers)
+      headers: Object.assign({ 'Content-Type': 'application/json' }, this._defaultHeaders, params.headers)
     }).run().then(() => {
       return Promise.resolve();
     });
@@ -112,7 +123,7 @@ module.exports = class Client {
       body: updates,
       filters,
       url: this.url,
-      headers: Object.assign({ 'Content-Type': 'application/json' }, params.headers)
+      headers: Object.assign({ 'Content-Type': 'application/json' }, this._defaultHeaders, params.headers)
     }).run().then(() => {
       return Promise.resolve();
     });
@@ -126,7 +137,7 @@ module.exports = class Client {
       limit: 1,
       offset: 0,
       url: this.url,
-      headers: Object.assign({ 'Accept': 'application/json' }, params.headers)
+      headers: Object.assign({ 'Accept': 'application/json' }, this._defaultHeaders, params.headers)
     }).run().then((body) => {
       return Promise.resolve(body.meta.total);
     });

@@ -48,6 +48,7 @@
     "minimist": "^1.2.0",
     "mocha": "^2.5.3",
     "mysql": "~2.9.0",
+    "nock": "^8.0.0",
     "sequelize": "~3.14.2",
     "supertest": "^1.1.0",
     "supertest-koa-agent": "^0.2.1",
