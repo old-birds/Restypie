@@ -162,10 +162,7 @@ module.exports = class SequelizeResource extends Restypie.Resources.AbstractReso
   }
 
 
-  reset() {
-    if (process.env.NODE_ENV !== Restypie.TEST_ENV) {
-      throw new Error('reset() is only intended to be used for Restypie internal testing');
-    }
+  __reset() {
     return this.model.destroy({ where: { [this.primaryKeyPath]: { $ne: null } } });
   }
 

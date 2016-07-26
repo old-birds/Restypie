@@ -129,11 +129,7 @@ module.exports = class FixturesResource extends Restypie.Resources.AbstractResou
     return Promise.resolve();
   }
 
-
-  reset() {
-    if (process.env.NODE_ENV !== Restypie.TEST_ENV) {
-      throw new Error('reset() is only intended to be used for Restypie internal testing');
-    }
+  __reset() {
     this.resetObjects();
     return Promise.resolve();
   }

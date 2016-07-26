@@ -1369,6 +1369,13 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
       });
     });
   }
+  
+  reset() {
+    if (process.env.NODE_ENV !== Restypie.TEST_ENV) {
+      throw new Error('reset() is only intended to be used for Restypie internal testing');
+    }
+    return this.__reset();
+  }
 
   static get LIST_SEPARATOR() { return /\s*,\s*/; }
 
