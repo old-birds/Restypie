@@ -234,22 +234,7 @@ module.exports = class Bundle {
   }
 
   mergeToFilters(filters) {
-    const prev = this._filters = this._filters || {};
-    for (const key in filters) {
-      const prevOperators = prev[key] = prev[key] || {};
-      const newOperators = filters[key];
-      for (const newOperator in newOperators) {
-        if (newOperator in prevOperators) {
-          if (Array.isArray(newOperators[newOperator])) {
-            prevOperators[newOperator] = _.uniq(prevOperators[newOperator].concat(newOperators[newOperator]));
-          } else {
-            prevOperators[newOperator] = newOperators[newOperator];
-          }
-        } else {
-          prevOperators[newOperator] = newOperators[newOperator];
-        }
-      }
-    }
+    this.setFilters(Restypie.mergeFilters(this._filters || {}, filters));
     return this;
   }
 
