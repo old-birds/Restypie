@@ -3,13 +3,13 @@
 /***********************************************************************************************************************
  * Dependencies
  **********************************************************************************************************************/
-let _ = require('lodash');
+const _ = require('lodash');
 
 /***********************************************************************************************************************
  * @namespace Restypie
  * @class Utils
  **********************************************************************************************************************/
-module.exports = {
+const Utils = module.exports = {
 
   /**
    * Checks whether or not `Child` is a subclass of `Parent`.
@@ -116,7 +116,7 @@ module.exports = {
    * ```
    */
   forceStatic(context, Constructor) {
-    if (context.constructor === Constructor || this.isSubclassOf(context.constructor, Constructor)) {
+    if (context.constructor === Constructor || Utils.isSubclassOf(context.constructor, Constructor)) {
       throw new TypeError(`Class ${Constructor.name} is static and cannot be instantiated`);
     }
   },
@@ -200,6 +200,13 @@ module.exports = {
    */
   missingImplementation(name) {
     throw new Error(`${this && this.constructor && this.constructor.name} must implement ${name}()`);
+  },
+  
+  
+  makeArray(value) {
+    if (Array.isArray(value)) return value;
+    if (_.isUndefined(value)) return [];
+    return [value];
   }
 
 };
