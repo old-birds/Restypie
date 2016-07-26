@@ -119,6 +119,7 @@ module.exports = function (supertest, app, api) {
       return new Promise((resolve, reject) => {
         supertest(app)
           .get(path)
+          .set(Restypie.getHeaderSignature())
           .query(Object.assign(
             Restypie.stringify({ filters }),
             Restypie.stringify(_.pick(options, Restypie.RESERVED_WORDS))
