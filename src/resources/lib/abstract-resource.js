@@ -11,8 +11,6 @@ const typeIs = require('type-is');
 const formDataToObject = require('form-data-to-object');
 const Promise = require('bluebird');
 
-const request = require('request');
-
 let Restypie = require('../../');
 let Utils = Restypie.Utils;
 
@@ -1002,10 +1000,9 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
 
     if (!bundle.populate.length) return bundle.next(); // Nothing to do
 
-    let self = this;
     let fieldsByKey = this.fieldsByKey;
 
-    return Promise.all(bundle.populate.map(function (keyDef) {
+    return Promise.all(bundle.populate.map((keyDef) => {
       let key = keyDef.key;
 
       let field = fieldsByKey[key];
@@ -1015,99 +1012,77 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
       let resource = field.to;
       Restypie.Utils.isInstanceOf(resource, Restypie.Resources.AbstractCoreResource, true);
 
+
       let data = Array.isArray(bundle.data) ? bundle.data : [bundle.data];
 
-      return Promise.all(data.map(function (object) {
+      return Promise.all(data.map((object) => {
         if (Restypie.Utils.isNone(object[key]) && !field.isRelation) return Promise.resolve();
 
         let toKeyField = resource.fieldsByKey[field.toKey];
         Restypie.Utils.isInstanceOf(toKeyField, Restypie.Fields.AbstractField, true);
 
-        let url;
-        let qs = {};
-        if (keyDef.populate.length) qs.populate = keyDef.populate.join(',');
-        let headers = Object.assign(
+        const headers = Object.assign(
           _.omit(bundle.req.headers, ['content-type', 'accept']), // Copy custom headers (ie, auth)
           Restypie.getHeaderSignature()
-        ); 
-        let tasks = [];
+        );
+
+        const toClient = resource.createClient({ defaultHeaders: headers }, true);
 
         if (field.isManyRelation) {
-          url = Restypie.Url.join(resource.getFullUrl(bundle));
-          qs.limit = 0;
-
-          let through = field.through;
+          const through = field.through;
 
           if (through) {
             Restypie.Utils.isInstanceOf(through, Restypie.Resources.AbstractCoreResource, true);
+
+            const throughClient = through.createClient({ defaultHeaders: headers }, true);
 
             let throughKeyField = through.fieldsByKey[field.throughKey];
             let otherThroughKeyField = field.through.fieldsByKey[field.otherThroughKey];
             Restypie.Utils.isInstanceOf(throughKeyField, Restypie.Fields.AbstractField, true);
             Restypie.Utils.isInstanceOf(otherThroughKeyField, Restypie.Fields.AbstractField, true);
 
-            tasks.push(function () {
-              return new Promise(function (resolve, reject) {
-                return request({
-                  method: 'GET',
-                  url: through.getFullUrl(),
-                  qs: {
-                    [throughKeyField.key]: object[self.primaryKeyField.key],
-                    limit: 0, // All items
-                    select: otherThroughKeyField.key, // Only what we need
-                    options: self.options.NO_COUNT
-                  },
-                  json: true,
-                  headers: headers
-                }, function (err, res, body) {
-                  if (err || res.statusCode !== Restypie.Codes.OK) {
-                    return reject(err || Restypie.RestErrors.fromStatusCode(res.statusCode, res.body.message));
-                  }
-                  let list = _.uniq(_.map(body.data, otherThroughKeyField.key));
-                  if (list.length) {
-                    qs[toKeyField.key + '__in'] = list.join(',');
-                    return resolve();
-                  } else {
-                    object[key] = []; // Empty array since there are no results
-                    return resolve(true); // Do not continue
-                  }
+            return throughClient.find({ [throughKeyField.key]: object[this.primaryKeyKey] }, {
+              limit: 0,
+              select: otherThroughKeyField.key,
+              options: this.options.NO_COUNT
+            }).then((data) => {
+              const ids = _.uniq(_.map(data, otherThroughKeyField.key));
+
+              if (ids.length) {
+                return toClient.find({ [toKeyField.key]: { in: ids } }, {
+                  limit: 0,
+                  options: this.options.NO_COUNT,
+                  populate: keyDef.populate
+                }).then((data) => {
+                  object[key] = data;
+                  return bundle.next();
                 });
-              });
+              } else {
+                object[key] = [];
+                return bundle.next();
+              }
             });
           } else {
-            qs[toKeyField.key] = object[self.primaryKeyField.key];
+            return toClient.find({ [toKeyField.key]: { eq: object[this.primaryKeyKey] } }, {
+              limit: 0,
+              options: this.options.NO_COUNT,
+              populate: keyDef.populate
+            }).then((data) => {
+              object[key] = data;
+              return bundle.next();
+            });
           }
         } else {
-          url = Restypie.Url.join(resource.getFullUrl(), object[field.fromKey]);
-        }
-
-
-        tasks.push(function (shouldStop) {
-          return new Promise(function (resolve, reject) {
-            if (shouldStop) return resolve();
-
-            return request({
-              method: 'GET',
-              url,
-              qs,
-              headers,
-              json: true
-            }, function (err, res, body) {
-              if (err || res.statusCode !== Restypie.Codes.OK) {
-                return reject(err || Restypie.RestErrors.fromStatusCode(res.statusCode, res.body.message));
-              }
-              if (!field.isManyRelation && Array.isArray(body.data)) {
-                return reject(new Error('Unfiltered ToOne relation, consider using ToManyField : ' + field.key));
-              }
-              object[key] = body.data;
-              return resolve();
-            });
+          return toClient.findById(object[field.fromKey], {
+            populate: keyDef.populate
+          }).then((data) => {
+            if (Array.isArray(data)) {
+              return bundle.next(new Error('Unfiltered ToOne relation, consider using ToManyField : ' + field.key));
+            }
+            object[key] = data;
+            return bundle.next();
           });
-        });
-
-        return tasks.reduce(function (acc, task) {
-          return acc.then(task);
-        }, Promise.resolve());
+        }
 
       }));
 

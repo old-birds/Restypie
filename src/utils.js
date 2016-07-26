@@ -116,7 +116,7 @@ const Utils = module.exports = {
    * ```
    */
   forceStatic(context, Constructor) {
-    if (context.constructor === Constructor || this.isSubclassOf(context.constructor, Constructor)) {
+    if (context.constructor === Constructor || Utils.isSubclassOf(context.constructor, Constructor)) {
       throw new TypeError(`Class ${Constructor.name} is static and cannot be instantiated`);
     }
   },
