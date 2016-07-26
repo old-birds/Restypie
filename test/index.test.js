@@ -242,12 +242,7 @@ describe('Restypie', function () {
         unusedNin: {}
       };
 
-      const result = Restypie.mergeFilters(left, right);
-
-      result.should.deep.equal(final);
-
-      console.log(JSON.stringify(result, null, 4));
-
+      Restypie.mergeFilters(left, right).should.deep.equal(final);
     });
   });
 

@@ -223,11 +223,12 @@ const Restypie = module.exports = {
       return null;
     }
 
-    let unFlat;
-    while (unFlat = findUnFlat()) {
+    let unFlat = findUnFlat();
+    while (unFlat) {
       const newFilter = Restypie.mergeValuesForOperator.apply(null, [unFlat].concat(allValues[unFlat].splice(0)));
       const operator = Object.keys(newFilter)[0];
       if (operator) allValues[operator].push(newFilter[operator]);
+      unFlat = findUnFlat();
     }
 
     const final = Object.keys(allValues).reduce((acc, operator) => {
