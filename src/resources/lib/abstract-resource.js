@@ -1226,7 +1226,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
       case statusCode === Restypie.Codes.InternalServerError:
         Restypie.Logger.error(bundle.err.stack, bundle.err);
         break;
-      case statusCode > Restypie.Codes.BadRequest:
+      case statusCode >= Restypie.Codes.BadRequest:
         Restypie.Logger.warn(bundle.err.stack, bundle.err);
         break;
     }
