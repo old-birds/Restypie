@@ -20,3 +20,8 @@ Restypie currently supports the following frameworks/routers :
 ```
 npm install restypie --save
 ```
+
+
+## Contributing
+
+See [here](./CONTRIBUTING.md).
