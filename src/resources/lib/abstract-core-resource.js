@@ -47,6 +47,7 @@ module.exports = class AbstractCoreResource {
 
   get routerType() { return null; }
 
+  get isGetAllAllowed() { return false; }
 
   constructor() {
     Restypie.Utils.forceAbstract(this, AbstractCoreResource, true);

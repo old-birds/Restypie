@@ -476,7 +476,12 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
       if (!Utils.isValidNumber(parsedLimit)) {
         throw new Restypie.TemplateErrors.BadType({ key: 'limit', value: rawLimit, expected: 'integer' });
       }
-      if (parsedLimit < 0 || parsedLimit > max) {
+      
+      const isOutOfRange = parsedLimit < 0 ||
+        parsedLimit > max ||
+        (parsedLimit === 0 && !this.isGetAllAllowed && !bundle.isRestypieRequest);
+      
+      if (isOutOfRange) {
         throw new Restypie.TemplateErrors.OutOfRange({ key: 'limit', value: parsedLimit, min: 1, max });
       }
       bundle.setLimit(parsedLimit);
@@ -735,7 +740,10 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
     if (!bundle.hasNestedFilters) return bundle.next();
 
     const self = this;
-    const headers = _.omit(bundle.req.headers, ['content-type', 'accept']);
+    const headers = Object.assign(
+      _.omit(bundle.req.headers, ['content-type', 'accept']),
+      Restypie.getHeaderSignature()
+    );
     const nestedFilters = bundle.nestedFilters;
     const primaryKeyPath = self.primaryKeyField.path;
 
@@ -1069,7 +1077,10 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
         let url;
         let qs = {};
         if (keyDef.populate.length) qs.populate = keyDef.populate.join(',');
-        let headers = _.omit(bundle.req.headers, ['content-type', 'accept']); // Copy custom headers (ie, auth)
+        let headers = Object.assign(
+          _.omit(bundle.req.headers, ['content-type', 'accept']), // Copy custom headers (ie, auth)
+          Restypie.getHeaderSignature()
+        ); 
         let tasks = [];
 
         if (field.isManyRelation) {
