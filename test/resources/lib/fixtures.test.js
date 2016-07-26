@@ -1,14 +1,18 @@
 'use strict';
 
-const _ = require('lodash');
-
 describe('Resources.FixturesResource', function () {
 
-  for (const routerType of _.values(Restypie.ROUTER_TYPES)) {
+  class FixturesResource extends Restypie.Resources.FixturesResource {
+    createObject(bundle) {
+      return super.createObject(bundle)
+        .then(function (object) {
+          object.createdOn = new Date();
+          return Promise.resolve(object);
+        });
+    }
+  }
 
-    before(function () {
-      Restypie.setRouterType(routerType);
-    });
+  describe('Own tests', function () {
 
     it('should take initialFixtures as base', function () {
       const values = [1, 2, 3];
@@ -26,18 +30,22 @@ describe('Resources.FixturesResource', function () {
       instance.fixtures.should.deep.equal(values);
     });
 
-    require('../../resource-test-suite')({
-      resource: class FixturesResource extends Restypie.Resources.FixturesResource {
-        createObject(bundle) {
-          return super.createObject(bundle)
-            .then(function (object) {
-              object.createdOn = new Date();
-              return Promise.resolve(object);
-            });
-        }
-      }
-    });
+  });
 
-  }
+  describe('Using Express', function () {
+    require('../../resource-test-suite')({
+      routerType: Restypie.RouterTypes.EXPRESS,
+      resource: FixturesResource
+    });
+  });
+
+
+  describe('Using Koa-Router', function () {
+    require('../../resource-test-suite')({
+      routerType: Restypie.RouterTypes.KOA_ROUTER,
+      resource: FixturesResource
+    });
+  });
+
 
 });

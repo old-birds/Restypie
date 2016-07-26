@@ -39,6 +39,8 @@ module.exports = class Route {
    * @default null
    */
   get handler() { return null; }
+  
+  get routerType() { return this._routerType; }
 
   /**
    * The context that was given to the constructor.
@@ -54,6 +56,8 @@ module.exports = class Route {
    * @constructor
    */
   constructor(context) {
+    context = context || {};
+    if (!this.routerType) this._setRouterType(context.routerType);
     Object.defineProperty(this, 'context', { get() { return context; } });
 
     if (!_.isString(this.path)) throw new TypeError(`Object ${this} requires a string "path"`);
@@ -75,16 +79,16 @@ module.exports = class Route {
    * @method createBundleHandler
    */
   createBundleHandler() {
-    switch (Restypie.routerType) {
+    switch (this.routerType) {
 
-      case Restypie.ROUTER_TYPES.EXPRESS:
+      case Restypie.RouterTypes.EXPRESS:
         /* istanbul ignore next */
         return function (req, res, next) {
           req.bundle = new Restypie.Bundle({ req, res });
           return next();
         };
 
-      case Restypie.ROUTER_TYPES.KOA_ROUTER:
+      case Restypie.RouterTypes.KOA_ROUTER:
         /* istanbul ignore next */
         return function *(next) {
           if (this.request.body) this.req.body = this.request.body;
@@ -94,6 +98,11 @@ module.exports = class Route {
           yield next;
         };
     }
+  }
+  
+  _setRouterType(routerType) {
+    Restypie.assertSupportedRouterType(routerType);
+    this._routerType = routerType;
   }
 
 
@@ -107,9 +116,9 @@ module.exports = class Route {
   _registerHandler(handler) {
     handler = handler.bind(this);
 
-    switch (Restypie.routerType) {
+    switch (this.routerType) {
 
-      case Restypie.ROUTER_TYPES.EXPRESS:
+      case Restypie.RouterTypes.EXPRESS:
         /* istanbul ignore next */
         if (handler.length === 1) {
           this._handlers.push(function (req, res, next) { return handler(req.bundle, next); });
@@ -118,7 +127,7 @@ module.exports = class Route {
         }
         break;
 
-      case Restypie.ROUTER_TYPES.KOA_ROUTER:
+      case Restypie.RouterTypes.KOA_ROUTER:
         /* istanbul ignore next */
         this._handlers.push(function *(next) {
           yield handler(this.state.bundle);

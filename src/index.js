@@ -3,25 +3,46 @@
 let packageJSON = require('../package.json');
 let _ = require('lodash');
 
-module.exports = {
+const Restypie = module.exports = {
 
   VERSION: packageJSON.version,
+
+  TEST_ENV: 'restypie-test',
+
+  INTERNAL_HEADER_NAME: 'x-restypie-signature',
+
+  isInternalRequest(headers) {
+    // TODO check user-agent ?
+    // TODO perform some kind of signature check
+    const header = headers[Restypie.INTERNAL_HEADER_NAME];
+    return !!header;
+  },
+
+  getHeaderSignature() {
+    // TODO generate a real secure signature. Allow for custom ones ?
+    return { [Restypie.INTERNAL_HEADER_NAME]: Date.now() };
+  },
 
   OPERATOR_SEPARATOR: '__',
   EQUALITY_OPERATOR: 'eq',
   LIST_SEPARATOR: ',',
   get LIST_SEPARATOR_REG() { return new RegExp('\\\s*' + this.LIST_SEPARATOR + '\\\s*', 'g'); },
 
-  ROUTER_TYPES: {
+  RouterTypes: {
     KOA_ROUTER: 'koa-router',
     EXPRESS: 'express'
   },
-
-  routerType: 'express',
-
-  setRouterType(type) {
-    if (!_.includes(_.values(this.ROUTER_TYPES), type)) throw new Error(`Unsupported router type : ${type}`);
-    this.routerType = type;
+  
+  RESERVED_WORDS: ['limit', 'offset', 'sort', 'select', 'format', 'populate', 'options'],
+  
+  isSupportedRouterType(type) {
+    return _.contains(_.values(Restypie.RouterTypes), type);
+  },
+  
+  assertSupportedRouterType(type) {
+    if (!Restypie.isSupportedRouterType(type)) {
+      throw new Error(`"routerType" should be one of : ${_.values(Restypie.RouterTypes).join(', ')}`);
+    }
   },
 
   listToArray(str) {
@@ -37,6 +58,7 @@ module.exports = {
     options.populate = options.populate || [];
     options.select = options.select || [];
     options.filters = options.filters || {};
+    options.options = options.options || [];
 
     let qs = {};
 
@@ -67,8 +89,168 @@ module.exports = {
     if (options.populate.length) qs.populate = this.arrayToList(options.populate);
     if (options.select.length) qs.select = this.arrayToList(options.select);
     if (options.sort.length) qs.sort = this.arrayToList(options.sort);
+    if (options.options.length) qs.options = this.arrayToList(options.options);
 
     return qs;
+  },
+
+  mergeValuesForOperator(operator, values) {
+    values = Array.from(arguments).filter(value => !_.isUndefined(value));
+    operator = values.shift();
+
+    if (!values.length) return {};
+
+    switch (operator) {
+
+      case 'in':
+        values = _.uniq(values.reduce((acc, current) => {
+          return _.intersection(acc, current);
+        }, values.shift()));
+        if (values.length === 1) return { eq: values[0] };
+        return { in: values };
+
+      case 'nin':
+        values = _.uniq(values.reduce((acc, current) => {
+          return acc.concat(current);
+        }, values.shift()));
+        if (values.length === 1) return { ne: values[0] };
+        return { nin: values };
+
+
+      case 'eq':
+        values = _.uniq(values);
+        if (values.length === 1) return { eq: values[0] };
+        return { in: values };
+
+
+      case 'ne':
+        values = _.uniq(values);
+        if (values.length === 1) return { ne: values[0] };
+        return { nin: values };
+
+
+      case 'gt':
+      case 'gte':
+        values = values.sort();
+        return { [operator]: values.pop() };
+
+      case 'lt':
+      case 'lte':
+        values = values.sort();
+        return { [operator]: values.shift() };
+
+      default:
+        throw new Error(`Don't know how to merge values for operator ${operator}`);
+    }
+  },
+
+  dedupeFilters(filters) {
+    if ('in' in filters) {
+      if (!filters.in.length) { // Nothing else matters, since we're looking for an empty list
+        Object.keys(filters).forEach((operator) => {
+          if (operator !== 'in') delete filters[operator];
+        });
+        return filters;
+      }
+      if ('eq' in filters) {
+        filters.in.push(filters.eq);
+        delete filters.eq;
+      }
+      filters.in = _.uniq(filters.in);
+      if (filters.in.length === 1) {
+        filters.eq = filters.in[0];
+        delete filters.in;
+      }
+    }
+
+    if ('nin' in filters) {
+      if (!filters.nin.length) {
+        delete filters.nin;
+      } else {
+        if ('ne' in filters) {
+          filters.nin.push(filters.ne);
+          delete filters.ne;
+        }
+        filters.nin = _.uniq(filters.nin);
+        if (filters.nin.length === 1) {
+          filters.ne = filters.nin[0];
+          delete filters.nin;
+        }
+      }
+    }
+
+    if (filters.in) {
+      if (filters.nin) filters.nin.forEach((val) => _.pull(filters.in, val));
+      if ('ne' in filters) _.pull(filters.in, filters.ne);
+      if (filters.in.length === 1) {
+        filters.eq = filters.in[0];
+        delete filters.in;
+      }
+    }
+
+    if ('eq' in filters && 'ne' in filters) {
+      filters.in = [];
+      delete filters.eq;
+      delete filters.ne;
+    }
+
+    return filters;
+  },
+  
+  mergeFilters(left, right) {
+    const final = _.uniq(Object.keys(left).concat(Object.keys(right))).reduce((acc, key) => {
+      acc[key] = Restypie.mergeFiltersForKey(left[key], right[key]);
+      return acc;
+    }, {});
+
+    return final;
+  },
+
+
+  mergeFiltersForKey(left, right) {
+    left = left || {};
+    right = right || {};
+
+    const operators = _.uniq(Object.keys(left).concat(Object.keys(right)));
+
+    const allValues = {
+      in: [],
+      nin: [],
+      eq: [],
+      ne: [],
+      gt: [],
+      gte: [],
+      lt: [],
+      lte: []
+    };
+
+    operators.forEach((operator) => {
+      const newFilter = Restypie.mergeValuesForOperator(operator, left[operator], right[operator]);
+      operator = Object.keys(newFilter)[0];
+      if (operator) allValues[operator].push(newFilter[operator]);
+    });
+
+    function findUnFlat() {
+      for (const op of Object.getOwnPropertyNames(allValues)) {
+        if (allValues[op].length > 1) return op;
+      }
+      return null;
+    }
+
+    let unFlat = findUnFlat();
+    while (unFlat) {
+      const newFilter = Restypie.mergeValuesForOperator.apply(null, [unFlat].concat(allValues[unFlat].splice(0)));
+      const operator = Object.keys(newFilter)[0];
+      if (operator) allValues[operator].push(newFilter[operator]);
+      unFlat = findUnFlat();
+    }
+
+    const final = Object.keys(allValues).reduce((acc, operator) => {
+      if (allValues[operator].length) acc[operator] = allValues[operator][0];
+      return acc;
+    }, {});
+
+    return Restypie.dedupeFilters(final);
   },
 
   get API() { return require('./api'); },

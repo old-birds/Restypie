@@ -79,6 +79,7 @@ module.exports = class FixturesResource extends Restypie.Resources.AbstractResou
 
   getObject(bundle, keepInstance) {
     let object = this.filterObjects(bundle)[0];
+    keepInstance = keepInstance === true;
     return Promise.resolve(keepInstance ? object : object ? _.pick(object, bundle.select) : object);
   }
 
@@ -126,6 +127,11 @@ module.exports = class FixturesResource extends Restypie.Resources.AbstractResou
   }
 
   replaceObject() {
+    return Promise.resolve();
+  }
+
+  __reset() {
+    this.resetObjects();
     return Promise.resolve();
   }
 

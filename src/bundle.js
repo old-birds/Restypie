@@ -58,6 +58,8 @@ module.exports = class Bundle {
   get isDelete() { return this._isDelete; }
   
   get hasNestedFilters() { return !!Object.keys(this._nestedFilters || {}).length; }
+  
+  get isRestypieRequest() { return this._isRestypieRequest; }
 
   next(err) {
     return err ? Promise.reject(err) : Promise.resolve(this);
@@ -85,6 +87,7 @@ module.exports = class Bundle {
     this._headers = {};
     this._statusCode = Restypie.Codes.Accepted;
     this._url = URL.parse(this._req.url);
+    this._isRestypieRequest = Restypie.isInternalRequest(this._req.headers);
 
     switch (this._req.method) {
       case 'POST':
@@ -234,22 +237,7 @@ module.exports = class Bundle {
   }
 
   mergeToFilters(filters) {
-    const prev = this._filters = this._filters || {};
-    for (const key in filters) {
-      const prevOperators = prev[key] = prev[key] || {};
-      const newOperators = filters[key];
-      for (const newOperator in newOperators) {
-        if (newOperator in prevOperators) {
-          if (Array.isArray(newOperators[newOperator])) {
-            prevOperators[newOperator] = _.uniq(prevOperators[newOperator].concat(newOperators[newOperator]));
-          } else {
-            prevOperators[newOperator] = newOperators[newOperator];
-          }
-        } else {
-          prevOperators[newOperator] = newOperators[newOperator];
-        }
-      }
-    }
+    this.setFilters(Restypie.mergeFilters(this._filters || {}, filters));
     return this;
   }
 
@@ -292,7 +280,6 @@ module.exports = class Bundle {
 
     return { next: next, prev: prev };
   }
-
 
   _getNavLink(limit, offset) {
     let queryString = QS.stringify(Object.assign({}, this.query, { limit: limit, offset: offset }));

@@ -162,6 +162,11 @@ module.exports = class SequelizeResource extends Restypie.Resources.AbstractReso
   }
 
 
+  __reset() {
+    return this.model.destroy({ where: { [this.primaryKeyPath]: { $ne: null } } });
+  }
+
+
   static formatFilters(filters) {
     filters = _.clone(filters || {});
     let equalityOperator = this.EQUALITY_OPERATOR;

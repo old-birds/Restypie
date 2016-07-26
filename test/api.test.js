@@ -5,7 +5,7 @@ describe('Restypie.API', function () {
 
   describe('constructor', function () {
     it('should instantiate a new API with no options', function () {
-      new Restypie.API();
+      new Restypie.API({ routerType: Restypie.RouterTypes.EXPRESS });
     });
 
     it('should instantiate a new API with a path', function () {

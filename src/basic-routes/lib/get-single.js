@@ -3,7 +3,7 @@
 /***********************************************************************************************************************
  * Dependencies
  **********************************************************************************************************************/
-let Promise = require('bluebird');
+const Promise = require('bluebird');
 
 let Restypie = require('../../');
 
@@ -26,7 +26,12 @@ module.exports = class GetSingleRoute extends Restypie.Route {
     return Promise.try(function () {
       pk = pkField.hydrate(bundle.params.pk);
       bundle.query[pkField.key] = pk;
-      resource.parseParameters(bundle);
+      resource.parseOptions(bundle);
+      resource.parseSelect(bundle);
+      resource.parseFormat(bundle);
+      resource.parseFilters(bundle);
+      resource.parsePopulate(bundle);
+      return bundle.next();
     }).then(resource.getObject.bind(resource, bundle))
       .then(function (object) {
         if (!object) return bundle.next(new Restypie.TemplateErrors.ResourceNotFound({ pk }));

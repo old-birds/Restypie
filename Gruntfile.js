@@ -28,7 +28,7 @@ module.exports = function (grunt) {
      */
     mocha_istanbul: {
       coverage: {
-        src: ['./test/**/*.test.js'],
+        src: args.file || ['./test/**/*.test.js'],
         options: {
           quiet: true,
           recursive: true,
@@ -41,7 +41,7 @@ module.exports = function (grunt) {
       coveralls: {
         src: ['./test/**/*.test.js'],
         options: {
-          quiet: true,
+          // quiet: true,
           coverage: true,
           recursive: true,
           require: [
@@ -73,7 +73,7 @@ module.exports = function (grunt) {
             './test/common.js'
           ]
         },
-        src: ['./test/**/*.test.js']
+        src: args.file || ['./test/**/*.test.js']
       }
     },
 

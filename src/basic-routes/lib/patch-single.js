@@ -3,7 +3,7 @@
 /***********************************************************************************************************************
  * Dependencies
  **********************************************************************************************************************/
-let Promise = require('bluebird');
+const Promise = require('bluebird');
 
 let Restypie = require('../../');
 
@@ -27,6 +27,7 @@ module.exports = class PatchSingleRoute extends Restypie.Route {
       pk = pkField.hydrate(bundle.params.pk);
       bundle.setQuery({ [pkField.key]: pk });
       resource.parseFilters(bundle);
+      return bundle.next();
     }).then(resource.parseBody.bind(resource, bundle))
       .then(resource.hydrate.bind(resource))
       .then(resource.validate.bind(resource))

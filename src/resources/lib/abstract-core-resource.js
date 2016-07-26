@@ -1,7 +1,8 @@
 'use strict';
 
-let Restypie = require('../../');
-let _ = require('lodash');
+const Restypie = require('../../');
+const _ = require('lodash');
+const Url = require('url');
 
 module.exports = class AbstractCoreResource {
 
@@ -12,6 +13,22 @@ module.exports = class AbstractCoreResource {
    * @type Restypie.Fields.AbstractField
    */
   get primaryKeyField() { return this._primaryKeyField; }
+
+  /**
+   * Shortcut to get the resource's primary key path.
+   *
+   * @attribute primaryKeyPath
+   * @type String
+   */
+  get primaryKeyPath() { return this._primaryKeyField.path; }
+
+  /**
+   * Shortcut to get the resource's primary key key.
+   *
+   * @attribute primaryKeyKey
+   * @type String
+   */
+  get primaryKeyKey() { return this._primaryKeyField.key; }
 
   /**
    * All the fields, mapped by `key`.
@@ -29,7 +46,9 @@ module.exports = class AbstractCoreResource {
    */
   get fieldsByPath() { return _.indexBy(this.fields, 'path'); }
 
+  get routerType() { return null; }
 
+  get isGetAllAllowed() { return false; }
 
   constructor() {
     Restypie.Utils.forceAbstract(this, AbstractCoreResource, true);
@@ -51,7 +70,7 @@ module.exports = class AbstractCoreResource {
    */
   _createRoute(Route) {
     Restypie.Utils.isSubclassOf(Route, Restypie.Route, true);
-    return new Route({ resource: this });
+    return new Route({ resource: this, routerType: this.routerType });
   }
 
   /**
@@ -99,6 +118,16 @@ module.exports = class AbstractCoreResource {
     this.fields = fields;
   }
 
+  createClient(options, isRestypie) {
+    options = options || {};
+    const url = Url.parse(this.getFullUrl());
+    const defaultHeaders = Object.assign(isRestypie ? Restypie.getHeaderSignature() : {}, options.defaultHeaders);
+    return new Restypie.Client(Object.assign({}, options, {
+      defaultHeaders,
+      host: Url.format({ host: url.host, protocol: url.protocol }),
+      path: url.pathname
+    }));
+  }
 
   /**
    * Ensures that the resource has one (and only one) primary key field.
