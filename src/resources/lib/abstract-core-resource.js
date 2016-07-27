@@ -118,10 +118,16 @@ module.exports = class AbstractCoreResource {
     this.fields = fields;
   }
 
-  createClient(options, isRestypie) {
+  createClient(options, makeSudo) {
+    if (arguments.length === 1 && options === true) {
+      options = {};
+      makeSudo = true;
+    }
+    
     options = options || {};
+    
     const url = Url.parse(this.getFullUrl());
-    const defaultHeaders = Object.assign(isRestypie ? Restypie.getHeaderSignature() : {}, options.defaultHeaders);
+    const defaultHeaders = Object.assign(makeSudo ? Restypie.getSudoHeader() : {}, options.defaultHeaders);
     return new Restypie.Client(Object.assign({}, options, {
       defaultHeaders,
       host: Url.format({ host: url.host, protocol: url.protocol }),

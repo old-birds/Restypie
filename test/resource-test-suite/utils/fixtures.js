@@ -14,6 +14,7 @@ const ReturnTypes = {
   META: 'meta'
 };
 
+// TODO use Restypie.Client instead ?
 module.exports = function (supertest, app, api) {
 
   return class Fixtures {
@@ -115,11 +116,11 @@ module.exports = function (supertest, app, api) {
     static getResources(path, filters, options) {
       filters = filters || {};
       options = options || {};
-      
+
       return new Promise((resolve, reject) => {
         supertest(app)
           .get(path)
-          .set(options.forceGetAllAllowed ? Restypie.getHeaderSignature() : {})
+          .set(options.forceGetAllAllowed ? Restypie.getSudoHeader() : {})
           .query(Object.assign(
             Restypie.stringify({ filters }),
             Restypie.stringify(_.pick(options, Restypie.RESERVED_WORDS))

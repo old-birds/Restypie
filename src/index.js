@@ -9,18 +9,22 @@ const Restypie = module.exports = {
 
   TEST_ENV: 'restypie-test',
 
-  INTERNAL_HEADER_NAME: 'x-restypie-signature',
+  SUDO_HEADER_NAME: 'x-restypie-signature',
 
-  isInternalRequest(headers) {
+  isSudo(headers) {
     // TODO check user-agent ?
     // TODO perform some kind of signature check
-    const header = headers[Restypie.INTERNAL_HEADER_NAME];
+    const header = headers[Restypie.SUDO_HEADER_NAME];
     return !!header;
   },
+  
+  getSudoHeader() {
+    return { [Restypie.SUDO_HEADER_NAME]: Restypie.getSudoSignature() };
+  },
 
-  getHeaderSignature() {
+  getSudoSignature() {
     // TODO generate a real secure signature. Allow for custom ones ?
-    return { [Restypie.INTERNAL_HEADER_NAME]: Date.now() };
+    return Date.now();
   },
 
   OPERATOR_SEPARATOR: '__',
