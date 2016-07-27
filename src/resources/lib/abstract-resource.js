@@ -601,7 +601,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
       if (parts.length) { // Nested filter
         const field = fieldsMap[baseProp];
         if (field) {
-          // Relations need to explicitely declare that they can be filtered
+          // Relations need to explicitly declare that they can be filtered
           if (!field.isFilterable || !field.to) {
             throw new Restypie.TemplateErrors.NotFilterable({ key: baseProp });
           }
@@ -669,7 +669,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
     select.forEach(function (key) {
       let field;
       if (key === PRIMARY_KEY_KEYWORD) {
-        key = self.primaryKeyField.key;
+        key = self.primaryKeyKey;
         select.splice(select.indexOf(PRIMARY_KEY_KEYWORD), 1, key);
       }
       field = fieldsByKey[key];
@@ -691,7 +691,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
   parsePopulate(bundle) {
     let fieldsByKey = this.fieldsByKey;
     let toPopulate = this.constructor.listToArray(bundle.query.populate).reduce(function (acc, key) {
-      let parts = key.split('.');
+      let parts = key.split('.'); // FIXME shouldn't use "." directly
       let rootKey = parts.shift();
       let field = fieldsByKey[rootKey];
       if (!field) throw new Restypie.TemplateErrors.UnknownPath({ key: rootKey });
@@ -701,7 +701,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
         obj = { key: rootKey, populate: [] };
         acc.push(obj);
       }
-      if (parts.length) obj.populate.push(parts.join('.'));
+      if (parts.length) obj.populate.push(parts.join('.')); // FIXME shouldn't use "." directly
       return acc;
     }, []);
     bundle.setPopulate(toPopulate);
@@ -1018,7 +1018,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
         let toKeyField = resource.fieldsByKey[field.toKey];
         Restypie.Utils.isInstanceOf(toKeyField, Restypie.Fields.AbstractField, true);
 
-        const headers = Object.assign(_.omit(bundle.req.headers, ['content-type', 'accept']));
+        const headers = bundle.safeReqHeaders;
 
         const toClient = resource.createClient({ defaultHeaders: headers }, true);
 

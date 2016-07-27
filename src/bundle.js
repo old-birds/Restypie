@@ -51,6 +51,8 @@ module.exports = class Bundle {
   get nestedFilters() { return this._nestedFilters; }
   get select() { return this._select; }
   get sort() { return this._sort; }
+  
+  get safeReqHeaders() { return _.omit(this._req.headers, ['content-type', 'accept']); }
 
   get isRead() { return this._isRead; }
   get isUpdate() { return this._isUpdate; }
@@ -58,6 +60,8 @@ module.exports = class Bundle {
   get isDelete() { return this._isDelete; }
   
   get hasNestedFilters() { return !!Object.keys(this._nestedFilters || {}).length; }
+  
+  get hasFilters() { return !!Object.keys(this._filters || {}).length; }
   
   get isSudo() { return this._isSudo; }
 
