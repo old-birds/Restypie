@@ -478,7 +478,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
       
       const isOutOfRange = parsedLimit < 0 ||
         parsedLimit > max ||
-        (parsedLimit === 0 && !this.isGetAllAllowed && !bundle.isRestypieRequest);
+        (parsedLimit === 0 && !this.isGetAllAllowed && !bundle.isSudo);
       
       if (isOutOfRange) {
         throw new Restypie.TemplateErrors.OutOfRange({ key: 'limit', value: parsedLimit, min: 1, max });
@@ -739,10 +739,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
     if (!bundle.hasNestedFilters) return bundle.next();
 
     const self = this;
-    const headers = Object.assign(
-      _.omit(bundle.req.headers, ['content-type', 'accept']),
-      Restypie.getHeaderSignature()
-    );
+    const headers = Object.assign(_.omit(bundle.req.headers, ['content-type', 'accept']));
     const nestedFilters = bundle.nestedFilters;
     const primaryKeyPath = self.primaryKeyField.path;
 
@@ -1021,10 +1018,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
         let toKeyField = resource.fieldsByKey[field.toKey];
         Restypie.Utils.isInstanceOf(toKeyField, Restypie.Fields.AbstractField, true);
 
-        const headers = Object.assign(
-          _.omit(bundle.req.headers, ['content-type', 'accept']), // Copy custom headers (ie, auth)
-          Restypie.getHeaderSignature()
-        );
+        const headers = Object.assign(_.omit(bundle.req.headers, ['content-type', 'accept']));
 
         const toClient = resource.createClient({ defaultHeaders: headers }, true);
 
