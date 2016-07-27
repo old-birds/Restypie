@@ -475,7 +475,7 @@ module.exports = function (Fixtures, api) {
       }).then(() => {
         return Fixtures.getUsers({ hasSubscribedEmails: true }, {
           return: Fixtures.ReturnTypes.BODY,
-          options: ['noCount']
+          options: [Restypie.QueryOptions.NO_COUNT]
         }).then((body) => {
           should.not.exist(body.meta.total);
         });

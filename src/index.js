@@ -37,6 +37,12 @@ const Restypie = module.exports = {
     EXPRESS: 'express'
   },
   
+  QueryOptions: {
+    NO_COUNT: 'NO_COUNT',
+    INCLUDE_SCORE: 'INCLUDE_SCORE',
+    SCORE_ONLY: 'SCORE_ONLY'
+  },
+  
   RESERVED_WORDS: ['limit', 'offset', 'sort', 'select', 'format', 'populate', 'options'],
   
   isSupportedRouterType(type) {

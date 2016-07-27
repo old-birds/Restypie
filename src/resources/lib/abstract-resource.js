@@ -168,12 +168,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
    * }
    * ```
    */
-  get options() {
-    // FIXME find a solution to not be able to override some basic options like NO_COUNT
-    return Object.freeze({ // Freezing so that options can't be overridden
-      NO_COUNT: 'noCount'
-    });
-  }
+  get options() { return Object.assign({}, Restypie.QueryOptions); }
 
   /**
    * Fields to be selected by default. By default select all readable fields.
@@ -1038,14 +1033,14 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
             return throughClient.find({ [throughKeyField.key]: object[this.primaryKeyKey] }, {
               limit: 0,
               select: otherThroughKeyField.key,
-              options: this.options.NO_COUNT
+              options: Restypie.QueryOptions.NO_COUNT
             }).then((data) => {
               const ids = _.uniq(_.map(data, otherThroughKeyField.key));
 
               if (ids.length) {
                 return toClient.find({ [toKeyField.key]: { in: ids } }, {
                   limit: 0,
-                  options: this.options.NO_COUNT,
+                  options: Restypie.QueryOptions.NO_COUNT,
                   populate: keyDef.populate
                 }).then((data) => {
                   object[key] = data;
@@ -1059,7 +1054,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
           } else {
             return toClient.find({ [toKeyField.key]: { eq: object[this.primaryKeyKey] } }, {
               limit: 0,
-              options: this.options.NO_COUNT,
+              options: Restypie.QueryOptions.NO_COUNT,
               populate: keyDef.populate
             }).then((data) => {
               object[key] = data;
