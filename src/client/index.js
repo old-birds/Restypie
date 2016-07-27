@@ -1,7 +1,13 @@
 'use strict';
 
-let Query = require('./lib/query');
-let Restypie = require('../');
+const Query = require('./lib/query');
+const Restypie = require('../');
+
+const ReturnTypes = {
+  BODY: 'body',
+  DATA: 'data',
+  META: 'meta'
+};
 
 module.exports = class Client {
 
@@ -59,7 +65,7 @@ module.exports = class Client {
       url: this.url,
       headers: Object.assign({ 'Accept': 'application/json' }, this._defaultHeaders, params.headers)
     }).run().then((body) => {
-      return Promise.resolve(body.data);
+      return Promise.resolve(Client.extractReturn(body, params.returnType));
     });
   }
 
@@ -136,5 +142,16 @@ module.exports = class Client {
       return Promise.resolve(body.meta.total);
     });
   }
+
+  static extractReturn(body, returnType) {
+    switch (returnType) {
+      case ReturnTypes.BODY: return body;
+      case ReturnTypes.META: return body && body.meta;
+      case ReturnTypes.DATA: return body && body.data;
+      default: return body && body.data;
+    }
+  }
+
+  static get ReturnTypes() { return ReturnTypes; }
 
 };
