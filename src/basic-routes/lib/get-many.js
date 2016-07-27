@@ -31,6 +31,18 @@ module.exports = class GetManyRoute extends Restypie.Route {
       resource.parseSort(bundle);
       return bundle.next();
     })
+      .then(() => {
+        const shouldCalculateScore = bundle.hasOption(Restypie.QueryOptions.INCLUDE_SCORE) ||
+          bundle.hasOption(Restypie.QueryOptions.SCORE_ONLY);
+
+        if (shouldCalculateScore) {
+          return resource.getQueryScore(bundle).then((score) => {
+            return bundle.assignToMeta({ score }).next();
+          });
+        } else {
+          return bundle.next();
+        }
+      })
       .then(resource.applyNestedFilters.bind(resource))
       .then(resource.getObjects.bind(resource))
       .then(function (objects) {

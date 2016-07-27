@@ -10,4 +10,6 @@ let Restypie = require('../../');
  * @class Eq
  * @extends Restypie.Operators.AbstractOperator
  **********************************************************************************************************************/
-module.exports = class Eq extends Restypie.Operators.AbstractOperator {};
+module.exports = class Eq extends Restypie.Operators.AbstractOperator {
+  static get filteringWeight() { return 100; }
+};

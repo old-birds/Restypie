@@ -143,6 +143,16 @@ module.exports = class Client {
     });
   }
 
+  getQueryScore(filters, params) {
+    params = params || {};
+    params.options = Restypie.Utils.makeArray(params.options);
+    params.options.push(Restypie.QueryOptions.SCORE_ONLY);
+    params.returnType = ReturnTypes.META;
+    return this.find(filters, params).then((meta) => {
+      return Promise.resolve(meta.score);
+    });
+  }
+
   static extractReturn(body, returnType) {
     switch (returnType) {
       case ReturnTypes.BODY: return body;

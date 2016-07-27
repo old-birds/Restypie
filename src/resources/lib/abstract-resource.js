@@ -75,6 +75,12 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
    */
   get maxLimit() { return DEFAULTS.MAX_LIMIT; }
 
+  /**
+   * @property minQueryScore
+   * @type Number
+   * @default 0
+   */
+  get minQueryScore() { return 0; }
 
   /**
    * Shortcut to get all `isReadable` fields.
@@ -83,6 +89,14 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
    * @type Restypie.Fields.AbstractField[]
    */
   get readableFields() { return this.fields.filter(function (field) { return field.isReadable; }); }
+
+  /**
+   * Shortcut to get all `isFilterable` fields.
+   *
+   * @attribute filterableFields
+   * @type Restypie.Fields.AbstractField[]
+   */
+  get filterableFields() { return this.fields.filter(function (field) { return field.isFilterable; }); }
 
   /**
    * Shortcut to get all `isWritable` fields.
@@ -702,24 +716,130 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
     bundle.setPopulate(toPopulate);
   }
 
+
   /**
+   * Produces a score for this query, according to the fields and operators filteringWeight. Makes distant queries if
+   * necessary to get the
    *
-   * @param {Restypie.Bundle} bundle
+   * @param bundle
+   * @async
+   * @returns {Promise}
+   *
+   * @example
+   *
+   * ```javascript
+   * // Final returned object looks like (including deep nested filters) :
+   *
+   *const score = {
+   *  total: 100,
+   *  filters: {
+   *    id: { eq: 100 },
+   *    tasks: {
+   *      total: 10, // 100 - 10 * 1
+   *      level: 1,
+   *      filters: {
+   *        tokens: {
+   *          total: 60, // 100 - 60 * 2
+   *          level: 2,
+   *          filters: {
+   *            retired_at: { eq: 10 }
+   *          }
+   *        }
+   *      }
+   *    }
+   *  }
+   *}
+   * ```
+   *
+   * // TODO should we also include populate ?
+   * // TODO this function assumes that filters have been parsed and validated
+   * // TODO scores will go from 0.01 to 1, 1 being the best score possible, 0 being reserved for unfiltered queries
+   * // TODO getQueryScore should be async to allow DB calls (ie fine grain some complex filters)
+   * // TODO Only for get many ? Yes, for now (v2.0.0 might be better)
+   * // TODO should filters be added ? substracted ? averaged ?
+   * // TODO nested filters will have to do a request to get the remote index
+   * // TODO nested filters result has to be added to the current index
+   * // TODO if no filters nor nestedFilters, immediately fire 0 (=== unfiltered)
+   * // TODO id X eq should equal Infinity
+   *
    */
-  parseParameters(bundle) {
-    try {
-      this.parseOptions(bundle);
-      this.parseLimit(bundle);
-      this.parseSelect(bundle);
-      this.parseOffset(bundle);
-      this.parseFormat(bundle);
-      this.parseFilters(bundle);
-      this.parsePopulate(bundle);
-      this.parseSort(bundle);
-    } catch (err) {
-      return Promise.reject(err);
+  getQueryScore(bundle) {
+    if (!bundle.hasFilters && !bundle.hasNestedFilters) {
+      return Promise.resolve({ total: 0, filters: {} });
     }
-    return bundle.next();
+
+    const fieldsByPath = this.fieldsByPath;
+    const fieldsByKey = this.fieldsByKey;
+    const displayScores = {};
+    const scores = {};
+    const nestedScores = {};
+
+    const computeAndResolve = () => {
+      let score = 0;
+
+      if (Object.keys(scores).length) {
+        score = Object.keys(scores).reduce((final, key) => {
+          const filter = scores[key];
+          return final * Object.keys(filter).reduce((filterFinal, operator) => {
+            let current = filter[operator];
+            displayScores[key] = displayScores[key] || {};
+            displayScores[key][operator] = current * 100;
+            if (current === 1) current = Infinity;
+            return filterFinal * current;
+          }, 1);
+        }, 1);
+      }
+
+      if (Object.keys(nestedScores).length) {
+      }
+
+      if (score === Infinity) score = 1; // primaryKey
+      
+      return Promise.resolve({
+        total: score * 100,
+        filters: Object.assign(displayScores, nestedScores)
+      });
+    };
+
+    if (bundle.hasFilters) {
+      const filters = bundle.filters;
+      Object.keys(filters).forEach((path) => {
+        Object.keys(filters[path]).forEach((operator) => {
+          const field = fieldsByPath[path];
+          const key = field.key;
+          scores[key] = Object.assign(scores[key] || {}, {
+            [operator]: field.normalizedFilteringWeight * field.getOperatorByName(operator).normalizedFilteringWeight
+          });
+        });
+      });
+    }
+
+    
+    if (bundle.hasNestedFilters) {
+      const nestedFilters = bundle.nestedFilters;
+
+      return Promise.all(Object.keys(nestedFilters).map((key) => {
+        const filters = nestedFilters[key];
+        const field = fieldsByKey[key];
+        const client = field.to.createClient({ defaultHeaders: bundle.safeReqHeaders });
+        return client.getQueryScore(filters).then((score) => {
+          nestedScores[key] = score;
+          return Promise.resolve();
+        });
+      })).then(computeAndResolve);
+
+    } else {
+      return computeAndResolve();
+    }
+  }
+
+  validateQueryScore(score) {
+    let isValid;
+
+    if (Restypie.Utils.isValidNumber(this.minQueryScore)) isValid = score.total >= this.minQueryScore;
+    else isValid = true;
+
+    return Promise.resolve(isValid);
   }
 
   /**
@@ -732,68 +852,74 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
    */
   applyNestedFilters(bundle) {
     if (!bundle.hasNestedFilters) return bundle.next();
+    
+    return this.getQueryScore(bundle)
+      .then((score) => this.validateQueryScore(score))
+      .then((isValid) => {
 
-    const self = this;
-    const headers = Object.assign(_.omit(bundle.req.headers, ['content-type', 'accept']));
-    const nestedFilters = bundle.nestedFilters;
-    const primaryKeyPath = self.primaryKeyField.path;
+        if (!isValid) return Promise.reject(new Restypie.TemplateErrors.RequestOutOfRange());
 
-    return Promise.reduce(Object.keys(nestedFilters), function (acc, key) {
-      const field = self.fieldsByKey[key];
-      const toClient = field.to.createClient({ defaultHeaders: headers }, true);
+        const headers = bundle.safeReqHeaders;
+        const nestedFilters = bundle.nestedFilters;
+        const primaryKeyPath = this.primaryKeyField.path;
 
-      if (field.isManyRelation) {
-        if (field.through) {
-          const throughClient = field.through.createClient({ defaultHeaders: headers }, true);
+        return Promise.reduce(Object.keys(nestedFilters), (acc, key) => {
+          const field = this.fieldsByKey[key];
+          const toClient = field.to.createClient({ defaultHeaders: headers }, true);
 
-          return toClient.find(nestedFilters[key], {
-            select: PRIMARY_KEY_KEYWORD,
-            limit: 0,
-            options: self.options.NO_COUNT
-          }).then((data) => {
-            const ids = data.map(item => item[Object.keys(item)[0]]);
+          if (field.isManyRelation) {
+            if (field.through) {
+              const throughClient = field.through.createClient({ defaultHeaders: headers }, true);
 
-            return throughClient.find({ [field.otherThroughKey]: { in: ids } }, {
+              return toClient.find(nestedFilters[key], {
+                select: PRIMARY_KEY_KEYWORD,
+                limit: 0,
+                options: Restypie.QueryOptions.NO_COUNT
+              }).then((data) => {
+                const ids = data.map(item => item[Object.keys(item)[0]]);
+
+                return throughClient.find({ [field.otherThroughKey]: { in: ids } }, {
+                  limit: 0,
+                  select: field.throughKey,
+                  options: Restypie.QueryOptions.NO_COUNT
+                }).then((data) => {
+                  acc[primaryKeyPath] = Restypie.mergeFiltersForKey(acc[primaryKeyPath], {
+                    in: data.map((item) => { return item[field.throughKey]; })
+                  });
+                  return Promise.resolve(acc);
+                });
+              });
+            } else {
+              return toClient.find(nestedFilters[key], {
+                select: field.toKey,
+                limit: 0,
+                options: Restypie.QueryOptions.NO_COUNT
+              }).then((data) => {
+                acc[primaryKeyPath] = Restypie.mergeFiltersForKey(acc[primaryKeyPath], {
+                  in: data.map((item) => { return item[field.toKey]; })
+                });
+                return Promise.resolve(acc);
+              });
+            }
+          } else {
+            return toClient.find(nestedFilters[key], {
+              select: PRIMARY_KEY_KEYWORD,
               limit: 0,
-              select: field.throughKey,
-              options: self.options.NO_COUNT
+              options: Restypie.QueryOptions.NO_COUNT
             }).then((data) => {
-              acc[primaryKeyPath] = Restypie.mergeFiltersForKey(acc[primaryKeyPath], {
-                in: data.map(function (item) { return item[field.throughKey]; })
+              acc[field.fromKey] = Restypie.mergeFiltersForKey(acc[field.fromKey], {
+                in: data.map((item) => { return item[Object.keys(item)[0]]; })
               });
               return Promise.resolve(acc);
             });
-          });
-        } else {
-          return toClient.find(nestedFilters[key], {
-            select: field.toKey,
-            limit: 0,
-            options: self.options.NO_COUNT
-          }).then((data) => {
-            acc[primaryKeyPath] = Restypie.mergeFiltersForKey(acc[primaryKeyPath], {
-              in: data.map(function (item) { return item[field.toKey]; })
-            });
-            return Promise.resolve(acc);
-          });
-        }
-      } else {
-        return toClient.find(nestedFilters[key], {
-          select: PRIMARY_KEY_KEYWORD,
-          limit: 0,
-          options: self.options.NO_COUNT
-        }).then((data) => {
-          acc[field.fromKey] = Restypie.mergeFiltersForKey(acc[field.fromKey], {
-            in: data.map(function (item) { return item[Object.keys(item)[0]]; })
-          });
-          return Promise.resolve(acc);
+          }
+
+        }, {}).then((filters) => {
+          bundle.mergeToFilters(filters);
+          return bundle.next();
         });
-      }
 
-    }, {}).then(function (filters) {
-      bundle.mergeToFilters(filters);
-      return bundle.next();
-    });
-
+      });
   }
 
   /**

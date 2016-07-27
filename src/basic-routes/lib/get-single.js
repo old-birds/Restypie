@@ -5,7 +5,7 @@
  **********************************************************************************************************************/
 const Promise = require('bluebird');
 
-let Restypie = require('../../');
+const Restypie = require('../../');
 
 /***********************************************************************************************************************
  * @namespace Restypie.BasicRoutes
@@ -32,7 +32,20 @@ module.exports = class GetSingleRoute extends Restypie.Route {
       resource.parseFilters(bundle);
       resource.parsePopulate(bundle);
       return bundle.next();
-    }).then(resource.getObject.bind(resource, bundle))
+    })
+      .then(() => {
+        const shouldCalculateScore = bundle.hasOption(Restypie.QueryOptions.INCLUDE_SCORE) ||
+          bundle.hasOption(Restypie.QueryOptions.SCORE_ONLY);
+
+        if (shouldCalculateScore) {
+          return resource.getQueryScore(bundle).then((score) => {
+            return bundle.assignToMeta({ score }).next();
+          });
+        } else {
+          return bundle.next();
+        }
+      })
+      .then(resource.getObject.bind(resource, bundle))
       .then(function (object) {
         if (!object) return bundle.next(new Restypie.TemplateErrors.ResourceNotFound({ pk }));
         return bundle
