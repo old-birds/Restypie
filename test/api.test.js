@@ -27,6 +27,23 @@ describe('Restypie.API', function () {
       const api = new Restypie.API({ host: 'http://localhost:3000' });
       api.host.should.equal('http://localhost:3000');
     });
+
+    it('should instantiate a new API with routes', function () {
+      class SelfRoute extends Restypie.Route {
+        get path() { return 'foo'; }
+        handler(bundle) {
+          return bundle.res.end('OK');
+        }
+      }
+
+      const api = new Restypie.API({
+        host: 'http://localhost:3000',
+        routerType: Restypie.RouterTypes.EXPRESS,
+        routes: [SelfRoute]
+      });
+      api.routes.should.be.an('array').and.have.lengthOf(1);
+      api.routes[0].should.be.an.instanceOf(SelfRoute);
+    });
   });
 
   describe('#launch()', function () {
@@ -111,6 +128,46 @@ describe('Restypie.API', function () {
       }).should.throw(/named resources/);
     });
 
+  });
+
+  describe('self routes', function () {
+    const supertest = require('supertest');
+    const app = require('express')();
+    const server = require('http').createServer(app);
+    const PORT = 3000;
+
+    const api = new Restypie.API({
+      path: 'my-api',
+      routerType: Restypie.RouterTypes.EXPRESS,
+      routes: [
+        class extends Restypie.Route {
+          get path() { return 'foo'; }
+          handler(bundle) {
+            const res = bundle.res;
+            res.statusCode = Restypie.Codes.OK;
+            res.setHeader('Content-Type', 'application/json');
+            return res.end(JSON.stringify({ foo: 'bar' }));
+          }
+        }
+      ]
+    });
+
+    api.launch(app, { port: PORT });
+
+    before(function (done) {
+      return server.listen(PORT, done);
+    });
+
+
+    it('should be able to access the route', function (done) {
+      return supertest(app)
+        .get('/my-api/foo')
+        .expect(Restypie.Codes.OK, (err, res) => {
+          if (err) return done(err);
+          res.body.should.deep.equal({ foo: 'bar' });
+          return done();
+        });
+    });
   });
 
 });
