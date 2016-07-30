@@ -9,18 +9,22 @@ const Restypie = module.exports = {
 
   TEST_ENV: 'restypie-test',
 
-  INTERNAL_HEADER_NAME: 'x-restypie-signature',
+  SUDO_HEADER_NAME: 'x-restypie-signature',
 
-  isInternalRequest(headers) {
+  isSudo(headers) {
     // TODO check user-agent ?
     // TODO perform some kind of signature check
-    const header = headers[Restypie.INTERNAL_HEADER_NAME];
+    const header = headers[Restypie.SUDO_HEADER_NAME];
     return !!header;
   },
+  
+  getSudoHeader() {
+    return { [Restypie.SUDO_HEADER_NAME]: Restypie.getSudoSignature() };
+  },
 
-  getHeaderSignature() {
+  getSudoSignature() {
     // TODO generate a real secure signature. Allow for custom ones ?
-    return { [Restypie.INTERNAL_HEADER_NAME]: Date.now() };
+    return Date.now();
   },
 
   OPERATOR_SEPARATOR: '__',
@@ -54,11 +58,11 @@ const Restypie = module.exports = {
 
   stringify(options) {
     options = options || {};
-    options.sort = options.sort || [];
-    options.populate = options.populate || [];
-    options.select = options.select || [];
+    options.sort = Restypie.Utils.makeArray(options.sort);
+    options.populate = Restypie.Utils.makeArray(options.populate);
+    options.select = Restypie.Utils.makeArray(options.select);
     options.filters = options.filters || {};
-    options.options = options.options || [];
+    options.options = Restypie.Utils.makeArray(options.options);
 
     let qs = {};
 

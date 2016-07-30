@@ -59,7 +59,7 @@ module.exports = class Bundle {
   
   get hasNestedFilters() { return !!Object.keys(this._nestedFilters || {}).length; }
   
-  get isRestypieRequest() { return this._isRestypieRequest; }
+  get isSudo() { return this._isSudo; }
 
   next(err) {
     return err ? Promise.reject(err) : Promise.resolve(this);
@@ -87,7 +87,7 @@ module.exports = class Bundle {
     this._headers = {};
     this._statusCode = Restypie.Codes.Accepted;
     this._url = URL.parse(this._req.url);
-    this._isRestypieRequest = Restypie.isInternalRequest(this._req.headers);
+    this._isSudo = Restypie.isSudo(this._req.headers);
 
     switch (this._req.method) {
       case 'POST':

@@ -65,6 +65,8 @@ module.exports = class API {
    */
   get routerType() { return this._routerType; }
 
+  get routes() { return this._routes; }
+
 
   /**
    * @constructor
@@ -76,6 +78,14 @@ module.exports = class API {
     if (options.router) this._router = options.router;
     if (options.host) this._setHost(options.host);
     if (options.path) this.setPath(options.path);
+    if (options.routes) {
+      options.routes.forEach(route => Restypie.Utils.isSubclassOf(route, Restypie.Route, true));
+      this._routes = options.routes.map((Route) => {
+        return new Route({ api: this, routerType: this.routerType });
+      });
+    } else {
+      this._routes = [];
+    }
   }
 
 
@@ -99,7 +109,7 @@ module.exports = class API {
     let resources = this._resources;
 
     // List routes from all resources
-    let routes = Object.keys(resources).reduce(function (acc, resourceName) {
+    const routes = Object.keys(resources).reduce(function (acc, resourceName) {
       let resource = resources[resourceName];
       let resourcePath = resource.path;
       return acc.concat(resource.routes.map(function (route) {
@@ -110,7 +120,14 @@ module.exports = class API {
           handlers: route.handlers
         };
       }));
-    }, []);
+    }, []).concat(this._routes.map((selfRoute) => {
+      return {
+        routerType: selfRoute.routerType,
+        method: selfRoute.method,
+        path: Restypie.Url.join('/', apiPath, selfRoute.path).replace(/\/$/, ''),
+        handlers: selfRoute.handlers
+      };
+    }));
 
     // Sort the routes and declare them to the app
     Restypie.RoutesSorter
