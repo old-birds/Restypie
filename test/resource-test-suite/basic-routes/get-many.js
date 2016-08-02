@@ -475,7 +475,7 @@ module.exports = function (Fixtures, api) {
       }).then(() => {
         return Fixtures.getUsers({ hasSubscribedEmails: true }, {
           return: Fixtures.ReturnTypes.BODY,
-          options: ['noCount']
+          options: [Restypie.QueryOptions.NO_COUNT]
         }).then((body) => {
           should.not.exist(body.meta.total);
         });
@@ -557,6 +557,46 @@ module.exports = function (Fixtures, api) {
 
     it('should be able to retrieve users with limit=0 (Restypie sign)', function () {
       return Fixtures.getUsers({}, { limit: 0, forceGetAllAllowed: true });
+    });
+
+    it('should only send back meta.score (and not make calls to DB)', function () {
+      const getObjects = api.resources.users.getObjects;
+      api.resources.users.getObjects = () => { throw new Error('should not have been called') };
+
+      return Fixtures.getUsers({}, {
+        return: Fixtures.ReturnTypes.META,
+        options: Restypie.QueryOptions.SCORE_ONLY
+      }).then((meta) => {
+        meta.should.have.keys(['score']);
+        api.resources.users.getObjects = getObjects;
+      });
+    });
+
+    it('should send back meta.score along with usual properties', function () {
+      return Fixtures.getUsers({}, {
+        return: Fixtures.ReturnTypes.BODY,
+        options: Restypie.QueryOptions.INCLUDE_SCORE
+      }).then((body) => {
+        body.data.should.be.an('array');
+        body.meta.should.have.keys(['total', 'next', 'prev', 'limit', 'offset', 'score']);
+      });
+    });
+
+    it('should NOT be able to fetch users (too much deep nesting)', function () {
+      return Fixtures.getUsers({
+        'slackTeams.channels.slackTeam.channels.slackTeam.name': 'team'
+      }, { statusCode: Restypie.Codes.Forbidden }).then((body) => {
+        body.code.should.equal('RequestOutOfRangeError');
+      });
+    });
+
+    it('should not be able to fetch users (score is too low)', function () {
+      return Fixtures.getUsers({
+        createdOn: { gt: 0 },
+        'slackTeams.channels.name': 'Team'
+      }, { statusCode: Restypie.Codes.Forbidden }).then((body) => {
+        body.code.should.equal('RequestOutOfRangeError');
+      });
     });
 
   });

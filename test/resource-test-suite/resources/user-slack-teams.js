@@ -20,8 +20,8 @@ module.exports = function () {
         // TODO this should be a virtual property as lookup tables do not necessarily have a single primaryKey
         id: { type: 'int', isPrimaryKey: true },
   
-        user: { type: 'int', isFilterable: true, isWritable: true },
-        slackTeam: { type: 'int', isFilterable: true, isWritable: true }
+        user: { type: 'int', isFilterable: true, isWritable: true, filteringWeight: 80 },
+        slackTeam: { type: 'int', isFilterable: true, isWritable: true, filteringWeight: 30 }
       };
     }
   }

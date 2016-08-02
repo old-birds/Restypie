@@ -3,9 +3,7 @@
 /***********************************************************************************************************************
  * Dependencies
  **********************************************************************************************************************/
-const Promise = require('bluebird');
-
-let Restypie = require('../../');
+const Restypie = require('../../');
 
 /***********************************************************************************************************************
  * @namespace Restypie.BasicRoutes
@@ -19,34 +17,33 @@ module.exports = class GetSingleRoute extends Restypie.Route {
   get path() { return '/:pk'; }
 
   handler(bundle) {
+    const resource = this.context.resource;
+    const pipeline = bundle.createPipeline(resource.exit, resource);
     let pk;
-    let resource = this.context.resource;
     let pkField = resource.primaryKeyField;
 
-    return Promise.try(function () {
-      pk = pkField.hydrate(bundle.params.pk);
-      bundle.query[pkField.key] = pk;
-      resource.parseOptions(bundle);
-      resource.parseSelect(bundle);
-      resource.parseFormat(bundle);
-      resource.parseFilters(bundle);
-      resource.parsePopulate(bundle);
-      return bundle.next();
-    }).then(resource.getObject.bind(resource, bundle))
-      .then(function (object) {
-        if (!object) return bundle.next(new Restypie.TemplateErrors.ResourceNotFound({ pk }));
-        return bundle
-          .setData(object)
-          .setStatusCode(Restypie.Codes.OK)
-          .next();
+    return pipeline
+      .add((bundle) => {
+        pk = pkField.hydrate(bundle.params.pk);
+        bundle.query[pkField.key] = pk;
+        resource.parseOptions(bundle);
+        resource.parseSelect(bundle);
+        resource.parseFormat(bundle);
+        resource.parseFilters(bundle);
+        resource.parsePopulate(bundle);
       })
-      .then(resource.dehydrate.bind(resource))
-      .then(resource.populate.bind(resource))
-      .catch (function (err) {
-        return bundle.setError(err).next();
+      .add((bundle) => {
+        return resource.getObject(bundle).then((object) => {
+          if (!object) return bundle.next(new Restypie.TemplateErrors.ResourceNotFound({ pk }));
+          return bundle
+            .setData(object)
+            .setStatusCode(Restypie.Codes.OK)
+            .next();
+        });
       })
-      .then(resource.serialize.bind(resource))
-      .then(resource.respond.bind(resource));
+      .add(resource.dehydrate)
+      .add(resource.populate)
+      .run();
   }
 
 };
