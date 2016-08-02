@@ -20,6 +20,7 @@ module.exports = class Query {
     this._populate = options.populate || [];
     this._headers = options.headers || {};
     this._select = options.select || [];
+    this._options = options.options || [];
     this._hasBeenRan = false;
     this._body = options.body;
     this.data = null;
@@ -63,7 +64,8 @@ module.exports = class Query {
       select: this._select,
       populate: this._populate,
       limit: this._limit,
-      offset: this._offset
+      offset: this._offset,
+      options: this._options
     });
   }
 

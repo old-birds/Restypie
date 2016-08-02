@@ -61,6 +61,7 @@ module.exports = class Client {
       offset: params.offset,
       populate: params.populate,
       select: params.select,
+      options: params.options,
       sort: params.sort,
       url: this.url,
       headers: Object.assign({ 'Accept': 'application/json' }, this._defaultHeaders, params.headers)
@@ -74,6 +75,7 @@ module.exports = class Client {
     return new Query({
       method: Restypie.Methods.GET,
       populate: params.populate,
+      options: params.options,
       select: params.select,
       url: Restypie.Url.join(this.url, id),
       headers: Object.assign({ 'Accept': 'application/json' }, this._defaultHeaders, params.headers)
@@ -91,6 +93,7 @@ module.exports = class Client {
       offset: 0,
       sort: params.sort,
       populate: params.populate,
+      options: params.options,
       select: params.select,
       url: this.url,
       headers: Object.assign({ 'Accept': 'application/json' }, this._defaultHeaders, params.headers)
@@ -149,7 +152,7 @@ module.exports = class Client {
     params.options.push(Restypie.QueryOptions.SCORE_ONLY);
     params.returnType = ReturnTypes.META;
     return this.find(filters, params).then((meta) => {
-      return Promise.resolve(meta.score);
+      return meta.score;
     });
   }
 
