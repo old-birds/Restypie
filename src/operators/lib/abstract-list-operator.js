@@ -15,6 +15,7 @@ module.exports = class AbstractListOperator extends Restypie.Operators.AbstractO
   static get SEPARATOR() { return /\s*,\s*/; }
 
   static parse(value) {
+    if (!value.length) return [];
     return value.split(this.SEPARATOR);
   }
 };

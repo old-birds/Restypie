@@ -56,7 +56,7 @@ const Restypie = module.exports = {
   },
 
   listToArray(str) {
-    if (!str) return [];
+    if (!str || !str.length) return [];
     return str.split(this.LIST_SEPARATOR_REG);
   },
 
