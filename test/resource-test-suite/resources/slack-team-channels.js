@@ -20,7 +20,7 @@ module.exports = function (options) {
     get schema() {
       return {
         id: { type: 'int', isPrimaryKey: true },
-        name: { type: String, isWritable: true, isReadable: true },
+        name: { type: String, isWritable: true, isFilterable: true, filteringWeight: 100 },
         slackTeam: {
           type: 'int',
           to() { return api.resources.slackTeams; },

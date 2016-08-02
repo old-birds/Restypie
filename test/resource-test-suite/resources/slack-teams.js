@@ -20,7 +20,7 @@ module.exports = function (options) {
     get schema() {
       return {
         id: { type: 'int', isPrimaryKey: true },
-        name: { type: String, isWritable: true, isFilterable: true },
+        name: { type: String, isWritable: true, isFilterable: true, filteringWeight: 100 },
         users: {
           type: Restypie.Fields.ToManyField,
           to() { return api.resources.users; },
@@ -33,7 +33,7 @@ module.exports = function (options) {
           type: Restypie.Fields.ToManyField,
           to() { return api.resources.slackTeamChannels; },
           toKey: 'slackTeam',
-          isReadable: true
+          isFilterable: true
         }
       };
     }
