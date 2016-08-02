@@ -208,12 +208,10 @@ const Restypie = module.exports = {
   },
   
   mergeFilters(left, right) {
-    const final = _.uniq(Object.keys(left).concat(Object.keys(right))).reduce((acc, key) => {
+    return _.uniq(Object.keys(left).concat(Object.keys(right))).reduce((acc, key) => {
       acc[key] = Restypie.mergeFiltersForKey(left[key], right[key]);
       return acc;
     }, {});
-
-    return final;
   },
 
 
