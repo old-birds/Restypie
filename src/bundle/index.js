@@ -3,11 +3,12 @@
 /***********************************************************************************************************************
  * Dependencies
  **********************************************************************************************************************/
-let _ = require('lodash');
-let QS = require('querystring');
-let URL = require('url');
+const _ = require('lodash');
+const QS = require('querystring');
+const URL = require('url');
 
-let Restypie = require('./');
+const Restypie = require('../');
+const TaskPipeline = require('./lib/task-pipeline');
 
 /***********************************************************************************************************************
  * @namespace Restypie
@@ -64,6 +65,16 @@ module.exports = class Bundle {
   get hasFilters() { return !!Object.keys(this._filters || {}).length; }
   
   get isSudo() { return this._isSudo; }
+  
+  get shouldCalculateQueryScore() {
+    const includeScore = this.hasOption(Restypie.QueryOptions.INCLUDE_SCORE);
+    const scoreOnly = this.hasOption(Restypie.QueryOptions.SCORE_ONLY);
+    return includeScore || scoreOnly || (!this._isSudo && (this.limit === 0 || this.hasNestedFilters));
+  }
+  
+  get shouldValidateQueryScore() {
+    return this.shouldCalculateQueryScore && (this.limit === 0 || this.hasNestedFilters);
+  }
 
   next(err) {
     return err ? Promise.reject(err) : Promise.resolve(this);
@@ -219,7 +230,6 @@ module.exports = class Bundle {
     this._select = Array.isArray(select) ? select : [select];
   }
 
-
   setLimit(value) {
     this._limit = value;
     return this;
@@ -288,6 +298,10 @@ module.exports = class Bundle {
   _getNavLink(limit, offset) {
     let queryString = QS.stringify(Object.assign({}, this.query, { limit: limit, offset: offset }));
     return this._url.pathname + '?' + QS.unescape(queryString);
+  }
+
+  createPipeline(exit, context) {
+    return new TaskPipeline({ bundle: this, exit, context });
   }
 
 };
