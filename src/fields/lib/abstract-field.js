@@ -3,9 +3,14 @@
 /***********************************************************************************************************************
  * Dependencies
  **********************************************************************************************************************/
-let _ = require('lodash');
+const _ = require('lodash');
 
-let Restypie = require('../../');
+const Restypie = require('../../');
+
+const AUTO_FILTERING_WEIGHT = Symbol('AUTO_FILTERING_WEIGHT');
+const MAX_FILTERING_WEIGHT = 100;
+const MIN_FILTERING_WEIGHT = 1;
+
 
 /***********************************************************************************************************************
  * Abstract class for fields.
@@ -54,6 +59,10 @@ module.exports = class AbstractField {
     return _.isString(this._fromKey) ? this._fromKey : this.key;
   }
 
+  get filteringWeight() { return this._filteringWeight; }
+  
+  get normalizedFilteringWeight() { return (this._filteringWeight || MIN_FILTERING_WEIGHT) / 100; }
+
   /**
    * @constructor
    */
@@ -81,6 +90,9 @@ module.exports = class AbstractField {
     if (this.isFilterable) this.isReadable = true;
     this.isUpdatable = this.isWritableOnce ? false : this.isWritable;
 
+    if ('filteringWeight' in options) this.setFilteringWeight(options.filteringWeight);
+    else this.setFilteringWeight(AUTO_FILTERING_WEIGHT);
+
     if (options.hasOwnProperty('default')) {
       this.hasDefault = true;
       this.default = options.default;
@@ -99,6 +111,20 @@ module.exports = class AbstractField {
         if (!this.throughKey) throw new Error('ManyToMany relation defined without a `throughKey`');
         if (!this.otherThroughKey) throw new Error('ManyToMany relation defined without a `otherThroughKey`');
       }
+    }
+  }
+
+  setFilteringWeight(weight) {
+    if (weight === AUTO_FILTERING_WEIGHT) {
+      this.setFilteringWeight(this.isPrimaryKey ? MAX_FILTERING_WEIGHT : MIN_FILTERING_WEIGHT);
+    } else {
+      if (!Restypie.Utils.isValidNumber(weight)) {
+        throw new Error(`filteringWeight must be a valid number, got ${weight}`);
+      }
+      if (weight < MIN_FILTERING_WEIGHT || weight > MAX_FILTERING_WEIGHT) {
+        throw new Error(`filteringWeight must be at least ${MIN_FILTERING_WEIGHT} and ${MAX_FILTERING_WEIGHT} at most`);
+      }
+      this._filteringWeight = weight;
     }
   }
 
@@ -175,6 +201,10 @@ module.exports = class AbstractField {
       if (operator.stringName === operatorName) return operator;
     }
   }
+
+  static get AUTO_FILTERING_WEIGHT() { return AUTO_FILTERING_WEIGHT; }
+  static get MAX_FILTERING_WEIGHT() { return MAX_FILTERING_WEIGHT; }
+  static get MIN_FILTERING_WEIGHT() { return MIN_FILTERING_WEIGHT; }
 
   /**
    * Turns `"null"` and `"undefined"` into `null` and `undefined`, otherwise lets `value` untouched.

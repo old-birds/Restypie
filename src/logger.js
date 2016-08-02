@@ -1,12 +1,12 @@
 'use strict';
 
-let Winston = require('winston');
+const Winston = require('winston');
 
-let Restypie = require('./');
+const Restypie = require('./');
 
 /* istanbul ignore next */
-let logger = new Winston.Logger({
-  level: process.env.RESTYPIE_DEBUG || 'error',
+const logger = new Winston.Logger({
+  level: process.env.RESTYPIE_DEBUG || process.env.NODE_ENV === 'development' ? 'warn' : 'error',
   transports: [
     new Winston.transports.Console({
       timestamp() { return new Date().toISOString(); },

@@ -147,7 +147,8 @@ module.exports = {
    */
   BadType: class BadTypeError extends AbstractBadRequestError {
     static template(meta) {
-      return `Expected path "${meta.key}" to be of type "${meta.expected}", got "${meta.type || typeof meta.value}".`;
+      return `Expected path "${meta.key}" to be of type "${meta.expected}", ` +
+        `got "${meta.type || typeof meta.value}" ("${meta.value}").`;
     }
   },
 

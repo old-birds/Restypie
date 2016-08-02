@@ -8,6 +8,7 @@ module.exports = function (options) {
     get path() { return '/users'; }
     get maxLimit() { return 50; }
     get upsertPaths() { return [['email']]; }
+    get minQueryScore() { return 15; }
     get routes() {
       return [
         Restypie.BasicRoutes.PostRoute,
@@ -23,16 +24,17 @@ module.exports = function (options) {
     get schema() {
       return {
         theId: { type: 'int', path: 'id', isPrimaryKey: true, isFilterable: true, isWritable: true },
-        firstName: { path: 'fName', type: String, isRequired: true, isFilterable: true },
-        lastName: { path: 'lName', type: String, isRequired: true, isFilterable: true },
-        email: { type: String, isRequired: true, isFilterable: true },
+        firstName: { path: 'fName', type: String, isRequired: true, isFilterable: true, filteringWeight: 30 },
+        lastName: { path: 'lName', type: String, isRequired: true, isFilterable: true, filteringWeight: 80 },
+        email: { type: String, isRequired: true, isFilterable: true, filteringWeight: 100 },
         yearOfBirth: {
           path: 'year',
           type: 'int',
           min: 1900,
           max: new Date().getFullYear(),
           isRequired: true,
-          isFilterable: true
+          isFilterable: true,
+          filteringWeight: 20
         },
         password: {
           path: 'pw',
@@ -46,13 +48,15 @@ module.exports = function (options) {
           isWritable: true,
           isFilterable: true,
           to() { return api.resources.jobs; },
-          fromKey: 'job'
+          fromKey: 'job',
+          filteringWeight: 10
         },
         otherJobPopulation: {
           type: Restypie.Fields.ToOneField,
           isReadable: true,
           to() { return api.resources.jobs; },
-          fromKey: 'job'
+          fromKey: 'job',
+          filteringWeight: 10
         },
         profilePicture: {
           path: 'pic',

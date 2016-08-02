@@ -1,7 +1,13 @@
 'use strict';
 
-let Query = require('./lib/query');
-let Restypie = require('../');
+const Query = require('./lib/query');
+const Restypie = require('../');
+
+const ReturnTypes = {
+  BODY: 'body',
+  DATA: 'data',
+  META: 'meta'
+};
 
 module.exports = class Client {
 
@@ -55,11 +61,12 @@ module.exports = class Client {
       offset: params.offset,
       populate: params.populate,
       select: params.select,
+      options: params.options,
       sort: params.sort,
       url: this.url,
       headers: Object.assign({ 'Accept': 'application/json' }, this._defaultHeaders, params.headers)
     }).run().then((body) => {
-      return Promise.resolve(body.data);
+      return Promise.resolve(Client.extractReturn(body, params.returnType));
     });
   }
 
@@ -68,6 +75,7 @@ module.exports = class Client {
     return new Query({
       method: Restypie.Methods.GET,
       populate: params.populate,
+      options: params.options,
       select: params.select,
       url: Restypie.Url.join(this.url, id),
       headers: Object.assign({ 'Accept': 'application/json' }, this._defaultHeaders, params.headers)
@@ -85,6 +93,7 @@ module.exports = class Client {
       offset: 0,
       sort: params.sort,
       populate: params.populate,
+      options: params.options,
       select: params.select,
       url: this.url,
       headers: Object.assign({ 'Accept': 'application/json' }, this._defaultHeaders, params.headers)
@@ -136,5 +145,26 @@ module.exports = class Client {
       return Promise.resolve(body.meta.total);
     });
   }
+
+  getQueryScore(filters, params) {
+    params = params || {};
+    params.options = Restypie.Utils.makeArray(params.options);
+    params.options.push(Restypie.QueryOptions.SCORE_ONLY);
+    params.returnType = ReturnTypes.META;
+    return this.find(filters, params).then((meta) => {
+      return meta.score;
+    });
+  }
+
+  static extractReturn(body, returnType) {
+    switch (returnType) {
+      case ReturnTypes.BODY: return body;
+      case ReturnTypes.META: return body && body.meta;
+      case ReturnTypes.DATA: return body && body.data;
+      default: return body && body.data;
+    }
+  }
+
+  static get ReturnTypes() { return ReturnTypes; }
 
 };

@@ -31,6 +31,12 @@ const Utils = module.exports = {
     }
     return !!isSubclass;
   },
+  
+  assertIsSubclassOf(Child, Parent) {
+    if (!Utils.isSubclassOf(Child, Parent)) {
+      throw new TypeError(`Object ${Child} should be a "${Parent.name}" subclass`);
+    }
+  },
 
   /**
    * Checks whether or not `obj` is an instance of `Constructor`.
@@ -51,6 +57,12 @@ const Utils = module.exports = {
       throw new TypeError(`Object ${obj} should be a "${Constructor.name}" instance`);
     }
     return !!isInstance;
+  },
+
+  assertIsInstanceOf(obj, Constructor) {
+    if (!Utils.isInstanceOf(obj, Constructor)) {
+      throw new TypeError(`Object ${obj} should be a "${Constructor.name}" instance`);
+    }
   },
 
   /**

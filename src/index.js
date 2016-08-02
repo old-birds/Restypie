@@ -37,6 +37,12 @@ const Restypie = module.exports = {
     EXPRESS: 'express'
   },
   
+  QueryOptions: {
+    NO_COUNT: 'NO_COUNT',
+    INCLUDE_SCORE: 'INCLUDE_SCORE',
+    SCORE_ONLY: 'SCORE_ONLY'
+  },
+  
   RESERVED_WORDS: ['limit', 'offset', 'sort', 'select', 'format', 'populate', 'options'],
   
   isSupportedRouterType(type) {
@@ -50,7 +56,7 @@ const Restypie = module.exports = {
   },
 
   listToArray(str) {
-    if (!str) return [];
+    if (!str || !str.length) return [];
     return str.split(this.LIST_SEPARATOR_REG);
   },
 
@@ -202,12 +208,10 @@ const Restypie = module.exports = {
   },
   
   mergeFilters(left, right) {
-    const final = _.uniq(Object.keys(left).concat(Object.keys(right))).reduce((acc, key) => {
+    return _.uniq(Object.keys(left).concat(Object.keys(right))).reduce((acc, key) => {
       acc[key] = Restypie.mergeFiltersForKey(left[key], right[key]);
       return acc;
     }, {});
-
-    return final;
   },
 
 
@@ -274,6 +278,7 @@ const Restypie = module.exports = {
   get Operators() { return require('./operators'); },
   get Client() { return require('./client'); },
   get Query() { return require('./client/lib/query'); },
-  get Logger() { return require('./logger'); }
+  get Logger() { return require('./logger'); },
+  get QueryScore() { return require('./query-score'); }
 
 };

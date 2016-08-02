@@ -75,6 +75,19 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
    */
   get maxLimit() { return DEFAULTS.MAX_LIMIT; }
 
+  /**
+   * @property minQueryScore
+   * @type Number
+   * @default 0
+   */
+  get minQueryScore() { return 0; }
+
+  /**
+   * @property maxDeepLevel
+   * @type Number
+   * @default 5
+   */
+  get maxDeepLevel() { return 5; }
 
   /**
    * Shortcut to get all `isReadable` fields.
@@ -83,6 +96,14 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
    * @type Restypie.Fields.AbstractField[]
    */
   get readableFields() { return this.fields.filter(function (field) { return field.isReadable; }); }
+
+  /**
+   * Shortcut to get all `isFilterable` fields.
+   *
+   * @attribute filterableFields
+   * @type Restypie.Fields.AbstractField[]
+   */
+  get filterableFields() { return this.fields.filter(function (field) { return field.isFilterable; }); }
 
   /**
    * Shortcut to get all `isWritable` fields.
@@ -168,12 +189,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
    * }
    * ```
    */
-  get options() {
-    // FIXME find a solution to not be able to override some basic options like NO_COUNT
-    return Object.freeze({ // Freezing so that options can't be overridden
-      NO_COUNT: 'noCount'
-    });
-  }
+  get options() { return Object.assign({}, Restypie.QueryOptions); }
 
   /**
    * Fields to be selected by default. By default select all readable fields.
@@ -601,7 +617,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
       if (parts.length) { // Nested filter
         const field = fieldsMap[baseProp];
         if (field) {
-          // Relations need to explicitely declare that they can be filtered
+          // Relations need to explicitly declare that they can be filtered
           if (!field.isFilterable || !field.to) {
             throw new Restypie.TemplateErrors.NotFilterable({ key: baseProp });
           }
@@ -669,7 +685,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
     select.forEach(function (key) {
       let field;
       if (key === PRIMARY_KEY_KEYWORD) {
-        key = self.primaryKeyField.key;
+        key = self.primaryKeyKey;
         select.splice(select.indexOf(PRIMARY_KEY_KEYWORD), 1, key);
       }
       field = fieldsByKey[key];
@@ -691,7 +707,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
   parsePopulate(bundle) {
     let fieldsByKey = this.fieldsByKey;
     let toPopulate = this.constructor.listToArray(bundle.query.populate).reduce(function (acc, key) {
-      let parts = key.split('.');
+      let parts = key.split('.'); // FIXME shouldn't use "." directly
       let rootKey = parts.shift();
       let field = fieldsByKey[rootKey];
       if (!field) throw new Restypie.TemplateErrors.UnknownPath({ key: rootKey });
@@ -701,30 +717,42 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
         obj = { key: rootKey, populate: [] };
         acc.push(obj);
       }
-      if (parts.length) obj.populate.push(parts.join('.'));
+      if (parts.length) obj.populate.push(parts.join('.')); // FIXME shouldn't use "." directly
       return acc;
     }, []);
     bundle.setPopulate(toPopulate);
   }
 
+
   /**
+   * Produces a score for this query, according to the fields and operators filteringWeight. Makes distant queries if
+   * necessary to get the nested filters scores.
    *
-   * @param {Restypie.Bundle} bundle
+   * @param bundle
+   * @async
+   * @returns {Promise}
    */
-  parseParameters(bundle) {
-    try {
-      this.parseOptions(bundle);
-      this.parseLimit(bundle);
-      this.parseSelect(bundle);
-      this.parseOffset(bundle);
-      this.parseFormat(bundle);
-      this.parseFilters(bundle);
-      this.parsePopulate(bundle);
-      this.parseSort(bundle);
-    } catch (err) {
-      return Promise.reject(err);
-    }
-    return bundle.next();
+  getQueryScore(bundle) {
+    return Restypie.QueryScore.compute(this.fields, bundle);
+  }
+
+  /**
+   * Validates that both total score and maximum level has respected
+   *
+   *
+   * @param score
+   * @returns {Promise.<boolean>}
+   */
+  validateQueryScore(score) {
+    let isValid;
+
+    if (Restypie.Utils.isValidNumber(this.minQueryScore)) isValid = score.total >= this.minQueryScore;
+    else isValid = true;
+
+
+    if (Restypie.Utils.isValidNumber(this.maxDeepLevel)) isValid &= score.maxLevel <= this.maxDeepLevel;
+
+    return Promise.resolve(!!isValid);
   }
 
   /**
@@ -738,13 +766,12 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
   applyNestedFilters(bundle) {
     if (!bundle.hasNestedFilters) return bundle.next();
 
-    const self = this;
-    const headers = Object.assign(_.omit(bundle.req.headers, ['content-type', 'accept']));
+    const headers = bundle.safeReqHeaders;
     const nestedFilters = bundle.nestedFilters;
-    const primaryKeyPath = self.primaryKeyField.path;
+    const primaryKeyPath = this.primaryKeyField.path;
 
-    return Promise.reduce(Object.keys(nestedFilters), function (acc, key) {
-      const field = self.fieldsByKey[key];
+    return Promise.reduce(Object.keys(nestedFilters), (acc, key) => {
+      const field = this.fieldsByKey[key];
       const toClient = field.to.createClient({ defaultHeaders: headers }, true);
 
       if (field.isManyRelation) {
@@ -754,17 +781,17 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
           return toClient.find(nestedFilters[key], {
             select: PRIMARY_KEY_KEYWORD,
             limit: 0,
-            options: self.options.NO_COUNT
+            options: Restypie.QueryOptions.NO_COUNT
           }).then((data) => {
             const ids = data.map(item => item[Object.keys(item)[0]]);
 
             return throughClient.find({ [field.otherThroughKey]: { in: ids } }, {
               limit: 0,
               select: field.throughKey,
-              options: self.options.NO_COUNT
+              options: Restypie.QueryOptions.NO_COUNT
             }).then((data) => {
               acc[primaryKeyPath] = Restypie.mergeFiltersForKey(acc[primaryKeyPath], {
-                in: data.map(function (item) { return item[field.throughKey]; })
+                in: data.map((item) => { return item[field.throughKey]; })
               });
               return Promise.resolve(acc);
             });
@@ -773,10 +800,10 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
           return toClient.find(nestedFilters[key], {
             select: field.toKey,
             limit: 0,
-            options: self.options.NO_COUNT
+            options: Restypie.QueryOptions.NO_COUNT
           }).then((data) => {
             acc[primaryKeyPath] = Restypie.mergeFiltersForKey(acc[primaryKeyPath], {
-              in: data.map(function (item) { return item[field.toKey]; })
+              in: data.map((item) => { return item[field.toKey]; })
             });
             return Promise.resolve(acc);
           });
@@ -785,20 +812,19 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
         return toClient.find(nestedFilters[key], {
           select: PRIMARY_KEY_KEYWORD,
           limit: 0,
-          options: self.options.NO_COUNT
+          options: Restypie.QueryOptions.NO_COUNT
         }).then((data) => {
           acc[field.fromKey] = Restypie.mergeFiltersForKey(acc[field.fromKey], {
-            in: data.map(function (item) { return item[Object.keys(item)[0]]; })
+            in: data.map((item) => { return item[Object.keys(item)[0]]; })
           });
           return Promise.resolve(acc);
         });
       }
 
-    }, {}).then(function (filters) {
+    }, {}).then((filters) => {
       bundle.mergeToFilters(filters);
       return bundle.next();
     });
-
   }
 
   /**
@@ -1018,7 +1044,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
         let toKeyField = resource.fieldsByKey[field.toKey];
         Restypie.Utils.isInstanceOf(toKeyField, Restypie.Fields.AbstractField, true);
 
-        const headers = Object.assign(_.omit(bundle.req.headers, ['content-type', 'accept']));
+        const headers = bundle.safeReqHeaders;
 
         const toClient = resource.createClient({ defaultHeaders: headers }, true);
 
@@ -1038,14 +1064,14 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
             return throughClient.find({ [throughKeyField.key]: object[this.primaryKeyKey] }, {
               limit: 0,
               select: otherThroughKeyField.key,
-              options: this.options.NO_COUNT
+              options: Restypie.QueryOptions.NO_COUNT
             }).then((data) => {
               const ids = _.uniq(_.map(data, otherThroughKeyField.key));
 
               if (ids.length) {
                 return toClient.find({ [toKeyField.key]: { in: ids } }, {
                   limit: 0,
-                  options: this.options.NO_COUNT,
+                  options: Restypie.QueryOptions.NO_COUNT,
                   populate: keyDef.populate
                 }).then((data) => {
                   object[key] = data;
@@ -1059,7 +1085,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
           } else {
             return toClient.find({ [toKeyField.key]: { eq: object[this.primaryKeyKey] } }, {
               limit: 0,
-              options: this.options.NO_COUNT,
+              options: Restypie.QueryOptions.NO_COUNT,
               populate: keyDef.populate
             }).then((data) => {
               object[key] = data;
@@ -1081,6 +1107,11 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
       }));
 
     })).then(function () { return bundle.next(); });
+  }
+  
+  
+  exit(bundle) {
+    return this.serialize(bundle).then(this.respond.bind(this, bundle));
   }
 
   /**
@@ -1149,10 +1180,9 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
         break;
     }
 
-
     if (typeof payload === 'object') payload = JSON.stringify(payload);
-    
-    return res.end(payload || '');
+
+    res.end(payload || '');
   }
 
 
