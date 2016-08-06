@@ -1,7 +1,7 @@
 'use strict';
 
 // For external callers
-global.should = require('chai').should;
+global.should = require('chai').should();
 
 /***********************************************************************************************************************
  * Dependencies
