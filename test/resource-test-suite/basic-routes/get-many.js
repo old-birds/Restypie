@@ -2,6 +2,8 @@
 
 const Promise = require('bluebird');
 
+const Restypie = require('../../../');
+
 module.exports = function (Fixtures, api) {
 
   describe('GET many', function () {

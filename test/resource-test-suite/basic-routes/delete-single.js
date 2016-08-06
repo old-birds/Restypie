@@ -1,5 +1,7 @@
 'use strict';
 
+const Restypie = require('../../../');
+
 module.exports = function (Fixtures) {
 
   describe('DELETE single', function () {

@@ -4,6 +4,7 @@ const _ = require('lodash');
 const Promise = require('bluebird');
 
 const Utils = require('./');
+const Restypie = require('../../../');
 
 let UUID = 0;
 

@@ -7,6 +7,7 @@ const express = require('express');
 const koa = require('koa');
 const http = require('http');
 const KoaRouter = require('koa-router');
+const Restypie = require('../../');
 
 const SERVER_PORT = 3333;
 
