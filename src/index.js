@@ -279,6 +279,7 @@ const Restypie = module.exports = {
   get Client() { return require('./client'); },
   get Query() { return require('./client/lib/query'); },
   get Logger() { return require('./logger'); },
-  get QueryScore() { return require('./query-score'); }
+  get QueryScore() { return require('./query-score'); },
+  get ResourceTester() { return require('./resource-tester'); }
 
 };
