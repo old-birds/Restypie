@@ -1,5 +1,8 @@
 'use strict';
 
+// For external callers
+global.should = require('chai').should;
+
 /***********************************************************************************************************************
  * Dependencies
  **********************************************************************************************************************/
@@ -10,6 +13,7 @@ const KoaRouter = require('koa-router');
 const Restypie = require('../../');
 
 const SERVER_PORT = 3333;
+
 
 /***********************************************************************************************************************
  * Resource tests suite. Run your implementation against this test suite to verify that it supports the basics of the
