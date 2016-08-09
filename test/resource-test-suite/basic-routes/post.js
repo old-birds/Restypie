@@ -200,6 +200,32 @@ module.exports = function(Fixtures, api) {
         body.meta.keys.should.deep.equal({ email: 'john.doe@example.com' });
       });
     });
+
+    it('should create multiple users (no profile picture)', function () {
+      const data = [{
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'john.doe@example.com',
+        yearOfBirth: 1986,
+        password: 'Passw0rd',
+        hasSubscribedEmails: true,
+        gender: 'male'
+      }, {
+        firstName: 'Jane',
+        lastName: 'Doe',
+        email: 'jane.doe@example.com',
+        yearOfBirth: 1988,
+        password: 'Passw0rd',
+        hasSubscribedEmails: true,
+        gender: 'female'
+      }];
+
+      return Fixtures.createUsers(data).then((users) => {
+        should.exist(users);
+        users.should.be.an('array').and.have.lengthOf(2);
+        users.forEach(user => user.theId.should.be.a('number'));
+      });
+    });
   });
   
 };
