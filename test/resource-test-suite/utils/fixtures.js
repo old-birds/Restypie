@@ -101,6 +101,19 @@ module.exports = function (supertest, app, api) {
       });
     }
 
+    static createResources(path, data, options) {
+      options = options || {};
+      return new Promise((resolve, reject) => {
+        supertest(app)
+          .post(path)
+          .send(data)
+          .expect(options.statusCode || Restypie.Codes.Created, (err, res) => {
+            if (err) return reject(err);
+            return resolve(Fixtures.extractReturn(res, options));
+          });
+      });
+    }
+
     static getResource(path, id, options) {
       options = options || {};
       return new Promise((resolve, reject) => {
@@ -262,6 +275,10 @@ module.exports = function (supertest, app, api) {
      */
     static createUser(data, options) {
       return Fixtures.createResource('/v1/users', data, options);
+    }
+    
+    static createUsers(data, options) {
+      return Fixtures.createResources('/v1/users', data, options);
     }
 
     static generateUser(generator) {
