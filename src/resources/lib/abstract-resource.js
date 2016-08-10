@@ -543,7 +543,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
    */
   parseSort(bundle) {
     let fieldsByKey = this.fieldsByKey;
-    let sort = this.constructor.listToArray(bundle.query.sort);
+    let sort = Restypie.listToArray(bundle.query.sort);
     sort.forEach(function (key) {
       key = key.replace(/^-/, '');
       let field = fieldsByKey[key];
@@ -681,7 +681,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
   parseSelect(bundle) {
     const self = this;
     let fieldsByKey = this.fieldsByKey;
-    let select = this.constructor.listToArray(bundle.query.select);
+    let select = Restypie.listToArray(bundle.query.select);
     select.forEach(function (key) {
       let field;
       if (key === PRIMARY_KEY_KEYWORD) {
@@ -706,7 +706,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
    */
   parsePopulate(bundle) {
     let fieldsByKey = this.fieldsByKey;
-    let toPopulate = this.constructor.listToArray(bundle.query.populate).reduce(function (acc, key) {
+    let toPopulate = Restypie.listToArray(bundle.query.populate).reduce(function (acc, key) {
       let parts = key.split('.'); // FIXME shouldn't use "." directly
       let rootKey = parts.shift();
       let field = fieldsByKey[rootKey];
@@ -1332,10 +1332,5 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
   static get EQUALITY_OPERATOR() { return 'eq'; }
 
   static get DEEP_PROPERTY_SEPARATOR() { return '.'; }
-
-  static listToArray(str) {
-    if (!str) return [];
-    return str.split(this.LIST_SEPARATOR);
-  }
 
 };
