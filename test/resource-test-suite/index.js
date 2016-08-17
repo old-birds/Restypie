@@ -1,5 +1,8 @@
 'use strict';
 
+// For external callers
+global.should = require('chai').should();
+
 /***********************************************************************************************************************
  * Dependencies
  **********************************************************************************************************************/
@@ -7,8 +10,10 @@ const express = require('express');
 const koa = require('koa');
 const http = require('http');
 const KoaRouter = require('koa-router');
+const Restypie = require('../../');
 
 const SERVER_PORT = 3333;
+
 
 /***********************************************************************************************************************
  * Resource tests suite. Run your implementation against this test suite to verify that it supports the basics of the
@@ -92,7 +97,7 @@ module.exports = function (options) {
    * BEGIN tests
    ****************************************/
 
-  require('./basic-routes/post-single')(Fixtures, api, supertest, app);
+  require('./basic-routes/post')(Fixtures, api, supertest, app);
   require('./basic-routes/get-single')(Fixtures, api, supertest, app);
   require('./basic-routes/get-many')(Fixtures, api, supertest, app);
   require('./basic-routes/patch-single')(Fixtures, api, supertest, app);

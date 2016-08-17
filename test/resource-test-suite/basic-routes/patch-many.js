@@ -2,6 +2,8 @@
 
 const Path = require('path');
 
+const Restypie = require('../../../');
+
 module.exports = function (Fixtures) {
 
   describe('PATCH many', function () {

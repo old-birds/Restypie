@@ -47,6 +47,10 @@ describe('Restypie', function () {
     it('should return an empty array if no string', function () {
       Restypie.listToArray().should.deep.equal([]);
     });
+    it('should return str if it s an array', function () {
+      const arr = [1, 2, 3];
+      Restypie.listToArray(arr).should.equal(arr);
+    });
   });
 
   describe('.arrayToList()', function () {

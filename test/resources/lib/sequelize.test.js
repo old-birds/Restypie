@@ -1,6 +1,8 @@
 'use strict';
 
 const Sequelize = require('sequelize');
+const express = require('express');
+const http = require('http');
 
 const db = new Sequelize('restypie_test', 'root', '', {
   host: 'localhost',
@@ -96,46 +98,64 @@ describe('Resources.SequelizeResource', function () {
     });
   });
 
-  // describe('Own tests', function () {
-  //
-  //   // FIXME those tests should use their own data
-  //
-  //   it('should map min validation error', function () {
-  //     return api.resources.users.createObject({
-  //       body: {
-  //         fName : 'Sequelize',
-  //         lName : 'Sequelize',
-  //         email : 'sequelizewrongdate@example.com',
-  //         year  : 1850, // Too small
-  //         pw    : 'Passw0rd',
-  //         emails: true,
-  //         gender: 'male'
-  //       }
-  //     }).catch(function (err) {
-  //       err.code.should.equal('OutOfRangeError');
-  //       err.meta.key.should.equal('yearOfBirth');
-  //       return Promise.resolve();
-  //     });
-  //   });
-  //
-  //   it('should map min validation error', function () {
-  //     return api.resources.users.createObject({
-  //       body: {
-  //         fName : 'Sequelize',
-  //         lName : 'Sequelize',
-  //         email : 'sequelizewrongdate@example.com',
-  //         year  : new Date().getFullYear() + 10, // Too big
-  //         pw    : 'Passw0rd',
-  //         emails: true,
-  //         gender: 'male'
-  //       }
-  //     }).catch(function (err) {
-  //       err.code.should.equal('OutOfRangeError');
-  //       err.meta.key.should.equal('yearOfBirth');
-  //       return Promise.resolve();
-  //     });
-  //   });
-  //
-  // });
+  describe('Own tests', function () {
+
+    const app = express();
+    const api = new Restypie.API({ path: 'v1', routerType: Restypie.RouterTypes.EXPRESS });
+    const PORT = 8333;
+    const server = http.createServer(app);
+
+    const UsersResource = require('../../resource-test-suite/resources/users')({
+      api,
+      resource: SequelizeResource
+    });
+
+    api
+      .registerResources({ users: UsersResource })
+      .launch(app, { port: PORT });
+
+
+
+    before(function (cb) {
+      return server.listen(PORT, cb);
+    });
+
+    it('should map min validation error', function () {
+      return api.resources.users.createObject({
+        body: {
+          fName : 'Sequelize',
+          lName : 'Sequelize',
+          email : 'sequelizewrongdate@example.com',
+          year  : 1850, // Too small
+          pw    : 'Passw0rd',
+          emails: true,
+          gender: 'male'
+        }
+      }).catch(function (err) {
+        err.code.should.equal('OutOfRangeError');
+        err.meta.key.should.equal('yearOfBirth');
+        return Promise.resolve();
+      });
+    });
+
+    it('should map max validation error', function () {
+      return api.resources.users.createObject({
+        body: {
+          fName : 'Sequelize',
+          lName : 'Sequelize',
+          email : 'sequelizewrongdate@example.com',
+          year  : new Date().getFullYear() + 10, // Too big
+          pw    : 'Passw0rd',
+          emails: true,
+          gender: 'male'
+        }
+      }).catch(function (err) {
+        err.code.should.equal('OutOfRangeError');
+        err.meta.key.should.equal('yearOfBirth');
+        return Promise.resolve();
+      });
+    });
+
+  });
 
 });

@@ -1,5 +1,7 @@
 'use strict';
 
+const Restypie = require('../../../');
+
 module.exports = function (options) {
 
   const api = options.api;
@@ -11,7 +13,7 @@ module.exports = function (options) {
     get minQueryScore() { return 15; }
     get routes() {
       return [
-        Restypie.BasicRoutes.PostRoute,
+        class extends Restypie.BasicRoutes.PostRoute { get allowsMany() { return true; } },
         Restypie.BasicRoutes.GetSingleRoute,
         Restypie.BasicRoutes.GetManyRoute,
         Restypie.BasicRoutes.PatchSingleRoute,

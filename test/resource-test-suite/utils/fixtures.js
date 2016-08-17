@@ -4,6 +4,7 @@ const _ = require('lodash');
 const Promise = require('bluebird');
 
 const Utils = require('./');
+const Restypie = require('../../../');
 
 let UUID = 0;
 
@@ -95,6 +96,19 @@ module.exports = function (supertest, app, api) {
             if (Restypie.Codes.isErrorCode(res.statusCode) && options.rejectOnError) {
               return reject(Fixtures.extractReturn(res));
             }
+            return resolve(Fixtures.extractReturn(res, options));
+          });
+      });
+    }
+
+    static createResources(path, data, options) {
+      options = options || {};
+      return new Promise((resolve, reject) => {
+        supertest(app)
+          .post(path)
+          .send(data)
+          .expect(options.statusCode || Restypie.Codes.Created, (err, res) => {
+            if (err) return reject(err);
             return resolve(Fixtures.extractReturn(res, options));
           });
       });
@@ -261,6 +275,10 @@ module.exports = function (supertest, app, api) {
      */
     static createUser(data, options) {
       return Fixtures.createResource('/v1/users', data, options);
+    }
+    
+    static createUsers(data, options) {
+      return Fixtures.createResources('/v1/users', data, options);
     }
 
     static generateUser(generator) {
