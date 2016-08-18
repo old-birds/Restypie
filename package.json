@@ -2,7 +2,7 @@
   "name": "restypie",
   "main": "./src/index",
   "description": "Tastypie inspired, lightweight and storage agnostic REST resources manager",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "repository": "https://github.com/SylvainEstevez/Restypie",
   "bugs": "https://github.com/SylvainEstevez/Restypie/issues",
   "engines": {
