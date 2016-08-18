@@ -48,6 +48,7 @@ module.exports = {
   get NotImplemented() { return require('./lib/not-implemented'); },
   get UnsupportedMediaType() { return require('./lib/unsupported-media-type'); },
   get NotAcceptable() { return require('./lib/not-acceptable'); },
-  get Unauthorized() { return require('./lib/unauthorized'); }
+  get Unauthorized() { return require('./lib/unauthorized'); },
+  get Conflict() { return require('./lib/conflict'); }
 
 };
