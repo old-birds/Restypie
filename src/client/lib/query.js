@@ -39,7 +39,8 @@ module.exports = class Query {
         headers: this._headers,
         qs: this._buildQueryString(),
         body: this._body,
-        json: true
+        json: true,
+        gzip: true
       };
 
       return request(this.options, (err, res, body) => {
