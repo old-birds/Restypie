@@ -83,6 +83,25 @@ class StringField extends Restypie.Fields.AbstractField {
   }
 
   /**
+   * Casts `value` into a `String` if its type is `String`, `Number` or `undefined`.
+   *
+   * **Throws:**
+   * - `Restypie.TemplateErrors.BadType`: If 'value' is not a `String`, `Number`, `undefined` or `null`.
+   *
+   * @method dehydrate
+   * @param {*} value
+   * @return {String}
+   */
+  dehydrate(value) {
+    value = super.dehydrate(value);
+    if (_.isUndefined(value)) return '';
+    if (_.isNull(value)) return null;
+    if (_.isString(value)) return value;
+    if (Restypie.Utils.isValidNumber(value)) return value.toString();
+    throw new Restypie.TemplateErrors.BadType({ key: this.key, value, expected: this.displayType });
+  }
+
+  /**
    * Validates that `value` fulfills the `options` requirements, such as `minLength`, ...
    *
    * **Throws:**

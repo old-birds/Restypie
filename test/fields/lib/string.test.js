@@ -84,6 +84,33 @@ describe('Restypie.Fields.StringField', function () {
 
   });
 
+  describe('.dehydrate', function () {
+    let stringField = new StringField('foo', {});
+
+    it('should return null for an undefined argument', function () {
+      should.equal(stringField.dehydrate(undefined), '');
+    });
+
+    it('should return null for a null argument', function () {
+      should.equal(stringField.dehydrate(null), null);
+    });
+
+    it('should return the argument value', function () {
+      stringField.dehydrate('bar').should.equal('bar');
+    });
+
+    it('should stringify the argument number', function () {
+      stringField.dehydrate(123).should.equal('123');
+    });
+
+    it('should throw an error if not a string or a number', function () {
+      (function () {
+        stringField.dehydrate({});
+      }).should.throw(Restypie.TemplateErrors.BadType);
+    });
+
+  });
+
   describe('.validate', function () {
 
     it('should be valid (no constraints)', function () {
