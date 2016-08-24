@@ -60,6 +60,14 @@ describe('Restypie.Fields.StringField', function () {
   describe('.hydrate', function () {
     let stringField = new StringField('foo', {});
 
+    it('should return null for an undefined argument', function () {
+      should.equal(stringField.hydrate(undefined), '');
+    });
+
+    it('should return null for a null argument', function () {
+      should.equal(stringField.hydrate(null), null);
+    });
+
     it('should return the argument value', function () {
       stringField.hydrate('bar').should.equal('bar');
     });
