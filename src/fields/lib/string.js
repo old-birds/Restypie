@@ -64,10 +64,10 @@ class StringField extends Restypie.Fields.AbstractField {
   }
 
   /**
-   * Casts `value` into a `String` if its type is `String` or `Number`.
+   * Casts `value` into a `String` if its type is `String`, `Number` or `undefined`.
    *
    * **Throws:**
-   * - `Restypie.TemplateErrors.BadType`: If 'value' is not a `String` or a `Number`.
+   * - `Restypie.TemplateErrors.BadType`: If 'value' is not a `String`, `Number`, `undefined` or `null`.
    *
    * @method hydrate
    * @param {*} value
