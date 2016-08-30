@@ -30,7 +30,6 @@ module.exports = function (grunt) {
       coverage: {
         src: args.file || ['./test/**/*.test.js'],
         options: {
-          quiet: true,
           recursive: true,
           require: [
             './test/common.js'
