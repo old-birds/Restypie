@@ -101,7 +101,7 @@ module.exports = class Bundle {
     this._params = this._req.params;
     this._headers = {};
     this._statusCode = Restypie.Codes.Accepted;
-    this._url = URL.parse(this._req.url);
+    this._url = URL.parse(options.url || this._req.url);
     this._isSudo = Restypie.isSudo(this._req.headers);
 
     switch (this._req.method) {

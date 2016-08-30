@@ -79,12 +79,15 @@ module.exports = class Route {
    * @method createBundleHandler
    */
   createBundleHandler() {
+    // Use the resource's path as base url for the bundle
+    const url = this.context.resource ? Restypie.Url.join(this.context.resource.fullDisplayPath, this.path) : null;
+
     switch (this.routerType) {
 
       case Restypie.RouterTypes.EXPRESS:
         /* istanbul ignore next */
         return function (req, res, next) {
-          req.bundle = new Restypie.Bundle({ req, res });
+          req.bundle = new Restypie.Bundle({ req, res, url });
           return next();
         };
 
@@ -94,7 +97,7 @@ module.exports = class Route {
           if (this.request.body) this.req.body = this.request.body;
           this.req.params = this.params; // Copy params so that we don't have to parse them
           this.req.query = this.query;
-          this.state.bundle = new Restypie.Bundle({ req: this.req, res: this.res });
+          this.state.bundle = new Restypie.Bundle({ req: this.req, res: this.res, url });
           yield next;
         };
     }

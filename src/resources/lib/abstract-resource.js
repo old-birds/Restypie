@@ -41,6 +41,17 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
   get path() { return null; }
 
   /**
+   * Path to be used when building `next` and `prev`, defaults to the resource's path. Useful to allow
+   *
+   * @property displayPath
+   * @type String
+   * @default path
+   */
+  get displayPath() { return this.path; }
+
+  get fullDisplayPath() { return Restypie.Url.join('/', this.api.path, this.displayPath); }
+
+  /**
    * @property schema
    * @type Object
    * @default {}
