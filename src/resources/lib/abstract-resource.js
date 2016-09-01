@@ -244,6 +244,15 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
     if (!Utils.isValidNumber(this.defaultLimit)) throw new TypeError('Property `defaultLimit` should be a number');
     if (!Utils.isValidNumber(this.maxLimit)) throw new TypeError('Property `maxLimit` should be a number');
     
+    const schema = this.schema;
+
+    if (this.defaultSelect) {
+      const defaultSelect = this.defaultSelect;
+      for (const select in defaultSelect) {
+        if (!schema.hasOwnProperty(defaultSelect[select]))
+          throw new Error('Schema doesnt have this property ' + this.defaultSelect[select]);
+      }
+    }
   }
 
 

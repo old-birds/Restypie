@@ -39,6 +39,14 @@ module.exports = function (Fixtures) {
       });
     });
 
+    it('should populate resouce', function () {
+      return Fixtures.generateMyResource().then((resource) => {
+        return Fixtures.getMyResource(resource.id);
+      }).then((resource) => {
+        resource.should.have.keys(['id', 'name']);
+      });
+    });
+
     it('should populate users on jobs resource', function () {
       const usersCount = 2;
 

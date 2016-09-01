@@ -41,6 +41,7 @@ module.exports = function (options) {
   const SlackTeamsResource = require('./resources/slack-teams')(options);
   const UserSlackTeamsResource = require('./resources/user-slack-teams')(options);
   const SlackTeamChannelsResource = require('./resources/slack-team-channels')(options);
+  const MyResource = require('./resources/my-resources')(options);
 
   switch (options.routerType) {
 
@@ -68,7 +69,8 @@ module.exports = function (options) {
       users: UsersResource,
       slackTeams: SlackTeamsResource,
       userSlackTeams: UserSlackTeamsResource,
-      slackTeamChannels: SlackTeamChannelsResource
+      slackTeamChannels: SlackTeamChannelsResource,
+      myResources: MyResource
     })
     .launch(router, { port: SERVER_PORT });
 
