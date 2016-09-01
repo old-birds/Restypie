@@ -454,6 +454,24 @@ module.exports = function (supertest, app, api) {
     static generateSlackTeamChannels(count, generator) {
       return Fixtures.generateResources(count, generator, Fixtures.generateSlackTeamChannel);
     }
+
+    /*******************************************************************************************************************
+     * MyResource
+     */
+    static createMyResource(data, options) {
+      return Fixtures.createResource('/v1/my-resources', data, options);
+    }
+
+    static generateMyResource(generator) {
+      const data = Object.assign({
+        name: `Resource-${Fixtures.uuid()}`
+      }, Fixtures.parameterToGenerator(generator)());
+
+      return Fixtures.createMyResource(data, { rejectOnError: true });
+    }
+    static getMyResource(id, options) {
+      return Fixtures.getResource('/v1/my-resources', id, options);
+    }
     
   };
 
