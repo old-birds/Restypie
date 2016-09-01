@@ -247,7 +247,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
     const schema = this.schema;
 
     if (this.defaultSelect) {
-      this.defaultSelect.forEach(function (keyItem) {
+      this.defaultSelect.forEach(keyItem => {
         if (!schema.hasOwnProperty(keyItem)) {
           throw new Error('Schema doesnt have this property ' + keyItem);
         }
