@@ -70,6 +70,24 @@ module.exports = class Client {
     });
   }
 
+  findWithPath(path, filters, params) {
+    params = params || {};
+    return new Query({
+      method: Restypie.Methods.GET,
+      filters: filters,
+      limit: params.limit,
+      offset: params.offset,
+      populate: params.populate,
+      select: params.select,
+      options: params.options,
+      sort: params.sort,
+      url: Restypie.Url.join(this.url, path),
+      headers: Object.assign({ 'Accept': 'application/json' }, this._defaultHeaders, params.headers)
+    }).run().then((body) => {
+      return Promise.resolve(Client.extractReturn(body, params.returnType));
+    });
+  }
+
   findById(id, params) {
     params = params || {};
     return new Query({
