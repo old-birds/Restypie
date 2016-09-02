@@ -34,6 +34,10 @@ const MIN_FILTERING_WEIGHT = 1;
 module.exports = class AbstractField {
 
   get isRelation() { return false; }
+  
+  get hasTo() { return this._hasTo; }
+  
+  get hasThrough() { return this._hasThrough; }
 
   get supportedOperators() { return [Restypie.Operators.Eq]; }
 
@@ -83,12 +87,14 @@ module.exports = class AbstractField {
     }
 
     if (options.hasOwnProperty('to')) {
+      this._hasTo = true;
       this.isPopulable = true;
       this._to = options.to;
       this._toKey = options.toKey;
       this._fromKey = options.fromKey;
 
       if (options.hasOwnProperty('through')) {
+        this._hasThrough = true;
         this._through = options.through;
         this.throughKey = options.throughKey;
         this.otherThroughKey = options.otherThroughKey;

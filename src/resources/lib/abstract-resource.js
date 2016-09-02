@@ -795,7 +795,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
       const toClient = field.getToResource(bundle.flatFilters).createClient({ defaultHeaders: headers }, true);
 
       if (field.isManyRelation) {
-        if (field.through) {
+        if (field.hasThrough) {
           const throughClient = field.getThroughResource(bundle.flatFilters)
             .createClient({ defaultHeaders: headers }, true);
 

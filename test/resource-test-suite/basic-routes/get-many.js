@@ -504,7 +504,7 @@ module.exports = function (Fixtures, api) {
       });
     });
 
-    it.only('should deeply filter (N-N relation)', function () {
+    it('should deeply filter (N-N relation)', function () {
       const usersCount = 4;
 
       return Promise.props({
@@ -601,14 +601,14 @@ module.exports = function (Fixtures, api) {
       });
     });
     
-    it('should populate dynamicRelation with a user', function () {
+    it('should populate dynamicRelation with a slackTeamChannel', function () {
       return Fixtures.createJob({ name: 'developer' }).then(() => {
-        return Fixtures.generateUser().then(() => {
+        return Fixtures.generateSlackTeamChannel().then(() => {
           return Fixtures.getJobs({}, { populate: ['dynamicRelation'] }).then(jobs => {
             const job = jobs[0];
             should.exist(job);
             should.exist(job.dynamicRelation);
-            job.dynamicRelation.should.contain.keys(['theId']);
+            job.dynamicRelation.should.contain.keys(['slackTeam']);
           });
         });
       });

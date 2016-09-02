@@ -31,7 +31,7 @@ module.exports = function (options) {
           type: Restypie.Fields.ToOneField,
           to: (object) => {
             switch (object.name) {
-              case 'developer': return api.resources.users;
+              case 'developer': return api.resources.slackTeamChannels;
               case 'other': return api.resources.slackTeams;
               default: throw new Restypie.RestErrors.BadRequest(`Can't find resource for name ${object.name}`);
             }
