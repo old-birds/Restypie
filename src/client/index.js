@@ -1,6 +1,5 @@
 'use strict';
 
-const _ = require('lodash');
 const Query = require('./lib/query');
 const Restypie = require('../');
 
@@ -121,7 +120,7 @@ module.exports = class Client {
       headers: Object.assign({ 'Content-Type': 'application/json' }, this._defaultHeaders, params.headers)
     }).run().then(() => undefined);
   }
-  
+
   update(filters, updates, params) {
     params = params || {};
     return new Query({
@@ -133,7 +132,7 @@ module.exports = class Client {
     }).run().then(() => undefined);
   }
 
-  query(method = Restypie.Methods.GET, path, filters, params) {
+  query(method, path, filters, params) {
     params = params || {};
     return new Query({
       method: method,
