@@ -73,7 +73,10 @@ describe('Restypie', function () {
           date: now,
           int: 1,
           float: 2.34,
-          bar: { gte: 1 }
+          bar: { gte: 1 },
+          null: null,
+          arrayWithNullAndUndefined: { in: [null, undefined] },
+          undefined: undefined
         },
         limit: 10,
         offset: 10,
@@ -81,7 +84,8 @@ describe('Restypie', function () {
         populate: ['external'],
         select: ['bar', 'baz'],
         options: ['noCount']
-      }).should.deep.equal({ foo__in: 'bar,baz',
+      }).should.deep.equal({
+        foo__in: 'bar,baz',
         bool: false,
         date: now,
         int: 1,
@@ -92,7 +96,10 @@ describe('Restypie', function () {
         populate: 'external',
         select: 'bar,baz',
         sort: '-bar,baz',
-        options: 'noCount'
+        options: 'noCount',
+        null: 'null',
+        undefined: 'undefined',
+        arrayWithNullAndUndefined__in: 'null,undefined'
       });
     });
   });

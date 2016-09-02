@@ -82,15 +82,15 @@ const Restypie = module.exports = {
           switch (operator) {
             case 'in':
             case 'nin':
-              qs[operandKey] = this.arrayToList(value);
+              qs[operandKey] = this.arrayToList(value.map(Restypie.javascriptToString));
               break;
             default:
-              qs[operandKey] = value;
+              qs[operandKey] = Restypie.javascriptToString(value);
               break;
           }
         });
       } else {
-        qs[key] = filter;
+        qs[key] = Restypie.javascriptToString(filter);
       }
     });
 
@@ -103,6 +103,12 @@ const Restypie = module.exports = {
     if (options.options.length) qs.options = this.arrayToList(options.options);
 
     return qs;
+  },
+
+  javascriptToString(value) {
+    if (value === null) return 'null';
+    if (value === undefined) return 'undefined';
+    return value;
   },
 
   mergeValuesForOperator(operator, values) {
