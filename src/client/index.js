@@ -120,7 +120,7 @@ module.exports = class Client {
       headers: Object.assign({ 'Content-Type': 'application/json' }, this._defaultHeaders, params.headers)
     }).run().then(() => undefined);
   }
-  
+
   update(filters, updates, params) {
     params = params || {};
     return new Query({
@@ -130,6 +130,24 @@ module.exports = class Client {
       url: this.url,
       headers: Object.assign({ 'Content-Type': 'application/json' }, this._defaultHeaders, params.headers)
     }).run().then(() => undefined);
+  }
+
+  query(method, path, filters, params) {
+    params = params || {};
+    return new Query({
+      method: method,
+      filters: filters,
+      limit: params.limit,
+      offset: params.offset,
+      sort: params.sort,
+      populate: params.populate,
+      options: params.options,
+      select: params.select,
+      url: path ? Restypie.Url.join(this.url, path) : this.url,
+      headers: Object.assign({ 'Accept': 'application/json' }, this._defaultHeaders, params.headers)
+    }).run().then((body) => {
+      return Promise.resolve(body.data);
+    });
   }
 
   count(filters, params) {

@@ -20,10 +20,26 @@ class PostRoute extends Restypie.BasicRoutes.PostRoute {
   get allowsMany() { return true; }
 }
 
+class CustomRoute extends Restypie.Route {
+  get method() { return Restypie.Methods.GET; }
+  get path() { return '/custom'; }
+  handler(bundle) {
+    const resource = this.context.resource;
+    const pipeline = bundle.createPipeline(resource.exit, resource);
+
+    return pipeline
+      .add((bundle) => {
+        return bundle.setData({ custom: true }).setStatusCode(Restypie.Codes.OK);
+      })
+      .run()
+  }
+}
+
 class UsersResource extends Restypie.Resources.FixturesResource {
   get path() { return 'users'; }
   get routes() {
     return [
+      CustomRoute,
       PostRoute,
       Restypie.BasicRoutes.GetSingleRoute,
       Restypie.BasicRoutes.GetManyRoute,
@@ -390,6 +406,17 @@ describe('Restypie.Client', function () {
         nock.cleanAll();
       });
     });
+  });
+
+  describe('#query', function () {
+
+    it('should allow for a custom path', function () {
+      const client = usersResource.createClient();
+      return client.query(Restypie.Methods.GET, 'custom').then(function (customData) {
+        customData.should.eql({ custom: true })
+      });
+    });
+
   });
 
   describe('#count', function () {
