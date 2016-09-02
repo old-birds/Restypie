@@ -1059,7 +1059,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
       let data = Array.isArray(bundle.data) ? bundle.data : [bundle.data];
 
       return Promise.all(data.map((object) => {
-        if (Restypie.Utils.isNone(object[key]) && !field.isRelation) return Promise.resolve();
+        if (Restypie.Utils.isNone(object[field.fromKey]) && !field.isRelation) return Promise.resolve();
 
         let toKeyField = resource.fieldsByKey[field.toKey];
         Restypie.Utils.isInstanceOf(toKeyField, Restypie.Fields.AbstractField, true);
