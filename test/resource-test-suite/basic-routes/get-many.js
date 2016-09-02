@@ -504,7 +504,7 @@ module.exports = function (Fixtures, api) {
       });
     });
 
-    it('should deeply filter (N-N relation)', function () {
+    it.only('should deeply filter (N-N relation)', function () {
       const usersCount = 4;
 
       return Promise.props({
@@ -600,7 +600,41 @@ module.exports = function (Fixtures, api) {
         body.code.should.equal('RequestOutOfRangeError');
       });
     });
+    
+    it('should populate dynamicRelation with a user', function () {
+      return Fixtures.createJob({ name: 'developer' }).then(() => {
+        return Fixtures.generateUser().then(() => {
+          return Fixtures.getJobs({}, { populate: ['dynamicRelation'] }).then(jobs => {
+            const job = jobs[0];
+            should.exist(job);
+            should.exist(job.dynamicRelation);
+            job.dynamicRelation.should.contain.keys(['theId']);
+          });
+        });
+      });
+    });
 
+    it('should populate dynamicRelation with a slackTeam', function () {
+      return Fixtures.createJob({ name: 'other' }).then(() => {
+        return Fixtures.generateSlackTeam().then(() => {
+          return Fixtures.getJobs({}, { populate: ['dynamicRelation'] }).then(jobs => {
+            const job = jobs[0];
+            should.exist(job);
+            should.exist(job.dynamicRelation);
+            job.dynamicRelation.should.contain.keys(['name']);
+          });
+        });
+      });
+    });
+
+    it('should throw if unable to find corresponding dynamic relation', function () {
+      return Fixtures.createJob({ name: 'waiter' }).then(() => {
+        return Fixtures.getJobs({}, { populate: ['dynamicRelation'], statusCode: Restypie.Codes.BadRequest })
+          .then(err => {
+            err.message.should.match(/waiter/);
+          });
+      });
+    });
   });
 
 };

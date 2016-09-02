@@ -39,22 +39,6 @@ module.exports = class AbstractField {
 
   get optionsProperties() { return []; }
 
-  get through() {
-    return (!this._through || this._through instanceof Restypie.Resources.AbstractCoreResource) ?
-      this._through :
-      this._through();
-  }
-
-  get to() {
-    return (!this._to || this._to instanceof Restypie.Resources.AbstractCoreResource) ?
-      this._to :
-      this._to();
-  }
-
-  get toKey() {
-    return _.isString(this._toKey) ? this._toKey : this.to.primaryKeyField.key;
-  }
-
   get fromKey() {
     return _.isString(this._fromKey) ? this._fromKey : this.key;
   }
@@ -187,6 +171,22 @@ module.exports = class AbstractField {
    */
   validate() {
     return true;
+  }
+  
+  getToKey() {
+    return _.isString(this._toKey) ? this._toKey : this.getToResource.apply(this, arguments).primaryKeyField.key;
+  }
+  
+  getToResource() {
+    return (!this._to || this._to instanceof Restypie.Resources.AbstractCoreResource) ?
+      this._to :
+      this._to.apply(null, arguments);
+  } 
+  
+  getThroughResource() {
+    return (!this._through || this._through instanceof Restypie.Resources.AbstractCoreResource) ?
+      this._through :
+      this._through.apply(null, arguments);
   }
 
   /**

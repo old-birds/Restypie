@@ -638,7 +638,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
         const field = fieldsMap[baseProp];
         if (field) {
           // Relations need to explicitly declare that they can be filtered
-          if (!field.isFilterable || !field.to) {
+          if (!field.isFilterable || !field._to) {
             throw new Restypie.TemplateErrors.NotFilterable({ key: baseProp });
           }
 
@@ -792,11 +792,12 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
 
     return Promise.reduce(Object.keys(nestedFilters), (acc, key) => {
       const field = this.fieldsByKey[key];
-      const toClient = field.to.createClient({ defaultHeaders: headers }, true);
+      const toClient = field.getToResource(bundle.flatFilters).createClient({ defaultHeaders: headers }, true);
 
       if (field.isManyRelation) {
         if (field.through) {
-          const throughClient = field.through.createClient({ defaultHeaders: headers }, true);
+          const throughClient = field.getThroughResource(bundle.flatFilters)
+            .createClient({ defaultHeaders: headers }, true);
 
           return toClient.find(nestedFilters[key], {
             select: PRIMARY_KEY_KEYWORD,
@@ -818,12 +819,12 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
           });
         } else {
           return toClient.find(nestedFilters[key], {
-            select: field.toKey,
+            select: field.getToKey(bundle.flatFilters),
             limit: 0,
             options: Restypie.QueryOptions.NO_COUNT
           }).then((data) => {
             acc[primaryKeyPath] = Restypie.mergeFiltersForKey(acc[primaryKeyPath], {
-              in: data.map((item) => { return item[field.toKey]; })
+              in: data.map((item) => { return item[field.getToKey(bundle.flatFilters)]; })
             });
             return Promise.resolve(acc);
           });
@@ -1052,16 +1053,15 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
       if (!field || !field.isReadable) return bundle.next(new Restypie.TemplateErrors.UnknownPath({ key }));
       if (!field.isPopulable) return bundle.next(new Restypie.TemplateErrors.NotPopulable({ key }));
 
-      let resource = field.to;
-      Restypie.Utils.isInstanceOf(resource, Restypie.Resources.AbstractCoreResource, true);
-
-
       let data = Array.isArray(bundle.data) ? bundle.data : [bundle.data];
 
       return Promise.all(data.map((object) => {
         if (Restypie.Utils.isNone(object[field.fromKey]) && !field.isRelation) return Promise.resolve();
 
-        let toKeyField = resource.fieldsByKey[field.toKey];
+        const resource = field.getToResource(object);
+        Restypie.Utils.isInstanceOf(resource, Restypie.Resources.AbstractCoreResource, true);
+
+        let toKeyField = resource.fieldsByKey[field.getToKey(object)];
         Restypie.Utils.isInstanceOf(toKeyField, Restypie.Fields.AbstractField, true);
 
         const headers = bundle.safeReqHeaders;
@@ -1069,7 +1069,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
         const toClient = resource.createClient({ defaultHeaders: headers }, true);
 
         if (field.isManyRelation) {
-          const through = field.through;
+          const through = field.getThroughResource(object);
 
           if (through) {
             Restypie.Utils.isInstanceOf(through, Restypie.Resources.AbstractCoreResource, true);
@@ -1077,7 +1077,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
             const throughClient = through.createClient({ defaultHeaders: headers }, true);
 
             let throughKeyField = through.fieldsByKey[field.throughKey];
-            let otherThroughKeyField = field.through.fieldsByKey[field.otherThroughKey];
+            let otherThroughKeyField = through.fieldsByKey[field.otherThroughKey];
             Restypie.Utils.isInstanceOf(throughKeyField, Restypie.Fields.AbstractField, true);
             Restypie.Utils.isInstanceOf(otherThroughKeyField, Restypie.Fields.AbstractField, true);
 

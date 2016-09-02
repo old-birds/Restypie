@@ -72,7 +72,8 @@ class QueryScore {
   _computeNested(originalFilters) {
     return Promise.reduce(Object.keys(originalFilters), (final, key) => {
       const field = this._getFieldByPath(key);
-      const client = field.to.createClient({ defaultHeaders: this._bundle.safeHeaders });
+      const client = field.getToResource(this._bundle.flatFilters)
+        .createClient({ defaultHeaders: this._bundle.safeHeaders });
       return client.getQueryScore(originalFilters[key]).then((score) => {
         final[key] = score;
         return final;
