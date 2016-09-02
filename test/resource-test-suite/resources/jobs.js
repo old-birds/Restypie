@@ -26,6 +26,18 @@ module.exports = function (options) {
           to() { return api.resources.users; },
           isFilterable: true,
           toKey: 'job'
+        },
+        dynamicRelation: {
+          type: Restypie.Fields.ToOneField,
+          to: (object) => {
+            switch (object.name) {
+              case 'developer': return api.resources.slackTeamChannels;
+              case 'other': return api.resources.slackTeams;
+              default: throw new Restypie.RestErrors.BadRequest(`Can't find resource for name ${object.name}`);
+            }
+          },
+          fromKey: 'id',
+          isFilterable: true
         }
       };
     }

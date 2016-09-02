@@ -46,11 +46,24 @@ module.exports = class Bundle {
   get data() { return this._data; }
 
   get code() { return this._code; }
+
   get format() { return this._format; }
 
   get filters() { return this._filters; }
+  
+  get flatFilters() {
+    return Object.keys(this._filters)
+      .filter(key => !_.isPlainObject(this._filters[key]))
+      .reduce((acc, key) => {
+        acc[key] = this._filters[key];
+        return acc;
+      }, {});
+  }
+
   get nestedFilters() { return this._nestedFilters; }
+
   get select() { return this._select; }
+
   get sort() { return this._sort; }
   
   get safeReqHeaders() { return _.omit(this._req.headers, ['content-type', 'accept']); }

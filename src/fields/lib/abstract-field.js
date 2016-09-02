@@ -34,26 +34,14 @@ const MIN_FILTERING_WEIGHT = 1;
 module.exports = class AbstractField {
 
   get isRelation() { return false; }
+  
+  get hasTo() { return this._hasTo; }
+  
+  get hasThrough() { return this._hasThrough; }
 
   get supportedOperators() { return [Restypie.Operators.Eq]; }
 
   get optionsProperties() { return []; }
-
-  get through() {
-    return (!this._through || this._through instanceof Restypie.Resources.AbstractCoreResource) ?
-      this._through :
-      this._through();
-  }
-
-  get to() {
-    return (!this._to || this._to instanceof Restypie.Resources.AbstractCoreResource) ?
-      this._to :
-      this._to();
-  }
-
-  get toKey() {
-    return _.isString(this._toKey) ? this._toKey : this.to.primaryKeyField.key;
-  }
 
   get fromKey() {
     return _.isString(this._fromKey) ? this._fromKey : this.key;
@@ -99,12 +87,14 @@ module.exports = class AbstractField {
     }
 
     if (options.hasOwnProperty('to')) {
+      this._hasTo = true;
       this.isPopulable = true;
       this._to = options.to;
       this._toKey = options.toKey;
       this._fromKey = options.fromKey;
 
       if (options.hasOwnProperty('through')) {
+        this._hasThrough = true;
         this._through = options.through;
         this.throughKey = options.throughKey;
         this.otherThroughKey = options.otherThroughKey;
@@ -187,6 +177,22 @@ module.exports = class AbstractField {
    */
   validate() {
     return true;
+  }
+  
+  getToKey() {
+    return _.isString(this._toKey) ? this._toKey : this.getToResource.apply(this, arguments).primaryKeyField.key;
+  }
+  
+  getToResource() {
+    return (!this._to || this._to instanceof Restypie.Resources.AbstractCoreResource) ?
+      this._to :
+      this._to.apply(null, arguments);
+  } 
+  
+  getThroughResource() {
+    return (!this._through || this._through instanceof Restypie.Resources.AbstractCoreResource) ?
+      this._through :
+      this._through.apply(null, arguments);
   }
 
   /**
