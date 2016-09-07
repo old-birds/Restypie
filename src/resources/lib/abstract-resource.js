@@ -1053,7 +1053,25 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
       if (!field || !field.isReadable) return bundle.next(new Restypie.TemplateErrors.UnknownPath({ key }));
       if (!field.isPopulable) return bundle.next(new Restypie.TemplateErrors.NotPopulable({ key }));
 
+      const headers = bundle.safeReqHeaders;
       let data = Array.isArray(bundle.data) ? bundle.data : [bundle.data];
+
+      if (!field.isManyRelation && !field.isDynamicRelation) {
+        const resource = field.getToResource();
+        const toClient = resource.createClient({ defaultHeaders: headers });
+        return toClient.find({ [resource.primaryKeyKey]: { in: _.uniq(_.compact(_.pluck(data, field.fromKey))) } }, {
+          populate: keyDef.populate
+        }).then(populated => {
+          data.forEach(object => {
+            object[key] = populated.find(item => {
+              let fromValue = object[field.fromKey];
+              if (_.isPlainObject(fromValue)) fromValue = fromValue[resource.primaryKeyKey];
+              return item[resource.primaryKeyKey] === fromValue;
+            });
+          });
+          return bundle.next();
+        });
+      }
 
       return Promise.all(data.map((object) => {
         if (Restypie.Utils.isNone(object[field.fromKey]) && !field.isRelation) return Promise.resolve();
@@ -1064,7 +1082,6 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
         let toKeyField = resource.fieldsByKey[field.getToKey(object)];
         Restypie.Utils.isInstanceOf(toKeyField, Restypie.Fields.AbstractField, true);
 
-        const headers = bundle.safeReqHeaders;
 
         const toClient = resource.createClient({ defaultHeaders: headers }, true);
 

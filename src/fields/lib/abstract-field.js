@@ -46,6 +46,10 @@ module.exports = class AbstractField {
   get fromKey() {
     return _.isString(this._fromKey) ? this._fromKey : this.key;
   }
+  
+  get isDynamicRelation() {
+    return this._isDynamicRelation;
+  }
 
   get filteringWeight() { return this._filteringWeight; }
   
@@ -92,6 +96,7 @@ module.exports = class AbstractField {
       this._to = options.to;
       this._toKey = options.toKey;
       this._fromKey = options.fromKey;
+      this._isDynamicRelation = !!options.isDynamicRelation; 
 
       if (options.hasOwnProperty('through')) {
         this._hasThrough = true;

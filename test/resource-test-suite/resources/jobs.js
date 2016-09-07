@@ -29,6 +29,7 @@ module.exports = function (options) {
         },
         dynamicRelation: {
           type: Restypie.Fields.ToOneField,
+          isDynamicRelation: true,
           to: (object) => {
             switch (object.name) {
               case 'developer': return api.resources.slackTeamChannels;
