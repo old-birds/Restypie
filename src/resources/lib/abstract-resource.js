@@ -1130,6 +1130,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
             });
           }
         } else {
+          if (!object[field.fromKey]) return bundle.next();
           return toClient.findById(object[field.fromKey], {
             populate: keyDef.populate
           }).then((data) => {
