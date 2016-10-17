@@ -1081,7 +1081,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
               acc.push(existing);
             }
             const objectValue = object[field.fromKey];
-            if (objectValue != null && !existing.identifiers.find(val => val === objectValue)) {
+            if (!Restypie.Utils.isNone(objectValue) && !existing.identifiers.find(val => val === objectValue)) {
               existing.identifiers.push(objectValue);
               existing.objects.push(object);
             }
