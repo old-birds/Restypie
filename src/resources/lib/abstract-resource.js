@@ -1046,6 +1046,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
 
     let fieldsByKey = this.fieldsByKey;
 
+    // For each key to populate...
     return Promise.all(bundle.populate.map((keyDef) => {
       let key = keyDef.key;
 
@@ -1056,36 +1057,76 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
       const headers = bundle.safeReqHeaders;
       let data = Array.isArray(bundle.data) ? bundle.data : [bundle.data];
 
-      if (!field.isManyRelation && !field.isDynamicRelation) {
-        const resource = field.getToResource();
-        const toClient = resource.createClient({ defaultHeaders: headers });
-        return toClient.find({ [resource.primaryKeyKey]: { in: _.uniq(_.compact(_.pluck(data, field.fromKey))) } }, {
-          populate: keyDef.populate
-        }).then(populated => {
-          data.forEach(object => {
-            object[key] = populated.find(item => {
-              let fromValue = object[field.fromKey];
-              if (_.isPlainObject(fromValue)) fromValue = fromValue[resource.primaryKeyKey];
-              return item[resource.primaryKeyKey] === fromValue;
+      // If the relation is to one one, then do grouped queries to save performances
+      if (!field.isManyRelation) {
+
+        // Simplest case, just do a simple find() query
+        if (!field.isDynamicRelation) {
+          const resource = field.getToResource();
+          const toClient = resource.createClient({ defaultHeaders: headers });
+          return toClient.find({ [resource.primaryKeyKey]: { in: _.uniq(_.compact(_.pluck(data, field.fromKey))) } }, {
+            populate: keyDef.populate
+          }).then(populated => {
+            data.forEach(object => {
+              object[key] = populated.find(item => {
+                let fromValue = object[field.fromKey];
+                if (_.isPlainObject(fromValue)) fromValue = fromValue[resource.primaryKeyKey];
+                return item[resource.primaryKeyKey] === fromValue;
+              });
             });
+            return bundle.next();
           });
-          return bundle.next();
-        });
-      }
+        } else {
+          // Here we'll list the values to query for each target resource
+          // And then perform grouped queries
+          // And finally reassemble the fetched data
 
-      return Promise.all(data.map((object) => {
-        if (Restypie.Utils.isNone(object[field.fromKey]) && !field.isRelation) return Promise.resolve();
+          const map = data.reduce((acc, object) => {
+            const current = field.getToResource(object);
+            let existing = acc.find(existing => existing.resource === current);
+            if (!existing) {
+              existing = { resource: current, identifiers: [], objects: [] };
+              acc.push(existing);
+            }
+            const objectValue = object[field.fromKey];
+            if (!Restypie.Utils.isNone(objectValue) && !existing.identifiers.find(val => val === objectValue)) {
+              existing.identifiers.push(objectValue);
+              existing.objects.push(object);
+            }
+            return acc;
+          }, []);
 
-        const resource = field.getToResource(object);
-        Restypie.Utils.isInstanceOf(resource, Restypie.Resources.AbstractCoreResource, true);
+          return Promise.all(map.map(config => {
+            if (config.identifiers.length) {
+              return config.resource.createClient({ defaultHeaders: headers }).find({
+                [config.resource.primaryKeyKey]: { in: config.identifiers }
+              }, {
+                populate: keyDef.populate
+              }).then(populated => {
+                config.objects.forEach(object => {
+                  object[key] = populated.find(item => {
+                    let fromValue = object[field.fromKey];
+                    if (_.isPlainObject(fromValue)) fromValue = fromValue[config.resource.primaryKeyKey];
+                    return item[config.resource.primaryKeyKey] === fromValue;
+                  });
+                });
+              });
+            }
+          }));
+        }
+      } else {
+        // Things get fancy... Many to many relationhips
+        return Promise.all(data.map((object) => {
+          if (Restypie.Utils.isNone(object[field.fromKey]) && !field.isRelation) return Promise.resolve();
 
-        let toKeyField = resource.fieldsByKey[field.getToKey(object)];
-        Restypie.Utils.isInstanceOf(toKeyField, Restypie.Fields.AbstractField, true);
+          const resource = field.getToResource(object);
+          Restypie.Utils.isInstanceOf(resource, Restypie.Resources.AbstractCoreResource, true);
 
+          let toKeyField = resource.fieldsByKey[field.getToKey(object)];
+          Restypie.Utils.isInstanceOf(toKeyField, Restypie.Fields.AbstractField, true);
 
-        const toClient = resource.createClient({ defaultHeaders: headers }, true);
+          const toClient = resource.createClient({ defaultHeaders: headers }, true);
 
-        if (field.isManyRelation) {
           const through = field.getThroughResource(object);
 
           if (through) {
@@ -1129,20 +1170,10 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
               return bundle.next();
             });
           }
-        } else {
-          if (!object[field.fromKey]) return bundle.next();
-          return toClient.findById(object[field.fromKey], {
-            populate: keyDef.populate
-          }).then((data) => {
-            if (Array.isArray(data)) {
-              return bundle.next(new Error('Unfiltered ToOne relation, consider using ToManyField : ' + field.key));
-            }
-            object[key] = data;
-            return bundle.next();
-          });
-        }
 
-      }));
+        }));
+      }
+
 
     })).then(function () { return bundle.next(); });
   }
