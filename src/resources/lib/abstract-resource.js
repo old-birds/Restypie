@@ -1046,6 +1046,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
 
     let fieldsByKey = this.fieldsByKey;
 
+    // For each key to populate...
     return Promise.all(bundle.populate.map((keyDef) => {
       let key = keyDef.key;
 
@@ -1056,7 +1057,10 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
       const headers = bundle.safeReqHeaders;
       let data = Array.isArray(bundle.data) ? bundle.data : [bundle.data];
 
+      // If the relation is to one one, then do grouped queries to save performances
       if (!field.isManyRelation) {
+
+        // Simplest case, just do a simple find() query
         if (!field.isDynamicRelation) {
           const resource = field.getToResource();
           const toClient = resource.createClient({ defaultHeaders: headers });
@@ -1073,6 +1077,10 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
             return bundle.next();
           });
         } else {
+          // Here we'll list the values to query for each target resource
+          // And then perform grouped queries
+          // And finally reassemble the fetched data
+
           const map = data.reduce((acc, object) => {
             const current = field.getToResource(object);
             let existing = acc.find(existing => existing.resource === current);
@@ -1107,6 +1115,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
           }));
         }
       } else {
+        // Things get fancy... Many to many relationhips
         return Promise.all(data.map((object) => {
           if (Restypie.Utils.isNone(object[field.fromKey]) && !field.isRelation) return Promise.resolve();
 
