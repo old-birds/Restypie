@@ -25,6 +25,7 @@ module.exports = class PatchSingleRoute extends Restypie.Route {
 
     return Promise.try(function () {
       pk = pkField.hydrate(bundle.params.pk);
+      resource.parseOptions(bundle);
       bundle.setQuery({ [pkField.key]: pk });
       resource.parseFilters(bundle);
       return bundle.next();
