@@ -1063,9 +1063,10 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
         // Simplest case, just do a simple find() query
         if (!field.isDynamicRelation) {
           const resource = field.getToResource();
-          const toClient = resource.createClient({ defaultHeaders: headers });
+          const toClient = resource.createClient({ defaultHeaders: headers }, true);
           return toClient.find({ [resource.primaryKeyKey]: { in: _.uniq(_.compact(_.pluck(data, field.fromKey))) } }, {
-            populate: keyDef.populate
+            populate: keyDef.populate,
+            limit: 0
           }).then(populated => {
             data.forEach(object => {
               object[key] = populated.find(item => {
@@ -1098,10 +1099,11 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
 
           return Promise.all(map.map(config => {
             if (config.identifiers.length) {
-              return config.resource.createClient({ defaultHeaders: headers }).find({
+              return config.resource.createClient({ defaultHeaders: headers }, true).find({
                 [config.resource.primaryKeyKey]: { in: config.identifiers }
               }, {
-                populate: keyDef.populate
+                populate: keyDef.populate,
+                limit: 0
               }).then(populated => {
                 config.objects.forEach(object => {
                   object[key] = populated.find(item => {
