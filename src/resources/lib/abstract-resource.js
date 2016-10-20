@@ -511,14 +511,11 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
       if (!Utils.isValidNumber(parsedLimit)) {
         throw new Restypie.TemplateErrors.BadType({ key: 'limit', value: rawLimit, expected: 'integer' });
       }
-      
-      const isOutOfRange = parsedLimit < 0 ||
-        parsedLimit > max ||
-        (parsedLimit === 0 && !this.isGetAllAllowed && !bundle.isSudo);
-      
-      if (isOutOfRange) {
+
+      if ((!this.isGetAllAllowed && !bundle.isSudo && parsedLimit > max) || parsedLimit < 0) {
         throw new Restypie.TemplateErrors.OutOfRange({ key: 'limit', value: parsedLimit, min: 1, max });
       }
+
       bundle.setLimit(parsedLimit);
     } else {
       bundle.setLimit(this.defaultLimit);
