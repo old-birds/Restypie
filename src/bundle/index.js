@@ -283,6 +283,10 @@ module.exports = class Bundle {
     return this;
   }
 
+  makeSudo(value) {
+    this._isSudo = !!value;
+  }
+
   /**
    * Builds navigation links.
    *
