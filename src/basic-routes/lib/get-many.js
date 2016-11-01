@@ -65,8 +65,8 @@ module.exports = class GetManyRoute extends Restypie.Route {
           return bundle.setData(objects).setStatusCode(Restypie.Codes.OK);
         });
       })
-      .add(resource.dehydrate)
       .add(resource.populate)
+      .add(resource.dehydrate)
       .add((bundle) => {
         bundle.assignToMeta({ limit: bundle.limit, offset: bundle.offset });
 

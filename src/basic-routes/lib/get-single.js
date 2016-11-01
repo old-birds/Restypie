@@ -41,8 +41,8 @@ module.exports = class GetSingleRoute extends Restypie.Route {
             .next();
         });
       })
-      .add(resource.dehydrate)
       .add(resource.populate)
+      .add(resource.dehydrate)
       .run();
   }
 
