@@ -38,6 +38,7 @@ module.exports = class Client {
       return new Query({
         method: Restypie.Methods.POST,
         body: object,
+        options: params.options,
         url: this.url,
         headers: Object.assign({
           'Accept': 'application/json',
@@ -106,6 +107,7 @@ module.exports = class Client {
     params = params || {};
     return new Query({
       method: Restypie.Methods.DELETE,
+      options: params.options,
       url: Restypie.Url.join(this.url, id),
       headers: Object.assign({}, this._defaultHeaders, params.headers)
     }).run().then(() => undefined);
@@ -126,6 +128,7 @@ module.exports = class Client {
     return new Query({
       method: Restypie.Methods.PATCH,
       body: updates,
+      options: params.options,
       filters,
       url: this.url,
       headers: Object.assign({ 'Content-Type': 'application/json' }, this._defaultHeaders, params.headers)
@@ -157,6 +160,7 @@ module.exports = class Client {
       filters: filters,
       limit: 1,
       offset: 0,
+      options: params.options,
       url: this.url,
       headers: Object.assign({ 'Accept': 'application/json' }, this._defaultHeaders, params.headers)
     }).run().then((body) => {
