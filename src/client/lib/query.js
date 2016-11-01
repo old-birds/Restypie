@@ -1,6 +1,7 @@
 'use strict';
 
 let request = require('request');
+const debug = require('debug')('restypie:query');
 
 let Restypie = require('../../');
 
@@ -43,6 +44,11 @@ module.exports = class Query {
         gzip: true
       };
 
+      debug(`run => ${this.options.method} ${this.options.url}\n` +
+            `query: ${JSON.stringify(this.options.qs)}\n` +
+            `headers: ${JSON.stringify(this.options.headers)}\n` +
+            `body: ${JSON.stringify(this.options.body)}`
+      );
       return request(this.options, (err, res, body) => {
         this._hasBeenRan = true;
         body = body || {};

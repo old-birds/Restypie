@@ -21,6 +21,11 @@ Restypie currently supports the following frameworks/routers :
 npm install restypie --save
 ```
 
+## Debugging
+Restypie allows debugging by supplying the `DEBUG` variable
+```
+DEBUG=restypie:* node app.js
+```
 
 ## Contributing
 

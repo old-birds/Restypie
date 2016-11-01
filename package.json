@@ -19,6 +19,7 @@
     "bluebird": "^3.0.6",
     "body-parser": "^1.15.2",
     "busboy": "~0.2.12",
+    "debug": "2.2.0",
     "form-data-to-object": "^0.2.0",
     "lodash": "^3.10.1",
     "negotiator": "^0.6.0",

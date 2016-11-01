@@ -10,6 +10,8 @@ const bodyParser = require('body-parser');
 const typeIs = require('type-is');
 const formDataToObject = require('form-data-to-object');
 const Promise = require('bluebird');
+const debugError = require('debug')('restypie:error');
+const debugWarn = require('debug')('restypie:warn');
 
 let Restypie = require('../../');
 let Utils = Restypie.Utils;
@@ -131,7 +133,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
    * @type Restypie.Fields.AbstractField[]
    */
   get populableFields() { return this.fields.filter(function (field) { return field.isPopulable; }); }
-  
+
   get requiredFields() { return this.fields.filter(function (field) { return field.isRequired; }); }
 
   /**
@@ -179,12 +181,12 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
    * @type Boolean
    */
   get supportsUniqueConstraints() { return false; }
-  
-  
+
+
   get supportsUpserts() { return false; }
-  
+
   get upsertPaths() { return []; }
-  
+
   get routerType() { return this.api.routerType; }
 
   /**
@@ -230,9 +232,9 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
   constructor(api) {
     super();
     Utils.forceAbstract(this, AbstractResource);
-    
+
     if (!Array.isArray(this.routes)) throw new TypeError('Property `routes` should be an array');
-    
+
     // Keep a reference to the api, do not allow to modify it
     Object.defineProperty(this, 'api', { get() { return api; } });
 
@@ -243,7 +245,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
     if (!_.isString(this.path)) throw new TypeError('Property `path` should be a string');
     if (!Utils.isValidNumber(this.defaultLimit)) throw new TypeError('Property `defaultLimit` should be a number');
     if (!Utils.isValidNumber(this.maxLimit)) throw new TypeError('Property `maxLimit` should be a number');
-    
+
     const schema = this.schema;
 
     if (this.defaultSelect) {
@@ -616,7 +618,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
    */
   parseFilters(bundle) {
     this.beforeParseFilters(bundle);
-    
+
     let fieldsMap = this.fieldsByKey;
     let query = _.omit(bundle.query, RESERVED_KEYWORDS);
     let filters = {};
@@ -627,7 +629,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
 
 
     for (let prop in query) {
-      
+
       const parts = prop.split(deepSeparator);
       const baseProp = parts.shift();
 
@@ -671,9 +673,9 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
             field.hydrate(value);
         } else {
           throw new Restypie.TemplateErrors.UnknownPath({ key });
-        }  
+        }
       }
-      
+
     }
 
     for (let key in filters) {
@@ -1176,8 +1178,8 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
 
     })).then(function () { return bundle.next(); });
   }
-  
-  
+
+
   exit(bundle) {
     return this.serialize(bundle).then(this.respond.bind(this, bundle));
   }
@@ -1241,9 +1243,11 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
         Restypie.Logger.error('No statusCode for request on ' + bundle.req.url);
         break;
       case statusCode === Restypie.Codes.InternalServerError:
+        debugError(bundle.err.stack);
         Restypie.Logger.error(bundle.err.stack, bundle.err);
         break;
       case statusCode >= Restypie.Codes.BadRequest:
+        debugWarn(bundle.err.stack);
         Restypie.Logger.warn(bundle.err.stack, bundle.err);
         break;
     }
@@ -1385,7 +1389,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
       });
     });
   }
-  
+
   reset() {
     if (process.env.NODE_ENV !== Restypie.TEST_ENV) {
       throw new Error('reset() is only intended to be used for Restypie internal testing');
