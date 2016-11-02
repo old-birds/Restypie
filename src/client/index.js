@@ -118,6 +118,7 @@ module.exports = class Client {
     return new Query({
       method: Restypie.Methods.PATCH,
       body: updates,
+      options: params.options,
       url: Restypie.Url.join(this.url, id),
       headers: Object.assign({ 'Content-Type': 'application/json' }, this._defaultHeaders, params.headers)
     }).run().then(() => undefined);
