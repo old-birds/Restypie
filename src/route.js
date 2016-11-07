@@ -39,7 +39,7 @@ module.exports = class Route {
    * @default null
    */
   get handler() { return null; }
-  
+
   get routerType() { return this._routerType; }
 
   /**
@@ -102,7 +102,7 @@ module.exports = class Route {
         };
     }
   }
-  
+
   _setRouterType(routerType) {
     Restypie.assertSupportedRouterType(routerType);
     this._routerType = routerType;
