@@ -1356,7 +1356,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
 
       parser.on('error', onError);
 
-      parser.on('finish', function () {
+      parser.on('end', function () {
         body = formDataToObject.toObj(body);
         Object.assign(body, files);
         bundle.setBody(body);
