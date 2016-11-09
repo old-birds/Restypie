@@ -1,9 +1,9 @@
 'use strict';
 
 describe('Restypie.RestErrors', function () {
-  
+
   describe('constructor', function () {
-    
+
     it('should call getters...', function () {
       Restypie.RestErrors.Forbidden;
       Restypie.RestErrors.NotImplemented;
@@ -12,6 +12,8 @@ describe('Restypie.RestErrors', function () {
       Restypie.RestErrors.BadRequest;
       Restypie.RestErrors.NotFound;
       Restypie.RestErrors.Unauthorized;
+      Restypie.RestErrors.ServiceUnavailable;
+      Restypie.RestErrors.GatewayTimeOut;
     });
 
   });
@@ -45,5 +47,5 @@ describe('Restypie.RestErrors', function () {
       err.meta.should.deep.equal({ foo: 'bar' });
     });
   });
-  
+
 });

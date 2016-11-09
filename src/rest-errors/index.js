@@ -49,6 +49,8 @@ module.exports = {
   get UnsupportedMediaType() { return require('./lib/unsupported-media-type'); },
   get NotAcceptable() { return require('./lib/not-acceptable'); },
   get Unauthorized() { return require('./lib/unauthorized'); },
-  get Conflict() { return require('./lib/conflict'); }
+  get Conflict() { return require('./lib/conflict'); },
+  get GatewayTimeOut() { return require('./lib/gateway-timeout'); },
+  get ServiceUnavailable() { return require('./lib/service-unavailable'); }
 
 };
