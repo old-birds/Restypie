@@ -54,7 +54,7 @@ module.exports = class Query {
         body = body || {};
         this.meta = body.meta || {};
         if (err || Restypie.Codes.isErrorCode(res.statusCode)) {
-          this.err = err = err || Restypie.RestErrors.fromStatusCode(res.statusCode, body.message, body.meta);
+          this.err = err = err || Restypie.RestErrors.fromStatusCode(res.statusCode, body.message || body, body.meta);
           return reject(err);
         }
         this.data = body.data;
