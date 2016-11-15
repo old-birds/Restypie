@@ -34,9 +34,9 @@ const MIN_FILTERING_WEIGHT = 1;
 module.exports = class AbstractField {
 
   get isRelation() { return false; }
-  
+
   get hasTo() { return this._hasTo; }
-  
+
   get hasThrough() { return this._hasThrough; }
 
   get supportedOperators() { return [Restypie.Operators.Eq]; }
@@ -46,13 +46,13 @@ module.exports = class AbstractField {
   get fromKey() {
     return _.isString(this._fromKey) ? this._fromKey : this.key;
   }
-  
+
   get isDynamicRelation() {
     return this._isDynamicRelation;
   }
 
   get filteringWeight() { return this._filteringWeight; }
-  
+
   get normalizedFilteringWeight() { return (this._filteringWeight || MIN_FILTERING_WEIGHT) / 100; }
 
   /**
@@ -73,7 +73,7 @@ module.exports = class AbstractField {
     this.isPrimaryKey = !!options.isPrimaryKey;
 
     // Let's stay consistent - DO NOT change the order of those declarations
-    if (this.isWritableOnce) this.isRequired = true;
+    if (this.isWritableOnce && !('isRequired' in options)) this.isRequired = true;
     if (this.isRequired) this.isWritable = true;
     if (this.isPrimaryKey && !options.hasOwnProperty('isFilterable')) this.isFilterable = true;
     if (this.isPrimaryKey && !this.isFilterable) {
@@ -96,7 +96,7 @@ module.exports = class AbstractField {
       this._to = options.to;
       this._toKey = options.toKey;
       this._fromKey = options.fromKey;
-      this._isDynamicRelation = !!options.isDynamicRelation; 
+      this._isDynamicRelation = !!options.isDynamicRelation;
 
       if (options.hasOwnProperty('through')) {
         this._hasThrough = true;
@@ -183,17 +183,17 @@ module.exports = class AbstractField {
   validate() {
     return true;
   }
-  
+
   getToKey() {
     return _.isString(this._toKey) ? this._toKey : this.getToResource.apply(this, arguments).primaryKeyField.key;
   }
-  
+
   getToResource() {
     return (!this._to || this._to instanceof Restypie.Resources.AbstractCoreResource) ?
       this._to :
       this._to.apply(null, arguments);
-  } 
-  
+  }
+
   getThroughResource() {
     return (!this._through || this._through instanceof Restypie.Resources.AbstractCoreResource) ?
       this._through :
