@@ -23,10 +23,10 @@
     "form-data-to-object": "^0.2.0",
     "lodash": "^3.10.1",
     "negotiator": "^0.6.0",
-    "node-uuid": "^1.4.7",
     "request": "^2.67.0",
     "sort-by": "^1.1.1",
     "type-is": "^1.6.10",
+    "uuid": "^3.0.0",
     "valid-url": "^1.0.9",
     "winston": "^2.2.0"
   },

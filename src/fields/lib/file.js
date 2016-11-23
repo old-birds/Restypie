@@ -6,7 +6,7 @@
 let fs = require('fs');
 let path = require('path');
 let OS = require('os');
-let UUID = require('node-uuid');
+let UUID = require('uuid');
 
 let Restypie = require('../../');
 
