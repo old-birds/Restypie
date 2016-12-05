@@ -157,8 +157,8 @@ describe('Restypie', function () {
     });
 
     describe('eq', function () {
-      it('should turn filter into in', function () {
-        Restypie.mergeValuesForOperator('eq', 1, 2).should.deep.equal({ in: [1, 2] });
+      it('should turn filter into empty in', function () {
+        Restypie.mergeValuesForOperator('eq', 1, 2).should.deep.equal({ in: [] });
       });
     });
 
@@ -207,7 +207,7 @@ describe('Restypie', function () {
   });
 
   describe('mergeFiltersForKey()', function () {
-    
+
     it('should correctly merge filters', function () {
       const left = {
         leftOnly: { gt: 0 },
@@ -237,7 +237,7 @@ describe('Restypie', function () {
         removingNe: { ne: 3 },
         sameIds: { in: [1, 1] }
       };
-      
+
       const final = {
         leftOnly: { gt: 0 },
         rightOnly: { lt: 0 },
@@ -245,9 +245,9 @@ describe('Restypie', function () {
         inExcluding: { in: [] },
         inIncluding: { eq: 2 },
         ninIncluding: { nin: [1, 2, 3, 4] },
-        eq: { in: [1, 2] },
+        eq: { in: [] },
         reMerge: { nin: [1, 2, 3] },
-        fancy1: { gte: 60, eq: 0, nin: [4, 5, 3] },
+        fancy1: { gte: 60, in: [], nin: [4, 5, 3] },
         excludeAll: { in: [] },
         inToEq: { eq: 1 },
         removingNe: { in: [1, 2], ne: 3 },
