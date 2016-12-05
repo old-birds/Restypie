@@ -21,5 +21,10 @@ describe('Restypie.Fields.AbstractField', function () {
       field.isRequired.should.equal(false);
     });
 
+    it('should set isPopulable', function () {
+      const field = new Field('key', { isPopulable: true });
+      field.isPopulable.should.equal(true);
+    });
+
   });
 });
