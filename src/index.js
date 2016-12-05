@@ -17,7 +17,7 @@ const Restypie = module.exports = {
     const header = headers[Restypie.SUDO_HEADER_NAME];
     return !!header;
   },
-  
+
   getSudoHeader() {
     return { [Restypie.SUDO_HEADER_NAME]: Restypie.getSudoSignature() };
   },
@@ -36,19 +36,19 @@ const Restypie = module.exports = {
     KOA_ROUTER: 'koa-router',
     EXPRESS: 'express'
   },
-  
+
   QueryOptions: {
     NO_COUNT: 'NO_COUNT',
     INCLUDE_SCORE: 'INCLUDE_SCORE',
     SCORE_ONLY: 'SCORE_ONLY'
   },
-  
+
   RESERVED_WORDS: ['limit', 'offset', 'sort', 'select', 'format', 'populate', 'options'],
-  
+
   isSupportedRouterType(type) {
     return _.contains(_.values(Restypie.RouterTypes), type);
   },
-  
+
   assertSupportedRouterType(type) {
     if (!Restypie.isSupportedRouterType(type)) {
       throw new Error(`"routerType" should be one of : ${_.values(Restypie.RouterTypes).join(', ')}`);
@@ -137,7 +137,7 @@ const Restypie = module.exports = {
       case 'eq':
         values = _.uniq(values);
         if (values.length === 1) return { eq: values[0] };
-        return { in: values };
+        return { in: [] };
 
 
       case 'ne':
@@ -170,7 +170,11 @@ const Restypie = module.exports = {
         return filters;
       }
       if ('eq' in filters) {
-        filters.in.push(filters.eq);
+        if (filters.in.find(val => val === filters.eq)) {
+          filters.in = [filters.eq];
+        } else {
+          filters.in = [];
+        }
         delete filters.eq;
       }
       filters.in = _.uniq(filters.in);
@@ -213,7 +217,7 @@ const Restypie = module.exports = {
 
     return filters;
   },
-  
+
   mergeFilters(left, right) {
     return _.uniq(Object.keys(left).concat(Object.keys(right))).reduce((acc, key) => {
       acc[key] = Restypie.mergeFiltersForKey(left[key], right[key]);
