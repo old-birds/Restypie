@@ -43,6 +43,7 @@ module.exports = class PostRoute extends Restypie.Route {
         }
         return bundle.next();
       })
+      .then(resource.parseBody.bind(resource))
       .then(resource.hydrate.bind(resource))
       .then(resource.validate.bind(resource))
       .then(function (bundle) {
@@ -56,6 +57,7 @@ module.exports = class PostRoute extends Restypie.Route {
           .next();
       })
       .then(resource.dehydrate.bind(resource))
+      .then(resource.populate.bind(resource))
       .catch (function (err) {
         return bundle.setError(err).next();
       })
