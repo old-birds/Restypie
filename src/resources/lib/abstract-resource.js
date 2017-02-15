@@ -1064,7 +1064,8 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
           const resource = field.getToResource();
           const toClient = resource.createClient({ defaultHeaders: headers }, true);
           if (!field.toKey) {
-            return toClient.find({ [resource.primaryKeyKey]: { in: _.uniq(_.compact(_.pluck(data, field.fromKey))) } }, {
+            const fromKeyValues = _.uniq(_.compact(_.pluck(data, field.fromKey)));
+            return toClient.find({ [resource.primaryKeyKey]: { in: fromKeyValues } }, {
               populate: keyDef.populate,
               limit: 0
             }).then(populated => {
