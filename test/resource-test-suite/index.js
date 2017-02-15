@@ -37,6 +37,7 @@ module.exports = function (options) {
   const api = options.api = new Restypie.API({ path: 'v1', routerType: options.routerType });
 
   const UsersResource = require('./resources/users')(options);
+  const ProfilesResource = require('./resources/profiles')(options);
   const JobsResource = require('./resources/jobs')(options);
   const SlackTeamsResource = require('./resources/slack-teams')(options);
   const UserSlackTeamsResource = require('./resources/user-slack-teams')(options);
@@ -68,7 +69,8 @@ module.exports = function (options) {
       users: UsersResource,
       slackTeams: SlackTeamsResource,
       userSlackTeams: UserSlackTeamsResource,
-      slackTeamChannels: SlackTeamChannelsResource
+      slackTeamChannels: SlackTeamChannelsResource,
+      profiles: ProfilesResource
     })
     .launch(router, { port: SERVER_PORT });
 

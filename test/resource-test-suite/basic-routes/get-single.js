@@ -28,7 +28,7 @@ module.exports = function (Fixtures) {
         user.should.have.keys(['theId', 'firstName']);
       });
     });
-    
+
     it('should populate job', function () {
       return Fixtures.generateUser().then((user) => {
         return Fixtures.getUser(user.theId, { populate: ['job'] }).then((populated) => {
@@ -104,7 +104,7 @@ module.exports = function (Fixtures) {
         });
       });
     });
-    
+
     it('should populate slackTeams.channels.slackTeam', function () {
       return Promise.props({
         user: Fixtures.generateUser(),
@@ -131,6 +131,17 @@ module.exports = function (Fixtures) {
             });
           });
         });
+      });
+    });
+
+    it('should populate profile', function () {
+      return Fixtures.generateProfile().then(profile => {
+        return Fixtures.getUser(profile.userId, {
+          populate: ['profile']
+        });
+      }).then(user => {
+        user.profile.should.be.an('object');
+        user.profile.flag.should.equal(true);
       });
     });
 

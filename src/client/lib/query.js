@@ -49,6 +49,7 @@ module.exports = class Query {
             `headers: ${JSON.stringify(this.options.headers)}\n` +
             `body: ${JSON.stringify(this.options.body)}`
       );
+      
       return request(this.options, (err, res, body) => {
         this._hasBeenRan = true;
         body = body || {};

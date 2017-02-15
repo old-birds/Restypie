@@ -64,6 +64,7 @@ module.exports = function (supertest, app, api) {
      */
     static reset() {
       return Promise.all([
+        api.resources.profiles.reset(),
         api.resources.jobs.reset(),
         api.resources.slackTeamChannels.reset(),
         api.resources.userSlackTeams.reset(),
@@ -145,7 +146,7 @@ module.exports = function (supertest, app, api) {
           });
       });
     }
-    
+
     static updateResource(path, id, updates, options) {
       options = options || {};
 
@@ -176,13 +177,13 @@ module.exports = function (supertest, app, api) {
 
       let returnIds;
       let primaryKey;
-      
+
       function doUpdate() {
-        
+
         const req = supertest(app)
           .patch(path)
           .query(Restypie.stringify({ filters }));
-        
+
         if (options.attach) {
           Utils.fillMultipartFields(req, updates);
           for (const name in options.attach) {
@@ -191,7 +192,7 @@ module.exports = function (supertest, app, api) {
         } else {
           req.send(updates);
         }
-        
+
         return new Promise((resolve, reject) => {
           req
             .expect(options.statusCode || Restypie.Codes.NoContent, (err, res) => {
@@ -215,19 +216,19 @@ module.exports = function (supertest, app, api) {
               primaryKey = Object.keys(resource)[0];
               return resource[primaryKey];
             });
-  
+
             return doUpdate();
           });
       } else {
-        return doUpdate(); 
+        return doUpdate();
       }
 
     }
-    
+
     static upsertResource(path, filters, data, options) {
       options = options || {};
       if (!options.statusCode) throw new Error('options.statusCode must be provided');
-      
+
       return new Promise((resolve, reject) => {
         supertest(app)
           .put(path)
@@ -238,7 +239,7 @@ module.exports = function (supertest, app, api) {
             return resolve(Fixtures.extractReturn(res, options));
           });
       });
-      
+
     }
 
     static deleteResource(path, id, options) {
@@ -276,14 +277,14 @@ module.exports = function (supertest, app, api) {
     static createUser(data, options) {
       return Fixtures.createResource('/v1/users', data, options);
     }
-    
+
     static createUsers(data, options) {
       return Fixtures.createResources('/v1/users', data, options);
     }
 
     static generateUser(generator) {
       const uuid = Fixtures.uuid();
-      
+
       const data = Object.assign({
         firstName: `John-${uuid}`,
         lastName: `Doe-${uuid}`,
@@ -293,12 +294,12 @@ module.exports = function (supertest, app, api) {
         hasSubscribedEmails: Fixtures.getRandomBoolean(),
         gender: Fixtures.getRandomBoolean() ? 'male' : 'female'
       }, Fixtures.parameterToGenerator(generator)());
-      
+
       const pre = {};
-      
+
       if (!data.job) pre.job = Fixtures.generateJob();
-      
-      return Promise.props(pre).then((results) => {
+
+      return Promise.props(pre).then(results => {
         if (results.job) data.job = results.job.id;
         return Fixtures.createUser(data, { rejectOnError: true });
       });
@@ -319,15 +320,15 @@ module.exports = function (supertest, app, api) {
     static deleteUser(id, options) {
       return Fixtures.deleteResource('/v1/users', id, options);
     }
-    
+
     static updateUser(id, updates, options) {
       return Fixtures.updateResource('/v1/users', id, updates, options);
     }
-    
+
     static upsertUser(filters, data, options) {
       return Fixtures.upsertResource('/v1/users', filters, data, options);
     }
-    
+
     static updateUsers(filters, updates, options) {
       return Fixtures.updateResources('/v1/users', filters, updates, options);
     }
@@ -365,7 +366,7 @@ module.exports = function (supertest, app, api) {
     static deleteSlackTeam(id, options) {
       return Fixtures.deleteResource('/v1/slack-teams', id, options);
     }
-    
+
     static createSlackTeam(data, options) {
       return Fixtures.createResource('/v1/slack-teams', data, options);
     }
@@ -405,10 +406,10 @@ module.exports = function (supertest, app, api) {
       const data = Object.assign({}, Fixtures.parameterToGenerator(generator)());
 
       const pre = {};
-      
+
       if (!data.user) pre.user = Fixtures.generateUser();
       if (!data.slackTeam) pre.slackTeam = Fixtures.generateSlackTeam();
-      
+
       return Promise.props(pre).then((results) => {
         if (results.user) data.user = results.user.theId;
         if (results.slackTeam) data.slackTeam = results.slackTeam.id;
@@ -454,7 +455,33 @@ module.exports = function (supertest, app, api) {
     static generateSlackTeamChannels(count, generator) {
       return Fixtures.generateResources(count, generator, Fixtures.generateSlackTeamChannel);
     }
-    
+
+    /*******************************************************************************************************************
+     * Profiles
+     */
+    static generateProfile(generator) {
+      const data = Object.assign({
+
+      }, Fixtures.parameterToGenerator(generator)());
+
+      const pre = {};
+
+      if (!data.userId) pre.user = Fixtures.generateUser();
+
+      return Promise.props(pre).then(results => {
+        if (results.user) data.userId = results.user.theId;
+        return Fixtures.createProfile(data, { rejectOnError: true });
+      });
+    }
+
+    static createProfile(data, options) {
+      return Fixtures.createResource('/v1/profiles', data, options);
+    }
+
+    static generateProfiles(count, generator) {
+      return Fixtures.generateResources(count, generator, Fixtures.generateProfile);
+    }
+
   };
 
 

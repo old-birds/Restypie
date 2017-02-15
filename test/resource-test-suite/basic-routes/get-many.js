@@ -34,11 +34,11 @@ module.exports = function (Fixtures, api) {
         });
       });
     });
-  
+
     it('should populate users on jobs resource', function () {
       const usersCount = 5;
       const jobsCount = 2;
-      
+
       return Fixtures.generateJobs(jobsCount).then((jobs) => {
         return Promise.all(jobs.map((job) => {
           return Fixtures.generateUsers(usersCount, { job: job.id });
@@ -52,7 +52,7 @@ module.exports = function (Fixtures, api) {
         });
       });
     });
-  
+
     it('should populate otherJobPopulation', function () {
       const usersCount = 2;
 
@@ -141,6 +141,19 @@ module.exports = function (Fixtures, api) {
           slackTeams.forEach((slackTeam) => {
             slackTeam.users.should.be.an('array').and.have.lengthOf(usersCount);
           });
+        });
+      });
+    });
+
+    it('should populate profile', function () {
+      return Fixtures.generateProfiles(3).then(profiles => {
+        return Fixtures.getUsers({ theId: { in: profiles.map(profile => profile.userId) } }, {
+          populate: ['profile']
+        });
+      }).then(users => {
+        users.forEach(user => {
+          user.profile.should.be.an('object');
+          user.profile.flag.should.equal(true);
         });
       });
     });
@@ -600,7 +613,7 @@ module.exports = function (Fixtures, api) {
         body.code.should.equal('RequestOutOfRangeError');
       });
     });
-    
+
     it('should populate dynamicRelation with a slackTeamChannel', function () {
       return Fixtures.createJob({ name: 'developer' }).then(() => {
         return Fixtures.generateSlackTeamChannel().then(() => {

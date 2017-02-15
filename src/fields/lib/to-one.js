@@ -11,6 +11,11 @@ let Restypie = require('../../');
  * @extends Restypie.Fields.AbstractRelationField
  * @constructor
  **********************************************************************************************************************/
-class ToOneField extends Restypie.Fields.AbstractRelationField {}
+class ToOneField extends Restypie.Fields.AbstractRelationField {
+  constructor(key, options) {
+    super(key, options);
+    if (this._toKey && this._fromKey) throw new Error(`Ambiguous ToOneField, cannot have both fromKey and toKey.`);
+  }
+}
 
 module.exports = ToOneField;
