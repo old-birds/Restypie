@@ -1063,19 +1063,33 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
         if (!field.isDynamicRelation) {
           const resource = field.getToResource();
           const toClient = resource.createClient({ defaultHeaders: headers }, true);
-          return toClient.find({ [resource.primaryKeyKey]: { in: _.uniq(_.compact(_.pluck(data, field.fromKey))) } }, {
-            populate: keyDef.populate,
-            limit: 0
-          }).then(populated => {
-            data.forEach(object => {
-              object[key] = populated.find(item => {
-                let fromValue = object[field.fromKey];
-                if (_.isPlainObject(fromValue)) fromValue = fromValue[resource.primaryKeyKey];
-                return item[resource.primaryKeyKey] === fromValue;
+          if (!field.toKey) {
+            return toClient.find({ [resource.primaryKeyKey]: { in: _.uniq(_.compact(_.pluck(data, field.fromKey))) } }, {
+              populate: keyDef.populate,
+              limit: 0
+            }).then(populated => {
+              data.forEach(object => {
+                object[key] = populated.find(item => {
+                  let fromValue = object[field.fromKey];
+                  if (_.isPlainObject(fromValue)) fromValue = fromValue[resource.primaryKeyKey];
+                  return item[resource.primaryKeyKey] === fromValue;
+                });
               });
+              return bundle.next();
             });
-            return bundle.next();
-          });
+          } else {
+            return toClient.find({ [field.toKey]: { in: data.map(object => object[this.primaryKeyKey]) } }, {
+              populate: keyDef.populate,
+              limit: 0
+            }).then(populated => {
+              data.forEach(object => {
+                object[key] = populated.find(item => {
+                  return item[field.toKey] === object[this.primaryKeyKey];
+                });
+              });
+              return bundle.next();
+            });
+          }
         } else {
           // Here we'll list the values to query for each target resource
           // And then perform grouped queries

@@ -45,6 +45,13 @@ module.exports = function (options) {
           isWritableOnce: true
         },
         hasSubscribedEmails: { path: 'emails', type: Boolean, isRequired: true, isFilterable: true },
+        profile: {
+          type: Restypie.Fields.ToOneField,
+          isFilterable: true,
+          to: () => api.resources.profiles,
+          toKey: 'userId',
+          filteringWeight: 10
+        },
         job: {
           type: 'int',
           isWritable: true,
@@ -82,5 +89,5 @@ module.exports = function (options) {
       };
     }
   }
-  
+
 };

@@ -47,6 +47,10 @@ module.exports = class AbstractField {
     return _.isString(this._fromKey) ? this._fromKey : this.key;
   }
 
+  get toKey() {
+    return this._toKey;
+  }
+
   get isDynamicRelation() {
     return this._isDynamicRelation;
   }
