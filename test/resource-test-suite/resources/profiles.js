@@ -20,7 +20,7 @@ module.exports = function (options) {
     get schema() {
       return {
         id: { type: 'int', isPrimaryKey: true },
-        flag: { type: Boolean, isWritable: true, isFilterable: true, default: true },
+        flag: { type: Boolean, isWritable: true, isFilterable: true, default: true, filteringWeight: 90 },
         userId: { type: 'int', isWritableOnce: true, isFilterable: true },
         user: {
           type: Restypie.Fields.ToOneField,

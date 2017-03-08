@@ -517,6 +517,19 @@ module.exports = function (Fixtures, api) {
       });
     });
 
+    it('should deeply filter (1-1 relation)', function () {
+      return Fixtures.generateUsers(3).then(users => {
+        return Fixtures.generateProfiles(3, function (index) {
+          return { userId: users[index].theId, flag: index !== 0 };
+        }).then(() => {
+          return Fixtures.getUsers({ 'profile.flag': false }).then(results => {
+            results.length.should.equal(1);
+            results[0].theId.should.equal(users[0].theId);
+          });
+        });
+      });
+    });
+
     it('should deeply filter (N-N relation)', function () {
       const usersCount = 4;
 

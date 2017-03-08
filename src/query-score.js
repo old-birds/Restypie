@@ -108,7 +108,7 @@ class QueryScore {
         allScores.push({ total: current.total, level: current.level });
       }
     });
-    
+
     score.total = new Score((allScores.reduce((acc, deepScore) => {
       if (deepScore.level > maxLevel) maxLevel = deepScore.level;
       return acc + (deepScore.total / deepScore.level);

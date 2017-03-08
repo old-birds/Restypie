@@ -76,6 +76,7 @@ module.exports = class AbstractField {
     this.isWritableOnce = !!options.isWritableOnce;
     this.isPrimaryKey = !!options.isPrimaryKey;
     this.isPopulable = !!options.isPopulable;
+    this.isOneToOneRelation = !!options.isOneToOneRelation;
 
     // Let's stay consistent - DO NOT change the order of those declarations
     if (this.isWritableOnce && !('isRequired' in options)) this.isRequired = true;
