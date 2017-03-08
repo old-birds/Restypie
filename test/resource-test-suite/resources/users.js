@@ -49,8 +49,10 @@ module.exports = function (options) {
           type: Restypie.Fields.ToOneField,
           isFilterable: true,
           to: () => api.resources.profiles,
+          fromKey: 'id',
           toKey: 'userId',
-          filteringWeight: 10
+          filteringWeight: 100,
+          isOneToOneRelation: true
         },
         job: {
           type: 'int',

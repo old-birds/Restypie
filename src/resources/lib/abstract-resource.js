@@ -828,6 +828,17 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
             return Promise.resolve(acc);
           });
         }
+      } else if (field.isOneToOneRelation) {
+        return toClient.find(nestedFilters[key], {
+          select: field.toKey,
+          limit: 0,
+          options: Restypie.QueryOptions.NO_COUNT
+        }).then((data) => {
+          acc[field.fromKey] = Restypie.mergeFiltersForKey(acc[field.fromKey], {
+            in: data.map((item) => { return item[field.toKey]; })
+          });
+          return Promise.resolve(acc);
+        });
       } else {
         return toClient.find(nestedFilters[key], {
           select: PRIMARY_KEY_KEYWORD,

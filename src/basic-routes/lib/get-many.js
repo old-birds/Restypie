@@ -39,14 +39,14 @@ module.exports = class GetManyRoute extends Restypie.Route {
         if (!bundle.shouldCalculateQueryScore) return bundle.next();
 
         return resource.getQueryScore(bundle).then((score) => {
-          
+
           if (includeScore || scoreOnly) bundle.assignToMeta({ score });
 
           if (scoreOnly) {
             bundle.setStatusCode(Restypie.Codes.OK);
             return pipeline.stop();
           }
-          
+
           if (bundle.shouldValidateQueryScore) {
             return resource.validateQueryScore(score).then((isValid) => {
               if (!isValid) {
