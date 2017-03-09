@@ -19,7 +19,8 @@ module.exports = class Query {
     this._limit = (typeof options.limit === 'number') ? options.limit : null;
     this._offset = options.offset || null;
     this._populate = options.populate || [];
-    this._headers = options.headers || {};
+    this._headers = (Restypie.QueryOptions.DEFAULT_HEADERS) ?
+      this._buildDefaultHeaders(options.method) : (options.headers || {});
     this._select = options.select || [];
     this._options = options.options || [];
     this._hasBeenRan = false;
@@ -49,7 +50,7 @@ module.exports = class Query {
             `headers: ${JSON.stringify(this.options.headers)}\n` +
             `body: ${JSON.stringify(this.options.body)}`
       );
-      
+
       return request(this.options, (err, res, body) => {
         this._hasBeenRan = true;
         body = body || {};
@@ -77,4 +78,14 @@ module.exports = class Query {
     });
   }
 
+  _buildDefaultHeaders(methodType) {
+    switch (methodType) {
+      case Restypie.Methods.POST:
+      case Restypie.Methods.PUT:
+      case Restypie.Methods.PATCH:
+        return { 'Accept': 'application/json', 'Content-Type': 'application/json' };
+      default:
+        return { 'Accept': 'application/json' };
+    }
+  }
 };

@@ -13,6 +13,8 @@ const server = http.createServer(app);
 app.set('port', PORT);
 app.use(bodyParser.json());
 
+const Query = require('../../src/client/lib/query');
+
 const api = new Restypie.API({ path: 'v1', routerType: Restypie.RouterTypes.EXPRESS });
 let usersResource;
 
@@ -415,6 +417,46 @@ describe('Restypie.Client', function () {
       return client.query(Restypie.Methods.GET, 'custom').then(function (customData) {
         customData.should.eql({ custom: true })
       });
+    });
+
+    it('should create get query using default headers', function () {
+      Restypie.setDefaultHeaders();
+      Restypie.QueryOptions.DEFAULT_HEADERS.should.equal(true);
+      const getQuery = new Query({
+        method: Restypie.Methods.GET,
+        url: 'test-url',
+        headers: Object.assign({ 'test-header': 'test-header-label' })
+      });
+      const defaultHeaders = getQuery._buildDefaultHeaders(Restypie.Methods.GET);
+      getQuery._headers.should.deep.equal(defaultHeaders);
+    });
+
+    it('should create post query using default headers', function () {
+      Restypie.setDefaultHeaders();
+      Restypie.QueryOptions.DEFAULT_HEADERS.should.equal(true);
+      const postQuery = new Query({
+        method: Restypie.Methods.POST,
+        url: 'test-url',
+        headers: Object.assign({ 'test-header': 'test-header-label' })
+      });
+      const defaultHeaders = postQuery._buildDefaultHeaders(Restypie.Methods.POST);
+      postQuery._headers.should.deep.equal(defaultHeaders);
+    });
+
+    it('should create get query using passed in headers', function () {
+      Restypie.setDefaultHeaders();
+      Restypie.QueryOptions.DEFAULT_HEADERS.should.equal(true);
+      Restypie.unsetDefaultHeaders();
+      Restypie.QueryOptions.DEFAULT_HEADERS.should.equal(false);
+      const header = { 'test-header': 'test-header-label' };
+      const myQuery = new Query({
+        method: Restypie.Methods.GET,
+        url: 'test-url',
+        headers: header
+      });
+      const defaultHeaders = myQuery._buildDefaultHeaders(Restypie.Methods.GET);
+      myQuery._headers.should.deep.equal(header);
+      myQuery._headers.should.not.deep.equal(defaultHeaders);
     });
 
   });
