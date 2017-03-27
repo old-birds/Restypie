@@ -70,7 +70,6 @@ class Pipeline {
       return this._exit(this._bundle);
     }).catch((err) => {
       Restypie.Logger.error(`Couldn't respond properly : ${err.stack || err}`);
-      Restypie.EventEmitter.emit(Restypie.EventTypes.ERROR, `Couldn't respond properly : ${err.stack || err}`);
       const res = this._bundle.res;
       res.statusCode = Restypie.Codes.InternalServerError;
       res.end(`Something went wrong : ${err.message}`);

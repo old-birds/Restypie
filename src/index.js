@@ -297,6 +297,6 @@ const Restypie = module.exports = {
   get Logger() { return require('./logger'); },
   get QueryScore() { return require('./query-score'); },
   get ResourceTester() { return require('./resource-tester'); },
-  get EventEmitter() { return require('./event-emitter')}
+  get EventEmitter() { return require('./event-emitter'); }
 
 };
