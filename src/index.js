@@ -45,6 +45,11 @@ const Restypie = module.exports = {
 
   RESERVED_WORDS: ['limit', 'offset', 'sort', 'select', 'format', 'populate', 'options'],
 
+  EventTypes: {
+    ERROR: 'error',
+    WARN: 'warn'
+  },
+
   isSupportedRouterType(type) {
     return _.contains(_.values(Restypie.RouterTypes), type);
   },
@@ -291,6 +296,7 @@ const Restypie = module.exports = {
   get Query() { return require('./client/lib/query'); },
   get Logger() { return require('./logger'); },
   get QueryScore() { return require('./query-score'); },
-  get ResourceTester() { return require('./resource-tester'); }
+  get ResourceTester() { return require('./resource-tester'); },
+  get EventEmitter() { return require('./event-emitter'); }
 
 };
