@@ -45,6 +45,11 @@ const Restypie = module.exports = {
 
   RESERVED_WORDS: ['limit', 'offset', 'sort', 'select', 'format', 'populate', 'options'],
 
+  EventTypes: {
+    ERROR: 'error',
+    WARN: 'warn'
+  },
+
   isSupportedRouterType(type) {
     return _.contains(_.values(Restypie.RouterTypes), type);
   },

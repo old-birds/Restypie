@@ -1267,17 +1267,17 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
     switch (true) {
       case !statusCode:
         Restypie.Logger.error('No statusCode for request on ' + bundle.req.url);
-        Restypie.EventEmitter.emit('error', 'No statusCode for request on ' + bundle.req.url);
+        Restypie.EventEmitter.emit(Restypie.EventTypes.ERROR, 'No statusCode for request on ' + bundle.req.url);
         break;
       case statusCode === Restypie.Codes.InternalServerError:
         debugError(bundle.err.stack);
         Restypie.Logger.error(bundle.err.stack, bundle.err);
-        Restypie.EventEmitter.emit('error', bundle.err.stack, bundle.err);
+        Restypie.EventEmitter.emit(Restypie.EventTypes.ERROR, bundle.err.stack, bundle.err);
         break;
       case statusCode >= Restypie.Codes.BadRequest:
         debugWarn(bundle.err.stack);
         Restypie.Logger.warn(bundle.err.stack, bundle.err);
-        Restypie.EventEmitter.emit('warn', bundle.err.stack, bundle.err);
+        Restypie.EventEmitter.emit(Restypie.EventTypes.WARN, bundle.err.stack, bundle.err);
         break;
     }
 
