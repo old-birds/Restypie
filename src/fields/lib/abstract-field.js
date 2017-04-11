@@ -6,6 +6,7 @@
 const _ = require('lodash');
 
 const Restypie = require('../../');
+const PermissionTypes = Restypie.PermissionTypes;
 
 const AUTO_FILTERING_WEIGHT = Symbol('AUTO_FILTERING_WEIGHT');
 const MAX_FILTERING_WEIGHT = 100;
@@ -112,6 +113,16 @@ module.exports = class AbstractField {
         if (!this.throughKey) throw new Error('ManyToMany relation defined without a `throughKey`');
         if (!this.otherThroughKey) throw new Error('ManyToMany relation defined without a `otherThroughKey`');
       }
+    }
+
+    if (options.hasOwnProperty('canRead')) {
+      this._canRead = options.canRead;
+    }
+    if (options.hasOwnProperty('canWriteOnCreate')) {
+      this._canWriteOnCreate = options.canWriteOnCreate;
+    }
+    if (options.hasOwnProperty('canWriteOnUpdate')) {
+      this._canWriteOnUpdate = options.canWriteOnUpdate;
     }
   }
 
@@ -235,5 +246,81 @@ module.exports = class AbstractField {
     return value === 'null' ? null :
       value === 'undefined' ? undefined :
         value;
+  }
+
+  /**
+   * Checks for read permission on the field. Override or pass in constructor options
+   * this method for field level authentication. Defaults to true otherwise
+   *
+   * @method canRead
+   * @param bundle
+   * @returns {Promise.<boolean>}
+   */
+  canRead(bundle) {
+    if (this._canRead) {
+      return Promise.resolve(this._canRead.call(null, bundle));
+    }
+    return Promise.resolve(true);
+  }
+
+  /**
+   * Checks for create permission on the field. Override or pass in constructor options
+   * this method for field level authentication. Defaults to true otherwise
+   *
+   * @method canWriteOnCreate
+   * @param bundle
+   * @returns {Promise.<boolean>}
+   */
+  canWriteOnCreate(bundle) {
+    if (this._canWriteOnCreate) {
+      return Promise.resolve(this._canWriteOnCreate.call(null, bundle));
+    }
+    return Promise.resolve(true);
+  }
+
+  /**
+   * Checks for update permission on the field. Override or pass in constructor options
+   * this method for field level authentication. Defaults to true otherwise
+   *
+   * @method canWriteOnUpdate
+   * @param bundle
+   * @returns {Promise.<boolean>}
+   */
+  canWriteOnUpdate(bundle) {
+    if (this._canWriteOnUpdate) {
+      return Promise.resolve(this._canWriteOnUpdate.call(null, bundle));
+    }
+    return Promise.resolve(true);
+  }
+
+  /**
+   * Checks for all permissions requested for the field
+   *
+   * @param requestedPermissions
+   * @param bundle
+   * @returns {Promise.<boolean>}
+   */
+  authenticatePermissions(requestedPermissions, bundle) {
+    return Promise.all(requestedPermissions.map(perm => {
+      let permissionPromise;
+      switch (perm) {
+        case PermissionTypes.READ:
+          permissionPromise = this.canRead(bundle);
+          break;
+        case PermissionTypes.CREATE:
+          permissionPromise = this.canWriteOnCreate(bundle);
+          break;
+        case PermissionTypes.UPDATE:
+          permissionPromise = this.canWriteOnUpdate(bundle);
+          break;
+        default:
+          permissionPromise = Promise.resolve(true);
+      }
+      return permissionPromise;
+    })).then(authorizations => {
+      return Promise.resolve(_.reduce(authorizations, (acc, perm) => {
+          return acc && perm;
+        }, true));
+    });
   }
 };

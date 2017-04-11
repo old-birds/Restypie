@@ -50,6 +50,12 @@ const Restypie = module.exports = {
     WARN: 'warn'
   },
 
+  PermissionTypes: {
+    READ: 'read',
+    CREATE: 'create',
+    UPDATE: 'update'
+  },
+
   isSupportedRouterType(type) {
     return _.contains(_.values(Restypie.RouterTypes), type);
   },
