@@ -45,7 +45,7 @@ module.exports = function (options) {
         theId: { type: 'int', path: 'id', isPrimaryKey: true, isFilterable: true, isWritable: true },
         firstName: { path: 'fName', type: String, isRequired: true, isFilterable: true, filteringWeight: 30 },
         lastName: { path: 'lName', type: String, isRequired: true, isFilterable: true, filteringWeight: 80 },
-        internalName: { type: String, isRequired: false, isReadable: true, isWritable: true,
+        internalName: { path: 'iName', type: String, isRequired: false, isReadable: true, isWritable: true,
           canRead: (bundle) => {
             return Promise.resolve(!!bundle.isSudo);
           },
