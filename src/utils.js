@@ -31,7 +31,7 @@ const Utils = module.exports = {
     }
     return !!isSubclass;
   },
-  
+
   assertIsSubclassOf(Child, Parent) {
     if (!Utils.isSubclassOf(Child, Parent)) {
       throw new TypeError(`Object ${Child} should be a "${Parent.name}" subclass`);
@@ -205,7 +205,7 @@ const Utils = module.exports = {
 
   /**
    * Returns a function that will throw when called. Useful to ensure certain methods are overridden.
-   * 
+   *
    * @method missingImplementation
    * @static
    * @param {String} name
@@ -213,12 +213,19 @@ const Utils = module.exports = {
   missingImplementation(name) {
     throw new Error(`${this && this.constructor && this.constructor.name} must implement ${name}()`);
   },
-  
-  
+
+
   makeArray(value) {
     if (Array.isArray(value)) return value;
     if (_.isUndefined(value)) return [];
     return [value];
+  },
+
+  addIfNotInclude(array, item) {
+    if (!_.includes(array, item)) {
+      array.push(item);
+    }
+    return array;
   }
 
 };

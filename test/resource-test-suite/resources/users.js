@@ -23,11 +23,39 @@ module.exports = function (options) {
       ];
     }
 
+    get defaultSelect() {
+      return [
+        'theId',
+        'firstName',
+        'lastName',
+        'email',
+        'yearOfBirth',
+        'hasSubscribedEmails',
+        'job',
+        'profilePicture',
+        'createdOn',
+        'gender',
+        'luckyNumber',
+        'readOnly'
+      ];
+    }
+
     get schema() {
       return {
         theId: { type: 'int', path: 'id', isPrimaryKey: true, isFilterable: true, isWritable: true },
         firstName: { path: 'fName', type: String, isRequired: true, isFilterable: true, filteringWeight: 30 },
         lastName: { path: 'lName', type: String, isRequired: true, isFilterable: true, filteringWeight: 80 },
+        internalName: { type: String, isRequired: false, isReadable: true, isWritable: true,
+          canRead: (bundle) => {
+            return Promise.resolve(!!bundle.isSudo);
+          },
+          canWriteOnCreate: (bundle) => {
+            return Promise.resolve(!!bundle.isSudo);
+          },
+          canWriteOnUpdate: (bundle) => {
+            return Promise.resolve(!!bundle.isSudo);
+          }
+        },
         email: { type: String, isRequired: true, isFilterable: true, filteringWeight: 100 },
         yearOfBirth: {
           path: 'year',

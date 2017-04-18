@@ -79,7 +79,9 @@ module.exports = function (supertest, app, api) {
     static createResource(path, data, options) {
       options = options || {};
 
-      const req = supertest(app).post(path);
+      const req = supertest(app)
+        .post(path)
+        .set(options.setSudoHeader ? Restypie.getSudoHeader() : {});
 
       if (options.attach) {
         Utils.fillMultipartFields(req, data);
@@ -107,6 +109,7 @@ module.exports = function (supertest, app, api) {
       return new Promise((resolve, reject) => {
         supertest(app)
           .post(path)
+          .set(options.setSudoHeader ? Restypie.getSudoHeader() : {})
           .send(data)
           .expect(options.statusCode || Restypie.Codes.Created, (err, res) => {
             if (err) return reject(err);
@@ -120,6 +123,7 @@ module.exports = function (supertest, app, api) {
       return new Promise((resolve, reject) => {
         supertest(app)
           .get(Restypie.Url.join(path, id))
+          .set(options.setSudoHeader ? Restypie.getSudoHeader() : {})
           .query(Restypie.stringify(_.pick(options, Restypie.RESERVED_WORDS)))
           .expect(options.statusCode || Restypie.Codes.OK, (err, res) => {
             if (err) return reject(err);
@@ -150,7 +154,9 @@ module.exports = function (supertest, app, api) {
     static updateResource(path, id, updates, options) {
       options = options || {};
 
-      const req = supertest(app).patch(Restypie.Url.join(path, id));
+      const req = supertest(app)
+        .patch(Restypie.Url.join(path, id))
+        .set(options.setSudoHeader ? Restypie.getSudoHeader() : {});
 
       if (options.attach) {
         Utils.fillMultipartFields(req, updates);
@@ -182,6 +188,7 @@ module.exports = function (supertest, app, api) {
 
         const req = supertest(app)
           .patch(path)
+          .set(options.setSudoHeader ? Restypie.getSudoHeader() : {})
           .query(Restypie.stringify({ filters }));
 
         if (options.attach) {
@@ -254,14 +261,14 @@ module.exports = function (supertest, app, api) {
       });
     }
 
-    static generateResources(count, generator, method) {
+    static generateResources(count, generator, method, options) {
       generator = Fixtures.parameterToGenerator(generator);
 
       let index = -1;
       const results = [];
       return (function loop() {
         if (++index < count) {
-          return method(generator(index)).then((item) => {
+          return method(generator(index), options).then((item) => {
             results.push(item);
             return loop();
           });
@@ -282,7 +289,7 @@ module.exports = function (supertest, app, api) {
       return Fixtures.createResources('/v1/users', data, options);
     }
 
-    static generateUser(generator) {
+    static generateUser(generator, options) {
       const uuid = Fixtures.uuid();
 
       const data = Object.assign({
@@ -301,12 +308,12 @@ module.exports = function (supertest, app, api) {
 
       return Promise.props(pre).then(results => {
         if (results.job) data.job = results.job.id;
-        return Fixtures.createUser(data, { rejectOnError: true });
+        return Fixtures.createUser(data, Object.assign({ rejectOnError: true }, options));
       });
     }
 
-    static generateUsers(count, generator) {
-      return Fixtures.generateResources(count, generator, Fixtures.generateUser);
+    static generateUsers(count, generator, options) {
+      return Fixtures.generateResources(count, generator, Fixtures.generateUser, options);
     }
 
     static getUser(id, options) {

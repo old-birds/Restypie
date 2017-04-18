@@ -319,8 +319,8 @@ module.exports = class AbstractField {
       return permissionPromise;
     })).then(authorizations => {
       return Promise.resolve(_.reduce(authorizations, (acc, perm) => {
-          return acc && perm;
-        }, true));
+        return acc && perm;
+      }, true));
     });
   }
 };

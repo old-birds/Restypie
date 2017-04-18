@@ -246,6 +246,23 @@ module.exports = {
   },
 
   /**
+   * The required permissions for the request
+   *
+   * @property UnAuthorizedRequest
+   * @type constructor
+   * @static
+   * @extends Restypie.TemplateErrors.AbstractError
+   * @constructor
+   */
+  UnAuthorizedRequest: class UnAuthorizedRequestError extends AbstractError {
+     get statusCode() { return Restypie.Codes.Unauthorized; }
+     static template(meta) {
+       const requiredPerms = meta.permissions.join(', ');
+       return `Do not have sufficent permissions for request on field "${meta.key}". Required : ${requiredPerms}`;
+     }
+  },
+
+  /**
    * The path can only be written once.
    *
    * @property NotUpdatable
@@ -370,8 +387,8 @@ module.exports = {
       return `Request is trying to access too many data, try refining your filters`;
     }
   },
-  
-  
+
+
   InconsistentRequest: class InconsistentRequestError extends AbstractBadRequestError {
     static template(meta) {
       return `Request is not consistent, values for path "${meta.key}" don't match :` +

@@ -26,6 +26,8 @@ const DEFAULTS = {
   SERIALIZERS: [Restypie.Serializers.JSONSerializer]
 };
 
+const FIELD_AUTH_METHODS = Restypie.FIELD_AUTH_METHODS;
+
 /***********************************************************************************************************************
  * @namespace Restypie.Resources
  * @class AbstractResource
@@ -251,8 +253,13 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
     if (this.defaultSelect) {
       this.defaultSelect.forEach(keyItem => {
         if (!schema.hasOwnProperty(keyItem)) {
-          throw new Error('Schema doesnt have this property ' + keyItem);
+          throw new Error(`Schema doesnt have this property ${keyItem}`);
         }
+        FIELD_AUTH_METHODS.forEach(permCheck => {
+          if (schema[keyItem].hasOwnProperty(permCheck)) {
+            throw new Error(`Cannot override authentication for default select value '${keyItem}', got: ${permCheck}`);
+          }
+        });
       });
     }
   }
@@ -479,16 +486,31 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
    * @return {Promise}
    */
   parseBody(bundle) {
+    const self = this;
     let supported = ['application/json', 'multipart/form-data'];
+    let parsed;
     switch (typeIs(bundle.req, supported)) {
       case 'application/json':
-        return this._parseJSON(bundle);
+        parsed = this._parseJSON(bundle);
+        break;
       case 'multipart/form-data':
-        return this._parseMultipart(bundle);
+        parsed = this._parseMultipart(bundle);
+        break;
     }
 
-    let headers = bundle.req.headers['content-type'];
-    return Promise.reject(new Restypie.TemplateErrors.UnsupportedFormat({ expected: supported, value: headers }));
+    if (!parsed) {
+      let headers = bundle.req.headers['content-type'];
+      return Promise.reject(new Restypie.TemplateErrors.UnsupportedFormat({ expected: supported, value: headers }));
+    }
+
+    return Promise.resolve(parsed)
+      .then(bundle => {
+        const data = Restypie.Utils.makeArray(bundle.body);
+        const fields = Object.getOwnPropertyNames(_.reduce(data, (acc, object) => {
+          return _.defaults(acc, object);
+        }, {}));
+        return self.authorize(bundle, fields);
+      });
   }
 
   /**
@@ -951,6 +973,49 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
         return bundle.setBody(isArray ? final : final[0]).next();
       }).then(this.afterHydrate.bind(this, bundle))
         .then(function () { return bundle.next(); });
+  }
+
+  /**
+   * Authenticates the requested fields
+   *
+   * @param bundle
+   * @param fields
+   * @returns {Promise.<TResult>}
+   */
+  authorize(bundle, fields) {
+    const self = this;
+    const permissions = AbstractResource.getPermissions(bundle);
+
+    let fieldsList = fields ? fields : bundle.query.select;
+    let fieldsArray = Restypie.listToArray(fieldsList);
+    let fieldsByKey = this.fieldsByKey;
+    let fieldsMap = this.fieldsByPath;
+
+    let fieldsAccessed = [];
+    let fieldsPermissions = [];
+    fieldsArray.forEach(function (key) {
+      let field;
+      if (key === PRIMARY_KEY_KEYWORD) {
+        key = self.primaryKeyKey;
+        fieldsArray.splice(fieldsArray.indexOf(PRIMARY_KEY_KEYWORD), 1, key);
+      }
+      field = fieldsByKey[key];
+      if (!field) {
+        field = fieldsMap[key];
+      }
+      fieldsAccessed.push(key);
+      fieldsPermissions.push(field.authenticatePermissions(permissions, bundle));
+    });
+    return Promise.all(fieldsPermissions).then(results => {
+      const failedPermIndex = _.findIndex(results, perm => {
+        return !perm;
+      });
+      if (failedPermIndex > -1) {
+        const key = fieldsAccessed[failedPermIndex];
+        return bundle.next(new Restypie.TemplateErrors.UnAuthorizedRequest({ key, permissions }));
+      }
+      return Promise.resolve(bundle);
+    });
   }
 
   /**
@@ -1425,6 +1490,23 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
       throw new Error('reset() is only intended to be used for Restypie internal testing');
     }
     return this.__reset();
+  }
+
+
+  static getPermissions(bundle, currentPermissions) {
+    let permissions = currentPermissions || [];
+    let isRead = bundle.isRead;
+    let isWrite = bundle.isWrite;
+    let isUpdate = bundle.isUpdate;
+    if (isRead) {
+      permissions = Restypie.Utils.addIfNotInclude(permissions, Restypie.PermissionTypes.READ);
+    }
+    if (isUpdate) {
+      permissions = Restypie.Utils.addIfNotInclude(permissions, Restypie.PermissionTypes.UPDATE);
+    } else if (isWrite) {
+      permissions = Restypie.Utils.addIfNotInclude(permissions, Restypie.PermissionTypes.CREATE);
+    }
+    return permissions;
   }
 
   static get LIST_SEPARATOR() { return /\s*,\s*/; }
