@@ -221,8 +221,8 @@ const Utils = module.exports = {
     return [value];
   },
 
-  addIfNotInclude(array, item) {
-    if (!_.includes(array, item)) {
+  pushUnique(array, item) {
+    if (!array.includes(item)) {
       array.push(item);
     }
     return array;

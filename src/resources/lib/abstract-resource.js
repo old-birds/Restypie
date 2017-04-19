@@ -484,22 +484,22 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
   parseBody(bundle) {
     const self = this;
     let supported = ['application/json', 'multipart/form-data'];
-    let parsed;
+    let parserPromise;
     switch (typeIs(bundle.req, supported)) {
       case 'application/json':
-        parsed = this._parseJSON(bundle);
+        parserPromise = this._parseJSON(bundle);
         break;
       case 'multipart/form-data':
-        parsed = this._parseMultipart(bundle);
+        parserPromise = this._parseMultipart(bundle);
         break;
     }
 
-    if (!parsed) {
+    if (!parserPromise) {
       let headers = bundle.req.headers['content-type'];
       return Promise.reject(new Restypie.TemplateErrors.UnsupportedFormat({ expected: supported, value: headers }));
     }
 
-    return Promise.resolve(parsed)
+    return Promise.resolve(parserPromise)
       .then(bundle => {
         const data = Restypie.Utils.makeArray(bundle.body);
         const fields = Object.getOwnPropertyNames(_.reduce(data, (acc, object) => {
@@ -1496,12 +1496,12 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
     let isWrite = bundle.isWrite;
     let isUpdate = bundle.isUpdate;
     if (isRead) {
-      permissions = Restypie.Utils.addIfNotInclude(permissions, Restypie.PermissionTypes.READ);
+      permissions = Restypie.Utils.pushUnique(permissions, Restypie.PermissionTypes.READ);
     }
     if (isUpdate) {
-      permissions = Restypie.Utils.addIfNotInclude(permissions, Restypie.PermissionTypes.UPDATE);
+      permissions = Restypie.Utils.pushUnique(permissions, Restypie.PermissionTypes.UPDATE);
     } else if (isWrite) {
-      permissions = Restypie.Utils.addIfNotInclude(permissions, Restypie.PermissionTypes.CREATE);
+      permissions = Restypie.Utils.pushUnique(permissions, Restypie.PermissionTypes.CREATE);
     }
     return permissions;
   }
