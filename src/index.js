@@ -56,8 +56,6 @@ const Restypie = module.exports = {
     UPDATE: 'update'
   },
 
-  FIELD_AUTH_METHODS: ['canRead', 'canWriteOnCreate', 'canWriteOnUpdate'],
-
   isSupportedRouterType(type) {
     return _.contains(_.values(Restypie.RouterTypes), type);
   },

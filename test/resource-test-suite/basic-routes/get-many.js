@@ -416,6 +416,48 @@ module.exports = function (Fixtures, api) {
       });
     });
 
+    it('should select internal name with authorization', function () {
+      const usersCount = 10;
+
+      return Fixtures.generateUsers(usersCount, (index) => {
+        return {
+          internalName: `john_doe${index}`
+        };
+      }, { setSudoHeader: true }).then(() => {
+        return Fixtures.getUsers(null, {
+          select: ['internalName'],
+          forceGetAllAllowed: true
+        }).then((populated) => {
+          populated.should.be.an('array').and.have.lengthOf(usersCount);
+          populated.forEach((user) => {
+            should.exist(user.internalName);
+          });
+        });
+      });
+    });
+
+    it('should NOT select internal name without authorization', function () {
+      const usersCount = 10;
+
+      return Fixtures.generateUsers(usersCount, (index) => {
+        return {
+          internalName: `john_doe${index}`
+        };
+      }, { setSudoHeader: true }).then(() => {
+        return Fixtures.getUsers(null, {
+          select: ['internalName'],
+          statusCode: Restypie.Codes.Unauthorized
+        }).then((body) => {
+          body.error.should.equal(true);
+          body.message.should.be.a('string');
+          body.code.should.be.a('string');
+          body.meta.should.be.an('object');
+          body.meta.key.should.equal('internalName');
+          body.meta.permissions.should.contain('read');
+        });
+      });
+    });
+
     it('should sort results (single ASC sort)', function () {
       return Fixtures.generateUsers(10, (index) => {
         return { yearOfBirth: 2000 + index };

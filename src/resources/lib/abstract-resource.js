@@ -26,8 +26,6 @@ const DEFAULTS = {
   SERIALIZERS: [Restypie.Serializers.JSONSerializer]
 };
 
-const FIELD_AUTH_METHODS = Restypie.FIELD_AUTH_METHODS;
-
 /***********************************************************************************************************************
  * @namespace Restypie.Resources
  * @class AbstractResource
@@ -255,11 +253,9 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
         if (!schema.hasOwnProperty(keyItem)) {
           throw new Error(`Schema doesnt have this property ${keyItem}`);
         }
-        FIELD_AUTH_METHODS.forEach(permCheck => {
-          if (schema[keyItem].hasOwnProperty(permCheck)) {
-            throw new Error(`Cannot override authentication for default select value '${keyItem}', got: ${permCheck}`);
-          }
-        });
+        if (schema[keyItem].hasOwnProperty('canRead')) {
+          throw new Error(`Cannot override canRead authentication for default select value '${keyItem}'`);
+        }
       });
     }
   }
@@ -976,7 +972,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
   }
 
   /**
-   * Authenticates the requested fields
+   * Authorizes fields access according to action
    *
    * @param bundle
    * @param fields
@@ -986,6 +982,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
     const self = this;
     const permissions = AbstractResource.getPermissions(bundle);
 
+    // Default to select if fields not passed in
     let fieldsList = fields ? fields : bundle.query.select;
     let fieldsArray = Restypie.listToArray(fieldsList);
     let fieldsByKey = this.fieldsByKey;

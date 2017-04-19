@@ -29,6 +29,27 @@ module.exports = function (Fixtures) {
       });
     });
 
+    it('should return selected fields if authorized', function () {
+      return Fixtures.generateUser({ internalName: `john_doe` }, { setSudoHeader: true }).then((user) => {
+        return Fixtures.getUser(user.theId, { select: ['theId', 'internalName'], setSudoHeader: true });
+      }).then((user) => {
+        user.should.have.keys(['theId', 'internalName']);
+      });
+    });
+
+    it('should NOT return if unauthorized for selected fields', function () {
+      return Fixtures.generateUser({ internalName: `john_doe` }, { setSudoHeader: true }).then((user) => {
+        return Fixtures.getUser(user.theId, { select: ['theId', 'internalName'], statusCode: Restypie.Codes.Unauthorized });
+      }).then((body) => {
+        body.error.should.equal(true);
+        body.message.should.be.a('string');
+        body.code.should.be.a('string');
+        body.meta.should.be.an('object');
+        body.meta.key.should.equal('internalName');
+        body.meta.permissions.should.contain('read');
+      });
+    });
+
     it('should populate job', function () {
       return Fixtures.generateUser().then((user) => {
         return Fixtures.getUser(user.theId, { populate: ['job'] }).then((populated) => {
