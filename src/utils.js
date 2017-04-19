@@ -222,7 +222,7 @@ const Utils = module.exports = {
   },
 
   pushUnique(array, item) {
-    if (!array.includes(item)) {
+    if (!_.includes(array, item)) {
       array.push(item);
     }
     return array;
