@@ -35,6 +35,42 @@ module.exports = function (Fixtures, api) {
       });
     });
 
+    it('should NOT populate job (selecting internal name)', function () {
+      const usersCount = 10;
+
+      return Fixtures.generateUsers(usersCount).then(() => {
+        return Fixtures.getUsers(null, {
+          select: ['internalName'],
+          statusCode: Restypie.Codes.Unauthorized
+        }).then((body) => {
+            body.error.should.equal(true);
+            body.message.should.be.a('string');
+            body.code.should.be.a('string');
+            body.meta.should.be.an('object');
+            body.meta.key.should.equal('internalName');
+            body.meta.permissions.should.contain('read');
+        });
+      });
+    });
+
+    it('should NOT populate job (populating internal name)', function () {
+      const usersCount = 10;
+
+      return Fixtures.generateUsers(usersCount).then(() => {
+        return Fixtures.getUsers(null, {
+          populate: ['internalName', 'job', 'otherJobPopulation'],
+          statusCode: Restypie.Codes.Unauthorized
+        }).then((body) => {
+          body.error.should.equal(true);
+          body.message.should.be.a('string');
+          body.code.should.be.a('string');
+          body.meta.should.be.an('object');
+          body.meta.key.should.equal('internalName');
+          body.meta.permissions.should.contain('read');
+        });
+      });
+    });
+
     it('should populate users on jobs resource', function () {
       const usersCount = 5;
       const jobsCount = 2;

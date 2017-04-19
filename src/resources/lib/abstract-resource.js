@@ -983,8 +983,18 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
     const permissions = AbstractResource.getPermissions(bundle);
 
     // Default to select if fields not passed in
-    let fieldsList = fields ? fields : bundle.query.select;
+    let fieldsList = fields;
     let fieldsArray = Restypie.listToArray(fieldsList);
+
+    if (!fields) {
+      let selectFieldsArray = Restypie.listToArray(bundle.query.select);
+      // Get the populate item in current resource
+      let populateFieldsArray = Restypie.listToArray(bundle.query.populate).map((path) => {
+        return Restypie.getItemInPath(path);
+      });
+      fieldsArray = _.union(selectFieldsArray, populateFieldsArray);
+    }
+
     let fieldsByKey = this.fieldsByKey;
     let fieldsMap = this.fieldsByPath;
 
