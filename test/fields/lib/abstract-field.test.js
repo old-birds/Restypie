@@ -31,23 +31,32 @@ describe('Restypie.Fields.AbstractField', function () {
 
   describe('authentication', function () {
 
+    const READ_ONLY_ERROR = `Cannot write to field`;
+    const ADMIN_ERROR = `Field can only be written by admins`;
+
     class ReadOnlyField extends AbstractField {
       canWriteOnCreate(bundle) {
-        return Promise.resolve(false);
+        return Promise.reject(new Error(READ_ONLY_ERROR));
       }
 
       canWriteOnUpdate(bundle) {
-        return Promise.resolve(false);
+        return Promise.reject(new Error(READ_ONLY_ERROR));
       }
     }
 
     class AdminWritableField extends AbstractField {
       canWriteOnCreate(bundle) {
-        return Promise.resolve(bundle.account_type === 'admin');
+        if (bundle.account_type !== 'admin') {
+          return Promise.reject(new Error(ADMIN_ERROR))
+        }
+        return Promise.resolve(true);
       }
 
       canWriteOnUpdate(bundle) {
-        return Promise.resolve(bundle.account_type === 'admin');
+        if (bundle.account_type !== 'admin') {
+          return Promise.reject(new Error(ADMIN_ERROR))
+        }
+        return Promise.resolve(true);
       }
     }
 
@@ -67,6 +76,17 @@ describe('Restypie.Fields.AbstractField', function () {
       }
     });
 
+    it('should reject unhandled permission', function () {
+      return field.authenticatePermissions([PermissionTypes.UPDATE, 'reed'], {}).then(result => {
+        result.should.equal(false);
+      }, err => {
+        err.should.be.an('error');
+        err.meta.value.should.equal('reed');
+        err.meta.expected.should.contain(PermissionTypes.READ);
+        err.meta.expected.should.contain(PermissionTypes.CREATE);
+        err.meta.expected.should.contain(PermissionTypes.UPDATE);
+      })
+    })
 
     it('should get the authenticatePermissions for full permissions user', function () {
       return field.authenticatePermissions(updateAction, {}).then(permission => {
@@ -74,27 +94,52 @@ describe('Restypie.Fields.AbstractField', function () {
       });
     });
 
-    it('should NOT allow write and allow read for ReadOnlyField', function () {
-      return readOnlyField.authenticatePermissions(updateAction, {}).then(permission => {
-        permission.should.equal(false);
-        return readOnlyField.authenticatePermissions(createAction, {}).then(permission => {
-          permission.should.equal(false);
-          return readOnlyField.authenticatePermissions(readOnlyAction, {}).then(permission => {
-            permission.should.equal(true);
-          });
-        });
+    it('should allow read for ReadOnlyField', function () {
+      return readOnlyField.authenticatePermissions(readOnlyAction, {}).then(permission => {
+        permission.should.equal(true);
       });
     });
 
-    it('should NOT allow write for non admin users for AdminWritableField', function () {
-      return adminField.authenticatePermissions(updateAction, { account_type: 'user' }).then(permission => {
-        permission.should.to.equal(false);
-        return adminField.authenticatePermissions(createAction, { account_type: 'user' }).then(permission => {
-          permission.should.equal(false);
-          return adminField.authenticatePermissions(readOnlyAction, { account_type: 'user' }).then(permission => {
-            permission.should.equal(true);
-          });
-        });
+
+    it('should NOT allow create for ReadOnlyField', function () {
+      return readOnlyField.authenticatePermissions(createAction, {}).then(result => {
+        result.should.equal(false);
+      }, err => {
+        err.should.be.an('error');
+        err.message.should.equal(READ_ONLY_ERROR);
+      });
+    });
+
+    it('should NOT allow update for ReadOnlyField', function () {
+      return readOnlyField.authenticatePermissions(updateAction, {}).then(result => {
+        result.should.equal(false);
+      }, err => {
+        err.should.be.an('error');
+        err.message.should.equal(READ_ONLY_ERROR);
+      });
+    });
+
+    it('should allow read for non admin users for AdminWritableField', function () {
+      return adminField.authenticatePermissions(readOnlyAction, {account_type: 'user'}).then(permission => {
+        permission.should.equal(true);
+      });
+    });
+
+    it('should NOT allow create for non admin users for AdminWritableField', function () {
+      return adminField.authenticatePermissions(createAction, { account_type: 'user' }).then(result => {
+        result.should.equal(false);
+      }, err => {
+        err.should.be.an('error');
+        err.message.should.equal(ADMIN_ERROR);
+      });
+    });
+
+    it('should NOT allow update for non admin users for AdminWritableField', function () {
+      return adminField.authenticatePermissions(updateAction, { account_type: 'user' }).then(result => {
+        result.should.equal(false);
+      }, err => {
+        err.should.be.an('error');
+        err.message.should.equal(ADMIN_ERROR);
       });
     });
 
@@ -115,8 +160,15 @@ describe('Restypie.Fields.AbstractField', function () {
         permission.should.be.equal(true);
         return schemaDefinedPermsField.authenticatePermissions(createAction, { account_type: 'user' }).then(permission => {
           permission.should.be.equal(true);
-          return schemaDefinedPermsField.authenticatePermissions(updateAction, { account_type: 'user' }).then(permission => {
-            permission.should.be.equal(false);
+          return schemaDefinedPermsField.authenticatePermissions(updateAction, { account_type: 'user' }).then(result => {
+            result.should.equal(false);
+          }, err => {
+            err.should.be.an('error');
+            err.meta.should.be.an('object');
+            err.message.should.be.a('string');
+            err.code.should.be.a('string');
+            err.meta.should.be.an('object');
+            err.meta.key.should.equal('key');
           })
         });
       });

@@ -45,6 +45,14 @@ class AbstractForbiddenError extends AbstractError {
   }
 }
 
+class AbstractUnauthorizedError extends AbstractError {
+  get statusCode() { return Restypie.Codes.Unauthorized; }
+  constructor(meta) {
+    super(meta);
+    Restypie.Utils.forceAbstract(this, AbstractUnauthorizedError);
+  }
+}
+
 
 /***********************************************************************************************************************
  * @namespace Restypie
@@ -184,6 +192,23 @@ module.exports = {
   },
 
   /**
+   * Requested permission is not supported.
+   *
+   * @property UnsupportedPermission
+   * @type constructor
+   * @static
+   * @extends Restypie.TemplateErrors.AbstractError
+   * @constructor
+   */
+  UnsupportedPermission: class UnsupportedPermissionError extends AbstractError {
+    get statusCode() { return Restypie.Codes.NotAcceptable; }
+    static template(meta) {
+      return `Requested permission is not supported ; should be one of ${meta.expected.join(', ')} ; 
+      got "${meta.value}"`;
+    }
+  },
+
+  /**
    * The resource could not be found.
    *
    * @property ResourceNotFound
@@ -246,20 +271,48 @@ module.exports = {
   },
 
   /**
-   * The required permissions for the request
+   * Missing read permissions for the path
    *
-   * @property UnAuthorizedRequest
+   * @property FieldNotReadable
    * @type constructor
    * @static
-   * @extends Restypie.TemplateErrors.AbstractError
+   * @extends Restypie.TemplateErrors.AbstractUnauthorizedError
    * @constructor
    */
-  UnAuthorizedRequest: class UnAuthorizedRequestError extends AbstractError {
-     get statusCode() { return Restypie.Codes.Unauthorized; }
+  FieldNotReadable: class FieldNotReadableError extends AbstractUnauthorizedError {
      static template(meta) {
-       const requiredPerms = meta.permissions.join(', ');
-       return `Do not have sufficent permissions for request on field "${meta.key}". Required : ${requiredPerms}`;
+       return `Missing Read permission for request on field "${meta.key}"`;
      }
+  },
+
+  /**
+   * Missing write permissions for the path
+   *
+   * @property FieldNotWritable
+   * @type constructor
+   * @static
+   * @extends Restypie.TemplateErrors.AbstractUnauthorizedError
+   * @constructor
+   */
+  FieldNotWritable: class FieldNotWritableError extends AbstractUnauthorizedError {
+    static template(meta) {
+      return `Missing Create permission for request on field "${meta.key}"`;
+    }
+  },
+
+  /**
+   * Missing update permissions for the path
+   *
+   * @property FieldNotUpdatable
+   * @type constructor
+   * @static
+   * @extends Restypie.TemplateErrors.AbstractUnauthorizedError
+   * @constructor
+   */
+  FieldNotUpdatable: class FieldNotUpdatableError extends AbstractUnauthorizedError {
+    static template(meta) {
+      return `Missing Update permission for request on field "${meta.key}"`;
+    }
   },
 
   /**

@@ -46,7 +46,6 @@ module.exports = function (Fixtures) {
         body.code.should.be.a('string');
         body.meta.should.be.an('object');
         body.meta.key.should.equal('internalName');
-        body.meta.permissions.should.contain('read');
       });
     });
 

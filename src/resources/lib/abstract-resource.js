@@ -998,7 +998,6 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
     let fieldsByKey = this.fieldsByKey;
     let fieldsMap = this.fieldsByPath;
 
-    let fieldsAccessed = [];
     let fieldsPermissions = [];
     fieldsArray.forEach(function (key) {
       let field;
@@ -1010,18 +1009,12 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
       if (!field) {
         field = fieldsMap[key];
       }
-      fieldsAccessed.push(key);
       fieldsPermissions.push(field.authenticatePermissions(permissions, bundle));
     });
-    return Promise.all(fieldsPermissions).then(results => {
-      const failedPermIndex = _.findIndex(results, perm => {
-        return !perm;
-      });
-      if (failedPermIndex > -1) {
-        const key = fieldsAccessed[failedPermIndex];
-        return bundle.next(new Restypie.TemplateErrors.UnAuthorizedRequest({ key, permissions }));
-      }
+    return Promise.all(fieldsPermissions).then(() => {
       return Promise.resolve(bundle);
+    }, reason => {
+      return bundle.next(reason);
     });
   }
 

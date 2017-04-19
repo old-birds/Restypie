@@ -258,7 +258,14 @@ module.exports = class AbstractField {
    */
   canRead(bundle) {
     if (this._canRead) {
-      return Promise.resolve(this._canRead.call(null, bundle));
+      return Promise.resolve(this._canRead.call(null, bundle))
+        .then(result => {
+          if (!result) {
+            return Promise.reject(new Restypie.TemplateErrors.FieldNotReadable({
+              key: this.key
+            }));
+          }
+        });
     }
     return Promise.resolve(true);
   }
@@ -273,7 +280,14 @@ module.exports = class AbstractField {
    */
   canWriteOnCreate(bundle) {
     if (this._canWriteOnCreate) {
-      return Promise.resolve(this._canWriteOnCreate.call(null, bundle));
+      return Promise.resolve(this._canWriteOnCreate.call(null, bundle))
+        .then(result => {
+          if (!result) {
+            return Promise.reject(new Restypie.TemplateErrors.FieldNotWritable({
+              key: this.key
+            }));
+          }
+        });
     }
     return Promise.resolve(true);
   }
@@ -288,7 +302,14 @@ module.exports = class AbstractField {
    */
   canWriteOnUpdate(bundle) {
     if (this._canWriteOnUpdate) {
-      return Promise.resolve(this._canWriteOnUpdate.call(null, bundle));
+      return Promise.resolve(this._canWriteOnUpdate.call(null, bundle))
+        .then(result => {
+          if (!result) {
+            return Promise.reject(new Restypie.TemplateErrors.FieldNotUpdatable({
+              key: this.key
+            }));
+          }
+        });
     }
     return Promise.resolve(true);
   }
@@ -314,13 +335,17 @@ module.exports = class AbstractField {
           permissionPromise = this.canWriteOnUpdate(bundle);
           break;
         default:
-          permissionPromise = Promise.resolve(true);
+          const supported = [PermissionTypes.READ, PermissionTypes.CREATE, PermissionTypes.UPDATE];
+          permissionPromise = Promise.reject(new Restypie.TemplateErrors.UnsupportedPermission({
+            expected: supported,
+            value: perm
+          }));
       }
       return permissionPromise;
-    })).then(authorizations => {
-      return Promise.resolve(_.reduce(authorizations, (acc, perm) => {
-        return acc && perm;
-      }, true));
+    })).then(() => {
+      return Promise.resolve(true);
+    }, reason => {
+      return Promise.reject(reason);
     });
   }
 };
