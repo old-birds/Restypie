@@ -1143,7 +1143,8 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
             const fromKeyValues = _.uniq(_.compact(_.pluck(data, field.fromKey)));
             return toClient.find({ [resource.primaryKeyKey]: { in: fromKeyValues } }, {
               populate: keyDef.populate,
-              limit: 0
+              limit: 0,
+              options: Restypie.QueryOptions.NO_COUNT
             }).then(populated => {
               data.forEach(object => {
                 object[key] = populated.find(item => {
@@ -1157,7 +1158,8 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
           } else {
             return toClient.find({ [field.toKey]: { in: data.map(object => object[this.primaryKeyKey]) } }, {
               populate: keyDef.populate,
-              limit: 0
+              limit: 0,
+              options: Restypie.QueryOptions.NO_COUNT
             }).then(populated => {
               data.forEach(object => {
                 object[key] = populated.find(item => {
@@ -1193,7 +1195,8 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
                 [config.resource.primaryKeyKey]: { in: config.identifiers }
               }, {
                 populate: keyDef.populate,
-                limit: 0
+                limit: 0,
+                options: Restypie.QueryOptions.NO_COUNT
               }).then(populated => {
                 config.objects.forEach(object => {
                   object[key] = populated.find(item => {
