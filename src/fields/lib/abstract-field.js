@@ -240,7 +240,7 @@ module.exports = class AbstractField {
    */
   canRead(bundle) {
     if (this._canReadField) {
-      return Promise.resolve(this._canReadField.call(null, bundle));
+      return Promise.resolve(this._canReadField.call(this, bundle));
     }
     return Promise.resolve(true);
   }
@@ -255,7 +255,7 @@ module.exports = class AbstractField {
    */
   canWriteOnCreate(bundle) {
     if (this._canWriteOnCreateField) {
-      return Promise.resolve(this._canWriteOnCreateField.call(null, bundle));
+      return Promise.resolve(this._canWriteOnCreateField.call(this, bundle));
     }
     return Promise.resolve(true);
   }
@@ -270,7 +270,7 @@ module.exports = class AbstractField {
    */
   canWriteOnUpdate(bundle) {
     if (this._canWriteOnUpdateField) {
-      return Promise.resolve(this._canWriteOnUpdateField.call(null, bundle));
+      return Promise.resolve(this._canWriteOnUpdateField.call(this, bundle));
     }
     return Promise.resolve(true);
   }
@@ -286,11 +286,11 @@ module.exports = class AbstractField {
     return Promise.resolve(this.canRead(bundle))
       .then(result => {
         if (!result) {
-          return Promise.reject(new Restypie.TemplateErrors.FieldNotReadable({
+          throw new Restypie.TemplateErrors.FieldNotReadable({
             key: this.key
-          }));
+          });
         }
-        return Promise.resolve(result);
+        return;
       });
   }
 
@@ -305,11 +305,11 @@ module.exports = class AbstractField {
     return Promise.resolve(this.canWriteOnCreate(bundle))
       .then(result => {
         if (!result) {
-          return Promise.reject(new Restypie.TemplateErrors.FieldNotWritable({
+          throw new Restypie.TemplateErrors.FieldNotWritable({
             key: this.key
-          }));
+          });
         }
-        return Promise.resolve(result);
+        return;
       });
   }
 
@@ -324,11 +324,11 @@ module.exports = class AbstractField {
     return Promise.resolve(this.canWriteOnUpdate(bundle))
       .then(result => {
         if (!result) {
-          return Promise.reject(new Restypie.TemplateErrors.FieldNotUpdatable({
+          throw new Restypie.TemplateErrors.FieldNotUpdatable({
             key: this.key
-          }));
+          });
         }
-        return Promise.resolve(result);
+        return;
       });
   }
 
