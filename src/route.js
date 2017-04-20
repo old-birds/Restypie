@@ -39,7 +39,7 @@ module.exports = class Route {
    * @default null
    */
   get handler() { return null; }
-  
+
   get routerType() { return this._routerType; }
 
   /**
@@ -86,14 +86,14 @@ module.exports = class Route {
 
       case Restypie.RouterTypes.EXPRESS:
         /* istanbul ignore next */
-        return function (req, res, next) {
+        return function restypieRouteHandler (req, res, next) {
           req.bundle = new Restypie.Bundle({ req, res, url });
           return next();
         };
 
       case Restypie.RouterTypes.KOA_ROUTER:
         /* istanbul ignore next */
-        return function *(next) {
+        return function * restypieRouteHandler (next) {
           if (this.request.body) this.req.body = this.request.body;
           this.req.params = this.params; // Copy params so that we don't have to parse them
           this.req.query = this.query;
@@ -102,7 +102,7 @@ module.exports = class Route {
         };
     }
   }
-  
+
   _setRouterType(routerType) {
     Restypie.assertSupportedRouterType(routerType);
     this._routerType = routerType;
