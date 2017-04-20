@@ -31,32 +31,23 @@ describe('Restypie.Fields.AbstractField', function () {
 
   describe('authentication', function () {
 
-    const READ_ONLY_ERROR = `Cannot write to field`;
-    const ADMIN_ERROR = `Field can only be written by admins`;
-
     class ReadOnlyField extends AbstractField {
       canWriteOnCreate(bundle) {
-        return Promise.reject(new Error(READ_ONLY_ERROR));
+        return Promise.resolve(false);
       }
 
       canWriteOnUpdate(bundle) {
-        return Promise.reject(new Error(READ_ONLY_ERROR));
+        return Promise.resolve(false);
       }
     }
 
     class AdminWritableField extends AbstractField {
       canWriteOnCreate(bundle) {
-        if (bundle.account_type !== 'admin') {
-          return Promise.reject(new Error(ADMIN_ERROR))
-        }
-        return Promise.resolve(true);
+        return Promise.resolve(bundle.account_type === 'admin');
       }
 
       canWriteOnUpdate(bundle) {
-        if (bundle.account_type !== 'admin') {
-          return Promise.reject(new Error(ADMIN_ERROR))
-        }
-        return Promise.resolve(true);
+        return Promise.resolve(bundle.account_type === 'admin');
       }
     }
 
@@ -106,7 +97,7 @@ describe('Restypie.Fields.AbstractField', function () {
         result.should.equal(false);
       }, err => {
         err.should.be.an('error');
-        err.message.should.equal(READ_ONLY_ERROR);
+        err.meta.key.should.equal('key');
       });
     });
 
@@ -115,7 +106,7 @@ describe('Restypie.Fields.AbstractField', function () {
         result.should.equal(false);
       }, err => {
         err.should.be.an('error');
-        err.message.should.equal(READ_ONLY_ERROR);
+        err.meta.key.should.equal('key');
       });
     });
 
@@ -130,7 +121,7 @@ describe('Restypie.Fields.AbstractField', function () {
         result.should.equal(false);
       }, err => {
         err.should.be.an('error');
-        err.message.should.equal(ADMIN_ERROR);
+        err.meta.key.should.equal('key');
       });
     });
 
@@ -139,7 +130,7 @@ describe('Restypie.Fields.AbstractField', function () {
         result.should.equal(false);
       }, err => {
         err.should.be.an('error');
-        err.message.should.equal(ADMIN_ERROR);
+        err.meta.key.should.equal('key');
       });
     });
 
