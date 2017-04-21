@@ -31,7 +31,7 @@ const Restypie = module.exports = {
   EQUALITY_OPERATOR: 'eq',
   LIST_SEPARATOR: ',',
   get LIST_SEPARATOR_REG() { return new RegExp('\\\s*' + this.LIST_SEPARATOR + '\\\s*', 'g'); },
-  POPULATE_PATH_SEPARATOR: '.',
+  DEEP_PATH_SEPARATOR: '.',
 
   RouterTypes: {
     KOA_ROUTER: 'koa-router',
@@ -80,7 +80,7 @@ const Restypie = module.exports = {
       return null;
     }
     index = index || 0;
-    separator = separator || this.POPULATE_PATH_SEPARATOR;
+    separator = separator || this.DEEP_PATH_SEPARATOR;
     return path.split(separator)[index];
   },
 

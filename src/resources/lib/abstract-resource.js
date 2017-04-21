@@ -499,10 +499,10 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
       return Promise.reject(new Restypie.TemplateErrors.UnsupportedFormat({ expected: supported, value: headers }));
     }
 
-    return Promise.resolve(parserPromise)
+    return parserPromise
       .then(bundle => {
         const data = Restypie.Utils.makeArray(bundle.body);
-        const fields = Object.getOwnPropertyNames(_.reduce(data, (acc, object) => {
+        const fields = Object.keys(data.reduce((acc, object) => {
           return _.defaults(acc, object);
         }, {}));
         return self.authorize(bundle, fields);
@@ -1012,9 +1012,7 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
       fieldsPermissions.push(field.authenticatePermissions(permissions, bundle));
     });
     return Promise.all(fieldsPermissions).then(() => {
-      return Promise.resolve(bundle);
-    }, reason => {
-      return bundle.next(reason);
+      return bundle;
     });
   }
 
