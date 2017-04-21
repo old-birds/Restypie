@@ -41,7 +41,7 @@ module.exports = function (Fixtures, api) {
       return Fixtures.generateUsers(usersCount).then(() => {
         return Fixtures.getUsers(null, {
           select: ['internalName'],
-          statusCode: Restypie.Codes.Unauthorized
+          statusCode: Restypie.Codes.Forbidden
         }).then((body) => {
             body.error.should.equal(true);
             body.message.should.be.a('string');
@@ -58,7 +58,7 @@ module.exports = function (Fixtures, api) {
       return Fixtures.generateUsers(usersCount).then(() => {
         return Fixtures.getUsers(null, {
           populate: ['internalName', 'job', 'otherJobPopulation'],
-          statusCode: Restypie.Codes.Unauthorized
+          statusCode: Restypie.Codes.Forbidden
         }).then((body) => {
           body.error.should.equal(true);
           body.message.should.be.a('string');
@@ -480,7 +480,7 @@ module.exports = function (Fixtures, api) {
       }, { setSudoHeader: true }).then(() => {
         return Fixtures.getUsers(null, {
           select: ['internalName'],
-          statusCode: Restypie.Codes.Unauthorized
+          statusCode: Restypie.Codes.Forbidden
         }).then((body) => {
           body.error.should.equal(true);
           body.message.should.be.a('string');

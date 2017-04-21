@@ -146,7 +146,7 @@ module.exports = function (Fixtures) {
 
         return Fixtures.getUsers(filters).then((preMatch) => {
           preMatch.should.have.lengthOf(updatedCount);
-          return Fixtures.updateUsers(filters, updates, { statusCode: Restypie.Codes.Unauthorized }).then((body) => {
+          return Fixtures.updateUsers(filters, updates, { statusCode: Restypie.Codes.Forbidden }).then((body) => {
             body.error.should.equal(true);
             body.meta.should.be.an('object');
             body.message.should.be.a('string');

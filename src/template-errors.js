@@ -45,15 +45,6 @@ class AbstractForbiddenError extends AbstractError {
   }
 }
 
-class AbstractUnauthorizedError extends AbstractError {
-  get statusCode() { return Restypie.Codes.Unauthorized; }
-  constructor(meta) {
-    super(meta);
-    Restypie.Utils.forceAbstract(this, AbstractUnauthorizedError);
-  }
-}
-
-
 /***********************************************************************************************************************
  * @namespace Restypie
  * @class TemplateErrors
@@ -276,10 +267,10 @@ module.exports = {
    * @property FieldNotReadable
    * @type constructor
    * @static
-   * @extends Restypie.TemplateErrors.AbstractUnauthorizedError
+   * @extends Restypie.TemplateErrors.AbstractForbiddenError
    * @constructor
    */
-  FieldNotReadable: class FieldNotReadableError extends AbstractUnauthorizedError {
+  FieldNotReadable: class FieldNotReadableError extends AbstractForbiddenError {
      static template(meta) {
        return `Missing Read permission for request on field "${meta.key}"`;
      }
@@ -291,10 +282,10 @@ module.exports = {
    * @property FieldNotWritable
    * @type constructor
    * @static
-   * @extends Restypie.TemplateErrors.AbstractUnauthorizedError
+   * @extends Restypie.TemplateErrors.AbstractForbiddenError
    * @constructor
    */
-  FieldNotWritable: class FieldNotWritableError extends AbstractUnauthorizedError {
+  FieldNotWritable: class FieldNotWritableError extends AbstractForbiddenError {
     static template(meta) {
       return `Missing Create permission for request on field "${meta.key}"`;
     }
@@ -306,10 +297,10 @@ module.exports = {
    * @property FieldNotUpdatable
    * @type constructor
    * @static
-   * @extends Restypie.TemplateErrors.AbstractUnauthorizedError
+   * @extends Restypie.TemplateErrors.AbstractForbiddenError
    * @constructor
    */
-  FieldNotUpdatable: class FieldNotUpdatableError extends AbstractUnauthorizedError {
+  FieldNotUpdatable: class FieldNotUpdatableError extends AbstractForbiddenError {
     static template(meta) {
       return `Missing Update permission for request on field "${meta.key}"`;
     }

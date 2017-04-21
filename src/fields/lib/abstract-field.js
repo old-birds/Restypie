@@ -360,11 +360,7 @@ module.exports = class AbstractField {
           }));
       }
       return permissionPromise;
-    })).then(() => {
-      return Promise.resolve(true);
-    }, reason => {
-      return Promise.reject(reason);
-    });
+    }));
   }
 
   static get AUTO_FILTERING_WEIGHT() { return AUTO_FILTERING_WEIGHT; }

@@ -39,7 +39,7 @@ module.exports = function (Fixtures) {
 
     it('should NOT return if unauthorized for selected fields', function () {
       return Fixtures.generateUser({ internalName: `john_doe` }, { setSudoHeader: true }).then((user) => {
-        return Fixtures.getUser(user.theId, { select: ['theId', 'internalName'], statusCode: Restypie.Codes.Unauthorized });
+        return Fixtures.getUser(user.theId, { select: ['theId', 'internalName'], statusCode: Restypie.Codes.Forbidden });
       }).then((body) => {
         body.error.should.equal(true);
         body.message.should.be.a('string');

@@ -86,7 +86,7 @@ module.exports = function (Fixtures) {
 
     it('should NOT update if missing update permissions', function () {
       return Fixtures.generateUser({ internalName: `john_doe` }, { setSudoHeader: true }).then((user) => {
-        return Fixtures.updateUser(user.theId, { internalName: 'hacker' }, { statusCode: Restypie.Codes.Unauthorized });
+        return Fixtures.updateUser(user.theId, { internalName: 'hacker' }, { statusCode: Restypie.Codes.Forbidden });
       }).then((body) => {
         body.error.should.equal(true);
         body.message.should.be.a('string');

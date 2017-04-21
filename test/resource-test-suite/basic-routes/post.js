@@ -236,7 +236,7 @@ module.exports = function(Fixtures, api) {
         gender: 'male'
       };
 
-      return Fixtures.createUser(data, { statusCode: Restypie.Codes.Unauthorized }).then((body) => {
+      return Fixtures.createUser(data, { statusCode: Restypie.Codes.Forbidden }).then((body) => {
         body.error.should.equal(true);
         body.message.should.be.a('string');
         body.code.should.be.a('string');
@@ -294,7 +294,7 @@ module.exports = function(Fixtures, api) {
         luckyNumber: '9'
       }];
 
-      return Fixtures.createUsers(data, { statusCode: Restypie.Codes.Unauthorized }).then((body) => {
+      return Fixtures.createUsers(data, { statusCode: Restypie.Codes.Forbidden }).then((body) => {
         should.exist(body);
         body.error.should.equal(true);
         body.message.should.be.a('string');

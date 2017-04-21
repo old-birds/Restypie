@@ -77,17 +77,17 @@ describe('Restypie.Fields.AbstractField', function () {
         err.meta.expected.should.contain(PermissionTypes.CREATE);
         err.meta.expected.should.contain(PermissionTypes.UPDATE);
       })
-    })
+    });
 
     it('should get the authenticatePermissions for full permissions user', function () {
       return field.authenticatePermissions(updateAction, {}).then(permission => {
-        permission.should.equal(true);
+        permission.should.be.an('array');
       });
     });
 
     it('should allow read for ReadOnlyField', function () {
       return readOnlyField.authenticatePermissions(readOnlyAction, {}).then(permission => {
-        permission.should.equal(true);
+        permission.should.be.an('array');
       });
     });
 
@@ -112,13 +112,13 @@ describe('Restypie.Fields.AbstractField', function () {
 
     it('should allow read for non admin users for AdminWritableField', function () {
       return adminField.authenticatePermissions(readOnlyAction, {account_type: 'user'}).then(permission => {
-        permission.should.equal(true);
+        permission.should.be.an('array');
       });
     });
 
     it('should NOT allow create for non admin users for AdminWritableField', function () {
       return adminField.authenticatePermissions(createAction, { account_type: 'user' }).then(result => {
-        result.should.equal(false);
+        result.should.should.be.an('array');
       }, err => {
         err.should.be.an('error');
         err.meta.key.should.equal('key');
@@ -136,11 +136,11 @@ describe('Restypie.Fields.AbstractField', function () {
 
     it('should allow write for admin users for AdminWritableField', function () {
       return adminField.authenticatePermissions(updateAction, { account_type: 'admin' }).then(permission => {
-        permission.should.to.equal(true);
+        permission.should.be.an('array');
         return adminField.authenticatePermissions(createAction, { account_type: 'admin' }).then(permission => {
-          permission.should.equal(true);
+          permission.should.be.an('array');
           return adminField.authenticatePermissions(readOnlyAction, { account_type: 'admin' }).then(permission => {
-            permission.should.equal(true);
+            permission.should.be.an('array');
           });
         });
       });
@@ -148,11 +148,11 @@ describe('Restypie.Fields.AbstractField', function () {
 
     it('should have correct permissions for users using Field creation params', function () {
       return schemaDefinedPermsField.authenticatePermissions(readOnlyAction, { account_type: 'user' }).then(permission => {
-        permission.should.be.equal(true);
+        permission.should.be.an('array');
         return schemaDefinedPermsField.authenticatePermissions(createAction, { account_type: 'user' }).then(permission => {
-          permission.should.be.equal(true);
+          permission.should.be.an('array');
           return schemaDefinedPermsField.authenticatePermissions(updateAction, { account_type: 'user' }).then(result => {
-            result.should.equal(false);
+            result.should.be.an('array');
           }, err => {
             err.should.be.an('error');
             err.meta.should.be.an('object');
@@ -167,11 +167,11 @@ describe('Restypie.Fields.AbstractField', function () {
 
     it('should have correct permissions for admins using Field creation params', function () {
       return schemaDefinedPermsField.authenticatePermissions(readOnlyAction, { account_type: 'admin' }).then(permission => {
-        permission.should.be.equal(true);
+        permission.should.be.an('array');
         return schemaDefinedPermsField.authenticatePermissions(createAction, { account_type: 'admin' }).then(permission => {
-          permission.should.be.equal(true);
+          permission.should.be.an('array');
           return schemaDefinedPermsField.authenticatePermissions(updateAction, { account_type: 'admin' }).then(permission => {
-            permission.should.be.equal(true);
+            permission.should.be.an('array');
           })
         });
       });
