@@ -17,21 +17,13 @@ Restypie is framework agnostic and allows you to plug the router you prefer :
 ```javascript
 const Express = require('express');
 const Restypie = require('restypie');
+const restypieExpress = require('restypie-express')
 
 const app = express();
 
-const v1 = new Restypie.API({
-  path: 'v1',
-  route(path, handler) {
-    app[method](path, ...handlers);
-  },
-  createBundleHandler(url) {
-    return function (req, res, next) {
-      req.bundle = new Restypie.Bundle({ req, res, url });
-      return next();
-    };
-  }
-});
+const v1 = new Restypie.API(app, restypieExpress({
+  path: 'v1'
+}));
 
 ```
 
@@ -69,21 +61,9 @@ const KoaRouter = require('koa-router');
 const app = new Koa();
 const router = new KoaRouter();
 
-const v1 = new Restypie.API({
-  path: 'v1',
-  route(method, path, handlers) {
-    router[method](path, ...handlers);
-  },
-  createBundleHandler(url) {
-    return async function (ctx, next) {
-      if (ctx.request.body) ctx.req.body = this.request.body;
-      ctx.req.params = ctx.params;
-      ctx.req.query = ctx.query;
-      ctx.state.bundle = new Restypie.Bundle({ req: this.req, res: this.res, url });
-      await next;
-    }; 
-  }
-});
+const v1 = new Restypie.API(router, restypieKoaRouter({
+  path: 'v1'
+}));
 
 
 // Your routes and resources here
