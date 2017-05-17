@@ -93,12 +93,12 @@ module.exports = class Route {
 
       case Restypie.RouterTypes.KOA_ROUTER:
         /* istanbul ignore next */
-        return function * restypieRouteHandler (next) {
-          if (this.request.body) this.req.body = this.request.body;
-          this.req.params = this.params; // Copy params so that we don't have to parse them
-          this.req.query = this.query;
-          this.state.bundle = new Restypie.Bundle({ req: this.req, res: this.res, url });
-          yield next;
+        return async function restypieRouteHandler (ctx, next) {
+          if (ctx.request.body) ctx.req.body = ctx.request.body;
+          ctx.req.params = ctx.params; // Copy params so that we don't have to parse them
+          ctx.req.query = ctx.query;
+          ctx.bundle = new Restypie.Bundle({ req: ctx.req, res: ctx.res, url });
+          await next();
         };
     }
   }
@@ -124,7 +124,9 @@ module.exports = class Route {
       case Restypie.RouterTypes.EXPRESS:
         /* istanbul ignore next */
         if (handler.length === 1) {
-          this._handlers.push(function (req, res, next) { return handler(req.bundle, next); });
+          this._handlers.push(function (req, res, next) {
+            return handler(req.bundle, next);
+          });
         } else {
           this._handlers.push(handler);
         }
@@ -132,9 +134,9 @@ module.exports = class Route {
 
       case Restypie.RouterTypes.KOA_ROUTER:
         /* istanbul ignore next */
-        this._handlers.push(function *(next) {
-          yield handler(this.state.bundle);
-          yield next;
+        this._handlers.push(async function (ctx, next) {
+          await handler(ctx.bundle);
+          await next();
         });
         break;
     }

@@ -97,8 +97,8 @@ describe('Restypie.Route', function () {
     it('should create a koa-router compatible handler', function () {
       const route = new RightRoute({ routerType: Restypie.RouterTypes.KOA_ROUTER });
       const bundleHandler = route._handlers[0];
-      bundleHandler.length.should.equal(1); // next
-      (bundleHandler.constructor.name === 'GeneratorFunction').should.equal(true);
+      bundleHandler.length.should.equal(2); // next
+      (bundleHandler.constructor.name === 'AsyncFunction').should.equal(true);
     });
 
   });

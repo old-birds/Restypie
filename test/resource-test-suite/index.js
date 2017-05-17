@@ -53,7 +53,7 @@ module.exports = function (options) {
       break;
 
     case Restypie.RouterTypes.KOA_ROUTER:
-      app = koa();
+      app = new koa();
       router = new KoaRouter();
       server = http.createServer(app.callback());
       supertest = require('supertest-koa-agent');
