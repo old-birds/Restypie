@@ -21,7 +21,7 @@ const restypieExpress = require('restypie-express')
 
 const app = express();
 
-const v1 = new Restypie.API(app, restypieExpress({
+const v1 = new Restypie.API(restypieExpress(router, {
   path: 'v1'
 }));
 
@@ -40,7 +40,7 @@ const restypieKoaRouter = require('restypie-koa-router');
 const app = koa();
 const router = new KoaRouter();
 
-const v1 = new Restypie.API(router, restypieKoaRouter({
+const v1 = new Restypie.API(restypieKoaRouter(router, {
   path: 'v1' // Options for this api
 }));
 
@@ -61,7 +61,7 @@ const KoaRouter = require('koa-router');
 const app = new Koa();
 const router = new KoaRouter();
 
-const v1 = new Restypie.API(router, restypieKoaRouter({
+const v1 = new Restypie.API(restypieKoaRouter(router, {
   path: 'v1'
 }));
 
