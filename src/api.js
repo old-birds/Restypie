@@ -29,7 +29,7 @@ module.exports = class API {
   get path() { return this._path; }
 
   /**
-   * See Restypie.ROUTER_TYPES about supported routers
+   * An object describe how to route and create handlers
    *
    * @property router
    * @writeOnce
@@ -58,13 +58,6 @@ module.exports = class API {
    */
   get host() { return this._host; }
 
-  /**
-   *
-   * @property routerType
-   * @returns {String}
-   */
-  get routerType() { return this._routerType; }
-
   get routes() { return this._routes; }
 
 
@@ -74,14 +67,15 @@ module.exports = class API {
   constructor(options) {
     options = options || {};
     this.reset();
-    if (options.routerType) this._setRouterType(options.routerType);
-    if (options.router) this._router = options.router;
+    
+    this._router = _.pick(options, ['route', 'createBundleHandler', 'createHandler']);
+    
     if (options.host) this._setHost(options.host);
     if (options.path) this.setPath(options.path);
     if (options.routes) {
       options.routes.forEach(route => Restypie.Utils.isSubclassOf(route, Restypie.Route, true));
       this._routes = options.routes.map((Route) => {
-        return new Route({ api: this, routerType: this.routerType });
+        return new Route({ api: this });
       });
     } else {
       this._routes = [];
@@ -102,7 +96,6 @@ module.exports = class API {
     router = this._router = router || this._router;
     if (host) this._setHost(host);
 
-    if (!router) throw new Error('An API requires a router (see Restypie.RouterTypes for supported frameworks)');
     if (!URLValidator.isWebUri(this._host)) throw new Error('An API requires a `host` to perform calls for population');
 
     let apiPath = this._path;
@@ -114,7 +107,6 @@ module.exports = class API {
       let resourcePath = resource.path;
       return acc.concat(resource.routes.map(function (route) {
         return {
-          routerType: route.routerType,
           method: route.method,
           path: Restypie.Url.join('/', apiPath, resourcePath, route.path).replace(/\/$/, ''),
           handlers: route.handlers
@@ -122,7 +114,6 @@ module.exports = class API {
       }));
     }, []).concat(this._routes.map((selfRoute) => {
       return {
-        routerType: selfRoute.routerType,
         method: selfRoute.method,
         path: Restypie.Url.join('/', apiPath, selfRoute.path).replace(/\/$/, ''),
         handlers: selfRoute.handlers
@@ -204,14 +195,6 @@ module.exports = class API {
     return this._resources[name];
   }
 
-  _setRouterType(routerType) {
-    this._throwIfLaunched();
-
-    Restypie.assertSupportedRouterType(routerType);
-    this._routerType = routerType;
-    return this;
-  }
-
   _setHost(host) {
     if (typeof host === 'string') host = URL.parse(host);
 
@@ -224,15 +207,7 @@ module.exports = class API {
   }
 
   _registerRoute(def) {
-    const routerType = def.routerType || this._routerType;
-    Restypie.assertSupportedRouterType(routerType);
-
-    switch (routerType) {
-      case Restypie.RouterTypes.EXPRESS:
-      case Restypie.RouterTypes.KOA_ROUTER:
-        this._router[def.method.toLowerCase()].apply(this._router, [def.path].concat(def.handlers));
-        break;
-    }
+    this._router.route(def.method.toLowerCase(), def.path, def.handlers);
   }
 
   _throwIfLaunched() {

@@ -187,8 +187,6 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
 
   get upsertPaths() { return []; }
 
-  get routerType() { return this.api.routerType; }
-
   /**
    * Supported options/flags for this resource.
    *

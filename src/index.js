@@ -32,11 +32,6 @@ const Restypie = module.exports = {
   LIST_SEPARATOR: ',',
   get LIST_SEPARATOR_REG() { return new RegExp('\\\s*' + this.LIST_SEPARATOR + '\\\s*', 'g'); },
 
-  RouterTypes: {
-    KOA_ROUTER: 'koa-router',
-    EXPRESS: 'express'
-  },
-
   QueryOptions: {
     NO_COUNT: 'NO_COUNT',
     INCLUDE_SCORE: 'INCLUDE_SCORE',
@@ -48,16 +43,6 @@ const Restypie = module.exports = {
   EventTypes: {
     ERROR: 'error',
     WARN: 'warn'
-  },
-
-  isSupportedRouterType(type) {
-    return _.contains(_.values(Restypie.RouterTypes), type);
-  },
-
-  assertSupportedRouterType(type) {
-    if (!Restypie.isSupportedRouterType(type)) {
-      throw new Error(`"routerType" should be one of : ${_.values(Restypie.RouterTypes).join(', ')}`);
-    }
   },
 
   listToArray(str) {

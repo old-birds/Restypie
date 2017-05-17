@@ -2,7 +2,7 @@
   "name": "restypie",
   "main": "./src/index",
   "description": "Tastypie inspired, lightweight and storage agnostic REST resources manager",
-  "version": "1.15.2",
+  "version": "2.0.0",
   "repository": "https://github.com/SylvainEstevez/Restypie",
   "bugs": "https://github.com/SylvainEstevez/Restypie/issues",
   "engines": {
@@ -51,6 +51,7 @@
     "mysql": "~2.9.0",
     "nock": "^8.0.0",
     "node-mocks-http": "1.5.3",
+    "restypie-koa-router": "5.0.0",
     "sequelize": "~3.14.2",
     "supertest": "^1.1.0",
     "supertest-koa-agent": "^0.2.1",
