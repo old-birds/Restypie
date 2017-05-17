@@ -10,6 +10,7 @@ const express = require('express');
 const koa = require('koa');
 const http = require('http');
 const KoaRouter = require('koa-router');
+const restypieKoaRouter = 
 const Restypie = require('../../');
 
 const SERVER_PORT = 3333;
@@ -34,7 +35,7 @@ module.exports = function (options) {
   let server;
   let router;
 
-  const api = options.api = new Restypie.API({ path: 'v1', routerType: options.routerType });
+  const api = options.api = new Restypie.API({ path: 'v1', router:  });
 
   const UsersResource = require('./resources/users')(options);
   const ProfilesResource = require('./resources/profiles')(options);

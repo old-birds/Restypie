@@ -40,8 +40,6 @@ module.exports = class Route {
    */
   get handler() { return null; }
 
-  get routerType() { return this._routerType; }
-
   /**
    * The context that was given to the constructor.
    *
@@ -57,7 +55,11 @@ module.exports = class Route {
    */
   constructor(context) {
     context = context || {};
-    if (!this.routerType) this._setRouterType(context.routerType);
+    
+    if (!context.router) {
+      throw new Error(`Missing router to construct route`);
+    }
+    
     Object.defineProperty(this, 'context', { get() { return context; } });
 
     if (!_.isString(this.path)) throw new TypeError(`Object ${this} requires a string "path"`);
@@ -81,31 +83,7 @@ module.exports = class Route {
   createBundleHandler() {
     // Use the resource's path as base url for the bundle
     const url = this.context.resource ? Restypie.Url.join(this.context.resource.fullDisplayPath, this.path) : null;
-
-    switch (this.routerType) {
-
-      case Restypie.RouterTypes.EXPRESS:
-        /* istanbul ignore next */
-        return function restypieRouteHandler (req, res, next) {
-          req.bundle = new Restypie.Bundle({ req, res, url });
-          return next();
-        };
-
-      case Restypie.RouterTypes.KOA_ROUTER:
-        /* istanbul ignore next */
-        return function * restypieRouteHandler (next) {
-          if (this.request.body) this.req.body = this.request.body;
-          this.req.params = this.params; // Copy params so that we don't have to parse them
-          this.req.query = this.query;
-          this.state.bundle = new Restypie.Bundle({ req: this.req, res: this.res, url });
-          yield next;
-        };
-    }
-  }
-
-  _setRouterType(routerType) {
-    Restypie.assertSupportedRouterType(routerType);
-    this._routerType = routerType;
+    return this._router.createBundleHandler(url);
   }
 
 
@@ -117,29 +95,7 @@ module.exports = class Route {
    * @private
    */
   _registerHandler(handler) {
-    handler = handler.bind(this);
-
-    switch (this.routerType) {
-
-      case Restypie.RouterTypes.EXPRESS:
-        /* istanbul ignore next */
-        if (handler.length === 1) {
-          this._handlers.push(function (req, res, next) { return handler(req.bundle, next); });
-        } else {
-          this._handlers.push(handler);
-        }
-        break;
-
-      case Restypie.RouterTypes.KOA_ROUTER:
-        /* istanbul ignore next */
-        this._handlers.push(function *(next) {
-          yield handler(this.state.bundle);
-          yield next;
-        });
-        break;
-    }
-
-
+    this._handlers.push(this._router.createHandler(handler.bind(this)));
   }
 
 };
