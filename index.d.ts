@@ -2,39 +2,56 @@
 
 import { Url } from "url";
 
-declare module Restypie {
+module Restypie {
+
+  type Host = string | Url;
+
+  export const VERSION: string;
+  export const TEST_ENV: string;
+  export const SUDO_HEADER_NAME: string;
+  export const OPERATOR_SEPARATOR: string;
+  export const EQUALITY_OPERATOR: string;
+  export const LIST_SEPARATOR: string;
+  export const LIST_SEPARATOR_REG: RegExp;
+  export const RESERVED_WORDS: string[];
+
   export enum RouterTypes {
     KOA_ROUTER = 'koa-router',
     EXPRESS = 'express'
   }
 
-  export module Resources {
-    export abstract class AbstractCoreResource {
-
-    }
-
-    export abstract class AbstractResource extends AbstractCoreResource {
-
-    }
-
-    export abstract class FixturesResource extends AbstractResource {
-
-    }
-
-    export abstract class SequelizeResource extends AbstractResource {
-
-    }
-
-    export abstract class ProxyResource extends AbstractCoreResource {
-
-    }
+  export enum QueryOptions {
+    NO_COUNT = 'NO_COUNT',
+    INCLUDE_SCORE = 'INCLUDE_SCORE',
+    SCORE_ONLY = 'SCORE_ONLY'
   }
 
-  export class Route {
-
+  export enum EventTypes {
+    ERROR = 'error',
+    WARN = 'warn'
   }
 
-  export type Host = string | Url;
+  export function isSudo(headers: { [header: string]: string }): boolean;
+  export function getSudoHeader(): { [SUDO_HEADER_NAME]: string | number };
+  export function getSudoSignature(): string | number;
+  export function isSupportedRouterType(type: string): boolean;
+  export function assertSupportedRouterType(type: string): void;
+  export function listToArray(str: string): string[];
+  export function arrayToList(arr: any[]): string;
+  export function stringify(options?: {
+    sort?: string[];
+    populate?: string[];
+    select?: string[];
+    filters?: { [key: string]: any };
+    options?: string[];
+    limit?: number;
+    offset?: number;
+  }): { [key: string]: any };
+  export function javascriptToString(value: any): any;
+  export function mergeValuesForOperator(operator: string, ...values: any[]): { [operator: string]: any };
+  export function dedupeFilters(filters: { [key: string]: any }): { [key: string]: any };
+  export function mergeFilters(left: { [key: string]: any}, right: { [key: string]: any}): { [key: string]: any};
+  export function mergeFiltersForKey(left: { [operator: string]: any }, right: { [operator: string]: any }): { [key: string]: any };
 
   export class API {
     public readonly path: string;
@@ -63,6 +80,39 @@ declare module Restypie {
     protected _registerRoute(definition: { routerType?: RouterTypes, method: string, path: string, handlers: Function[] });
     protected _throwIfLaunched(): void;
   }
+
+  export class Route {
+
+  }
+
+
+  export module Resources {
+    export abstract class AbstractCoreResource {
+
+    }
+
+    export abstract class AbstractResource extends AbstractCoreResource {
+
+    }
+
+    export abstract class FixturesResource extends AbstractResource {
+
+    }
+
+    export abstract class SequelizeResource extends AbstractResource {
+
+    }
+
+    export abstract class ProxyResource extends AbstractCoreResource {
+
+    }
+  }
+
+
+
+
+
+
 
 }
 
