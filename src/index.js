@@ -40,7 +40,15 @@ const Restypie = module.exports = {
   QueryOptions: {
     NO_COUNT: 'NO_COUNT',
     INCLUDE_SCORE: 'INCLUDE_SCORE',
-    SCORE_ONLY: 'SCORE_ONLY'
+    SCORE_ONLY: 'SCORE_ONLY',
+    DEFAULT_HEADERS: false
+  },
+
+  setDefaultHeaders() {
+    Restypie.QueryOptions.DEFAULT_HEADERS = true;
+  },
+  unsetDefaultHeaders() {
+    Restypie.QueryOptions.DEFAULT_HEADERS = false;
   },
 
   RESERVED_WORDS: ['limit', 'offset', 'sort', 'select', 'format', 'populate', 'options'],
