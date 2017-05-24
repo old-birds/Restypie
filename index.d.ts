@@ -5,6 +5,7 @@ import { Url } from "url";
 module Restypie {
 
   type Host = string | Url;
+  type HandlerFunction = Function | GeneratorFunction;
 
   export const VERSION: string;
   export const TEST_ENV: string;
@@ -82,9 +83,42 @@ module Restypie {
   }
 
   export class Route {
+    public readonly path: string;
+    public readonly method: Methods.METHODS;
+    public readonly handler: HandlerFunction;
+    public readonly routerType: RouterTypes;
+    protected readonly _handlers: HandlerFunction[];
 
+    public constructor(context?: {
+      routerType?: RouterTypes;
+      [key: string]: any;
+    });
+
+    protected createBundleHandler(): HandlerFunction;
+    protected _setRouterType(routerType: RouterTypes): void;
   }
 
+  export module Methods {
+    export enum METHODS {
+      GET = 'GET',
+      POST = 'POST',
+      PUT = 'PUT',
+      PATCH = 'PATCH',
+      DELETE = 'DELETE',
+      OPTIONS = 'OPTIONS',
+      HEAD = 'HEAD'
+    }
+
+    export const GET: string = 'GET';
+    export const POST: string = 'POST';
+    export const PUT: string = 'PUT';
+    export const PATCH: string = 'PATCH';
+    export const DELETE: string = 'DELETE';
+    export const OPTIONS: string = 'OPTIONS';
+    export const HEAD: string = 'HEAD';
+
+    export function isSupportedMethod(method: string): boolean;
+  }
 
   export module Resources {
     export abstract class AbstractCoreResource {
