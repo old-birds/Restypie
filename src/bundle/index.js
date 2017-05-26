@@ -241,6 +241,7 @@ module.exports = class Bundle {
 
   setSelect(select) {
     this._select = Array.isArray(select) ? select : [select];
+    return this;
   }
 
   setLimit(value) {

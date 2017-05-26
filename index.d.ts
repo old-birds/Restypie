@@ -2,11 +2,21 @@
 
 import { Url } from 'url';
 import { Writable } from 'stream';
+import { IncomingMessage, ServerResponse } from 'http';
 
 declare module Restypie {
-
   type Host = string | Url;
   type HandlerFunction = Function | GeneratorFunction;
+  type Request = OpenPartial<IncomingMessage>;
+  type Response = OpenPartial<ServerResponse>;
+  type Code = string | number;
+  type NavLinks = { prev: string, next: string };
+  type ExitFunction = (bundle: Bundle) => Promise<any> | any;
+  interface Meta extends NavLinks { limit?: number, offset?: number, total?: number };
+  type SchemaType = string | typeof Fields.AbstractField | typeof String | typeof Number | typeof Boolean | typeof Date;
+  interface OpenPartial<T> extends Partial<T> {
+    [key: string]: any;
+  }
 
   export const VERSION: string;
   export const TEST_ENV: string;
@@ -99,6 +109,109 @@ declare module Restypie {
     protected _setRouterType(routerType: RouterTypes): void;
   }
 
+  type Options = string[];
+  type Populate = string[];
+  type Sort = string[];
+  type Sort = string[];
+  type Filters = { [key: string]: any };
+  type Headers = { [name: string]: string };
+  
+  enum ReturnTypes {
+    BODY,
+    DATA,
+    META
+  };
+
+  export class Client<T> {
+    public readonly url: string;
+    public readonly defaultHeaders: Headers;
+    public readonly host: string;
+    public readonly path: string;
+    public readonly version: string;
+
+    public constructor(options?: {
+      host: string;
+      path: string;
+      version?: string;
+      defaultHeaders?: { [name: string]: string };
+    });
+
+    public create(props: T | T[] | null, params?: {
+      options?: Options,
+      headers?: Headers
+    }): Promise<T | T[]>;
+
+    public find(filters?: Filters, params?: {
+      headers?: Headers;
+      options?: Options;
+      select?: Select;
+      limit?: number;
+      offset?: number;
+      populate?: Populate;
+      sort?: Sort;
+      returnType?: ReturnTypes;
+    }): Promise<T[]>;
+
+    public findById(id: any, params?: {
+      headers?: Headers;
+      options?: Options;
+      select?: Select;
+      populate?: Populate;
+    }): Promise<T>;
+
+    public findOne(filters?: Filters, params?: {
+      headers?: Headers;
+      options?: Options;
+      select?: Select;
+      populate?: Populate;
+      sort?: Sort;
+    }): Promise<T>;
+
+    public deleteByid(id: any, params?: {
+      headers?: Headers;
+      options?: Options;
+    }): Promise<void>;
+
+    public updateById(id: any, updates: OpenPartial<T>, params?: {
+      headers?: Headers;
+      options?: Options;
+    }): Promise<void>;
+
+    public update(filters: Filters, updates: OpenPartial<T>, params?: {
+      headers?: Headers;
+      options?: Options;
+    }): Promise<void>;
+
+    public query(method: Methods.METHODS, path: string, filters?: Filters, params?: {
+      headers?: Headers;
+      options?: Options;
+      select?: Select;
+      limit?: number;
+      offset?: number;
+      populate?: Populate;
+      sort?: Sort;
+    }): Promise<any>;
+
+    public count(filters?: Filters, params?: {
+      headers?: Headers;
+      options?: Options;
+    }): Promise<number>;
+
+    public getQueryScore(filters?: Filters, params?: {
+      headers?: Headers;
+      options?: Options;
+      select?: Select;
+      limit?: number;
+      offset?: number;
+      populate?: Populate;
+      sort?: Sort;
+    }): Promise<number>;
+
+    public static extractReturn(body: any, returnType: ReturnTypes): any;
+
+    public static readonly ReturnTypes = ReturnTypes;    
+  }
+
   export module Operators {
     export abstract class AbstractOperator {
       public static readonly filteringWeight: number;
@@ -123,7 +236,7 @@ declare module Restypie {
   }
 
   export module Fields {
-    interface IFileObject {
+    export interface IFileObject {
       name: string;
       mimeType?: string;
       encoding?: string;
@@ -131,7 +244,7 @@ declare module Restypie {
       [key: string]: any;
     }
 
-    interface IAbstractFieldConstructorOptions {
+    export interface IAbstractFieldConstructorOptions {
       path?: string;
       isRequired?: boolean;
       isWritable?: boolean;
@@ -148,27 +261,27 @@ declare module Restypie {
       to?: Resources.AbstractCoreResource;
     }
 
-    interface IAbstractNumberFieldConstructorOptions extends IAbstractFieldConstructorOptions {
+    export interface IAbstractNumberFieldConstructorOptions extends IAbstractFieldConstructorOptions {
       min?: number;
       max?: number;
       range?: [number, number]
     }
 
-    interface IDateFieldConstructorOptions extends IAbstractFieldConstructorOptions {
+    export interface IDateFieldConstructorOptions extends IAbstractFieldConstructorOptions {
       ISOFormat?: RegExp;
       min?: Date | number;
       max?: Date | number;
     }
 
-    interface IFileFieldConstructorOptions extends IAbstractFieldConstructorOptions {
+    export interface IFileFieldConstructorOptions extends IAbstractFieldConstructorOptions {
       maxSize?: number;
     }
 
-    interface IIntegerFieldConstructorOptions extends IAbstractFieldConstructorOptions {
+    export interface IIntegerFieldConstructorOptions extends IAbstractFieldConstructorOptions {
       enum?: number[];
     }
 
-    interface IStringFieldConstructorOptions extends IAbstractFieldConstructorOptions {
+    export interface IStringFieldConstructorOptions extends IAbstractFieldConstructorOptions {
       lengthRange?: [number, number];
       minLength?: number;
       maxLength?: number;
@@ -176,7 +289,7 @@ declare module Restypie {
       enum?: string[];
     }
 
-    export function match(type: string | typeof AbstractField | typeof String | typeof Number | typeof Boolean | typeof Date): typeof AbstractField;
+    export function match(type: SchemaType): typeof AbstractField;
 
     export abstract class AbstractField {
       public readonly isRelation: boolean;
@@ -290,13 +403,219 @@ declare module Restypie {
     export function isSupportedMethod(method: string): boolean;
   }
 
-  export module Resources {
-    export abstract class AbstractCoreResource {
+  export module Serializers {
+    export abstract class AbstractSerializer {
 
     }
+  }
 
-    export abstract class AbstractResource extends AbstractCoreResource {
+  class TaskPipeline {
+    public readonly bundle: Bundle;
+    public readonly exit: ExitFunction;
+    public readonly context: any;
+    protected _tasks: Function[];
+    protected _context: any;
+    protected _exit: () => Promise<any> | any;
+    protected _ran: boolean;
+    protected _isRunning: boolean;
+    protected _bundle: Bundle;
 
+    public constructor(options?: {
+      exit: ExitFunction,
+      bundle: Bundle,
+      context?: any
+    });
+
+    public add(task: Function): TaskPipeline;
+    public run(): Promise<any>;
+    public stop(): Promise<Symbol>;
+    protected _getNext(): Function | null;
+    protected _run(): Promise<any>;
+  }
+
+  export class Bundle {
+    public readonly req: Request;
+    public readonly res: Response;
+    public readonly url: string;
+    public readonly body: any;
+    public readonly query: { [key: string]: any };
+    public readonly params: Filters;
+    public readonly headers: Headers;
+    public readonly populate: Populate;
+    public readonly options: Options;
+    public readonly statusCode: number;
+    public readonly limit: number;
+    public readonly offset: number;
+    public readonly isError: boolean;
+    public readonly meta: OpenPartial<Meta>;
+    public readonly data: any | any[];
+    public readonly code: Code;
+    public readonly format: string;
+    public readonly filters: Filters;
+    public readonly flatFilters: Filters;
+    public readonly nestedFilters: Filters;
+    public readonly select: Select;
+    public readonly sort: Sort;
+    public readonly safeReqHeaders: Headers;
+    public readonly isRead: boolean;
+    public readonly isUpdate: boolean;
+    public readonly isWrite: boolean;
+    public readonly isDelete: boolean;
+    public readonly hasNestedFilters: boolean;
+    public readonly hasFilters: boolean;
+    public readonly isSudo: boolean;
+    public readonly shouldCalculateQueryScore: boolean;
+    public readonly shouldValidateQueryScore: boolean;
+    public readonly payload: any;
+
+    public constructor(options?: {
+      req: Request,
+      res: Response,
+      params?: Filters,
+      url?: string
+    });
+
+    public next(err?: Error): Promise<Bundle>;
+    public setData(data: any): Bundle;
+    public setPayload(payload: any): Bundle;
+    public assignToPayload(obj: {}): Bundle;
+    public assignToHeaders(headers: Headers): Bundle;
+    public resetPayload(): Bundle;
+    public emptyPayload(): Bundle;
+    public assignToQuery(obj: Filters): Bundle;
+    public setStatusCode(statusCode: number): Bundle;
+    public setQuery(query: Filters): Bundle;
+    public setOptions(options: Options): Bundle;
+    public hasOption(option: string): boolean;
+    public setMessage(message: string): Bundle;
+    public setCode(code: Code): Bundle;
+    public setError(err: Error): Bundle;
+    public assignToMeta(key: string, value: any): Bundle;
+    public setMeta(meta: OpenPartial<Meta>): Bundle;
+    public setPopulate(fields: Populate): Bundle;
+    public setSelect(fields: Select): Bundle;
+    public setLimit(value: number): Bundle;
+    public setOffset(value: number): Bundle;
+    public setFormat(format: string): Bundle;
+    public setFilters(filters: Filters): Bundle;
+    public mergeToFilters(filters: Filters): Bundle;
+    public setNestedFilters(filters: Filters): Bundle;
+    public setBody(body: any): Bundle;
+    public setSort(fields: string[]): Bundle;
+    public makeSudo(value: boolean): void;
+    public getNavLinks(total: number): NavLinks;
+    public createPipeline(exit: ExitFunction, context?: any): TaskPipeline;
+    protected _getNavLink(limit: number, offset: number): string;    
+  }
+
+  declare class Score {
+
+  }
+
+  export class QueryScore {
+
+    public static Score = Score;
+  }
+
+  export module Resources {
+    export abstract class AbstractCoreResource {
+      public abstract readonly primaryKeyField: typeof Fields.AbstractField;
+      public readonly primaryKeyPath: string;
+      public readonly primaryKeyKey: string;
+      public readonly fieldsByKey: { [key: string]: typeof Fields.AbstractField };
+      public readonly fieldsByPath: { [path: string]: typeof Fields.AbstractField };
+      public readonly routerType: RouterTypes;
+      public readonly isGetAllAllowed: boolean;
+
+      public constructor();
+
+      public getFullUrl(): string;
+      public createFields(): void;
+      public createClient(): Client;
+      protected _createRoute(route: typeof Route): void;
+      protected _createRoutes(): void;
+      protected _ensurePrimaryKeyField(): void;
+    }
+
+    export abstract class AbstractResource<T> extends AbstractCoreResource {
+      public readonly path: string;
+      public readonly displayPath: string;
+      public readonly fullDisplayPath: string;
+      public readonly schema: {}; // FIXME: could be better
+      public readonly routes: Route[];
+      public readonly serializers: (typeof Serializers.AbstractSerializer)[];
+      public readonly defaultLimit: number;
+      public readonly maxLimit: number;
+      public readonly minQueryScore: number;
+      public readonly maxDeepLevel: number;
+      public readonly readableFields: (typeof Fields.AbstractField)[];
+      public readonly filterableFields: (typeof Fields.AbstractField)[];
+      public readonly writableFields: (typeof Fields.AbstractField)[];
+      public readonly populableFields: (typeof Fields.AbstractField)[];
+      public readonly requiredFields: (typeof Fields.AbstractField)[];
+      public readonly fileFields: (typeof Fields.AbstractField)[];
+      public readonly supportedFormatMimeTypes: string[];
+      public readonly supportedFormatAliases: string[];
+      public readonly supportedFormatMimeTypesAndAliases: string[];
+      public readonly supportsUniqueConstraints: boolean;
+      public readonly supportsUpserts: boolean;
+      public readonly upsertPaths: string[];
+      public readonly routerType: RouterTypes;
+      public readonly options: {};
+      public readonly defaultSelect: string[];
+      public readonly defaultSort: string[];
+      public readonly api: API;
+
+      public constructor(api: API);
+
+      public beforeValidate(bundle: Bundle): Promise<Bundle>;
+      public afterValidate(bundle: Bundle): Promise<Bundle>;
+      public beforeHydrate(bundle: Bundle): Promise<Bundle>;
+      public afterHydrate(bundle: Bundle): Promise<Bundle>;
+      public beforeDehydrate(bundle: Bundle): Promise<Bundle>;
+      public afterDehydrate(bundle: Bundle): Promise<Bundle>;
+      public beforeParseFilters(bundle: Bundle): void;
+      public afterParseFilters(bundle: Bundle): void;
+      public fieldPathToKey(path: string): string;
+      public getFullUrl(): string;
+      public abstract countObjects(bundle: Bundle): Promise<number>;
+      public abstract createObject(bundle: Bundle): Promise<T>;
+      public abstract createObjects(bundle: Bundle): Promise<T[]>;
+      public abstract getObject(bundle: Bundle): Promise<T>;
+      public abstract getObjects(bundle: Bundle): Promise<T[]>;
+      public abstract updateObject(bundle: Bundle): Promise<void>;
+      public abstract deleteObject(bundle: Bundle): Promise<void>;
+      public abstract replaceObject(bundle: Bundle): Promise<void>;
+      public getSchemaDescription(): {};
+      public getSerializerByAliasOrMimeType(type: string): typeof Serializers.AbstractSerializer;
+      public parseOptions(bundle: Bundle): void;
+      public parseBody(bundle: Bundle): Promise<Bundle>;
+      public parseLimit(bundle: Bundle): void;
+      public parseOffset(bundle: Bundle): void;
+      public parseSort(bundle: Bundle): void;
+      public parseFormat(bundle: Bundle): void;
+      public parseFilters(bundle: Bundle): void;
+      public parseSelect(bundle: Bundle): void;
+      public parsePopulate(bundle: Bundle): void;
+      public getQueryScore(bundle: Bundle): Promise<number>;
+      public validateQueryScore(score: QueryScore.Score): Promise<boolean>;
+      public applyNestedFilters(bundle: Bundle): Promise<Bundle>;
+      public hydrate(bundle: Bundle): Promise<Bundle>;
+      public validate(bundle: Bundle): Promise<Bundle>;
+      public dehydrate(bundle: Bundle): Promise<Bundle>;
+      public populate(bundle: Bundle): Promise<Bundle>;
+      public exit(bundle: Bundle): Promise<void>;
+      public serialize(bundle: Bundle): Promise<Bundle>;
+      public respond(bundle: Bundle): void;
+      public reset(): Promise<any>;
+      protected _parseMultipart(bundle: Bundle): Promise<Bundle>;
+      protected _parseJSON(bundle: Bundle): Promise<Bundle>;
+      protected abstract _reset(): Promise<any>;
+
+      public static readonly LIST_SEPARATOR: RegExp;
+      public static readonly OPERATOR_SEPARATOR: string;
+      public static readonly EQUALITY_OPERATOR: string;
+      public static readonly DEEP_PROPERTY_SEPARATOR: string;
     }
 
     export abstract class FixturesResource extends AbstractResource {
