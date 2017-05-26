@@ -14,9 +14,13 @@ declare module Restypie {
   type ExitFunction = (bundle: Bundle) => Promise<any> | any;
   interface Meta extends NavLinks { limit?: number, offset?: number, total?: number };
   type SchemaType = string | typeof Fields.AbstractField | typeof String | typeof Number | typeof Boolean | typeof Date;
-  interface OpenPartial<T> extends Partial<T> {
-    [key: string]: any;
-  }
+  interface OpenPartial<T> extends Partial<T> { [key: string]: any; }
+  type Options = string[];
+  type Populate = string[];
+  type Sort = string[];
+  type Sort = string[];
+  type Filters = { [key: string]: any };
+  type Headers = { [name: string]: string };
 
   export const VERSION: string;
   export const TEST_ENV: string;
@@ -109,13 +113,6 @@ declare module Restypie {
     protected _setRouterType(routerType: RouterTypes): void;
   }
 
-  type Options = string[];
-  type Populate = string[];
-  type Sort = string[];
-  type Sort = string[];
-  type Filters = { [key: string]: any };
-  type Headers = { [name: string]: string };
-  
   enum ReturnTypes {
     BODY,
     DATA,
@@ -610,7 +607,7 @@ declare module Restypie {
       public reset(): Promise<any>;
       protected _parseMultipart(bundle: Bundle): Promise<Bundle>;
       protected _parseJSON(bundle: Bundle): Promise<Bundle>;
-      protected abstract _reset(): Promise<any>;
+      protected abstract __reset(): Promise<any>;
 
       public static readonly LIST_SEPARATOR: RegExp;
       public static readonly OPERATOR_SEPARATOR: string;
@@ -618,8 +615,22 @@ declare module Restypie {
       public static readonly DEEP_PROPERTY_SEPARATOR: string;
     }
 
-    export abstract class FixturesResource extends AbstractResource {
-
+    export class FixturesResource<T> extends AbstractResource<T> {
+      public readonly initialFixtures: T[];
+      public readonly fixtures: T[];
+      public readonly size: number;
+      protected _fixtures: T[];
+      
+      public countObjects(bundle: Bundle): Promise<number>;
+      public createObject(bundle: Bundle): Promise<T>;
+      public createObjects(bundle: Bundle): Promise<T[]>;
+      public getObject(bundle: Bundle): Promise<T>;
+      public getObjects(bundle: Bundle): Promise<T[]>;
+      public updateObject(bundle: Bundle): Promise<void>;
+      public deleteObject(bundle: Bundle): Promise<void>;
+      public replaceObject(bundle: Bundle): Promise<void>;
+      public filterObjects(bundle: Bundle): T[];
+      protected __reset(): Promise<any>;
     }
 
     export abstract class SequelizeResource extends AbstractResource {
