@@ -864,6 +864,16 @@ declare module Restypie {
 
 
   /**************************************************************************************************************************************
+   ResourceTester
+  **************************************************************************************************************************************/
+  
+  export class ResourceTester {
+    static validate(resourceClass: typeof Resources.AbstractCoreResource, options: { routerType: RouterTypes, before?: (...args: any[]) => void }): void;
+  }
+
+
+
+  /**************************************************************************************************************************************
    Resources
   **************************************************************************************************************************************/
   
@@ -888,11 +898,11 @@ declare module Restypie {
     }
 
     export abstract class AbstractResource<T> extends AbstractCoreResource<T> {
-      public readonly path: string;
+      public abstract readonly path: string;
       public readonly displayPath: string;
       public readonly fullDisplayPath: string;
-      public readonly schema: {}; // FIXME: could be better
-      public readonly routes: Route[];
+      public abstract readonly schema: {}; // FIXME: could be better
+      public abstract readonly routes: Route[];
       public readonly serializers: (typeof Serializers.AbstractSerializer)[];
       public readonly defaultLimit: number;
       public readonly maxLimit: number;
@@ -968,7 +978,7 @@ declare module Restypie {
       public static readonly DEEP_PROPERTY_SEPARATOR: string;
     }
 
-    export class FixturesResource<T> extends AbstractResource<T> {
+    export abstract class FixturesResource<T> extends AbstractResource<T> {
       public readonly initialFixtures: T[];
       public readonly fixtures: T[];
       public readonly size: number;
@@ -1010,7 +1020,7 @@ declare module Restypie {
       public readonly targetPath: string;
 
       public constructor(targetUrl?: string);
-      
+
       protected _buildTargetUrl(): void;
     }
   }
