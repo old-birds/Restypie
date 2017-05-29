@@ -148,17 +148,6 @@ class QueryScore {
 
 }
 
+QueryScore.Score = Score;
+
 module.exports = QueryScore;
-
-
-
-
-
-
-
-
-
-
-
-
-
