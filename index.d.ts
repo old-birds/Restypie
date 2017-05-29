@@ -1,8 +1,11 @@
 /// <reference types="node" />
+/// <reference types="winston" />
 
 import { Url } from 'url';
 import { Writable } from 'stream';
 import { IncomingMessage, ServerResponse } from 'http';
+import { EventEmitter } from 'event';
+import * as winston from 'winston';
 
 declare module Restypie {
   type Host = string | Url;
@@ -12,15 +15,25 @@ declare module Restypie {
   type Code = string | number;
   type NavLinks = { prev: string, next: string };
   type ExitFunction = (bundle: Bundle) => Promise<any> | any;
-  interface Meta extends NavLinks { limit?: number, offset?: number, total?: number };
+  interface Meta extends NavLinks { limit?: number, offset?: number, total?: number }
   type SchemaType = string | typeof Fields.AbstractField | typeof String | typeof Number | typeof Boolean | typeof Date;
-  interface OpenPartial<T> extends Partial<T> { [key: string]: any; }
+  type OpenPartial<T> = { [key: string]: any; } & Partial<T>;
   type Options = string[];
   type Populate = string[];
   type Sort = string[];
-  type Sort = string[];
+  type Select = string[];
   type Filters = { [key: string]: any };
   type Headers = { [name: string]: string };
+  enum ReturnTypes {
+    BODY,
+    DATA,
+    META
+  }
+
+
+  /**************************************************************************************************************************************
+   Index
+  **************************************************************************************************************************************/
 
   export const VERSION: string;
   export const TEST_ENV: string;
@@ -69,6 +82,12 @@ declare module Restypie {
   export function mergeFilters(left: { [key: string]: any}, right: { [key: string]: any}): { [key: string]: any};
   export function mergeFiltersForKey(left: { [operator: string]: any }, right: { [operator: string]: any }): { [key: string]: any };
 
+
+
+  /**************************************************************************************************************************************
+   API
+  **************************************************************************************************************************************/
+
   export class API {
     public readonly path: string;
     public readonly router: any;
@@ -97,6 +116,12 @@ declare module Restypie {
     protected _throwIfLaunched(): void;
   }
 
+
+
+  /**************************************************************************************************************************************
+   Route
+  **************************************************************************************************************************************/
+  
   export class Route {
     public readonly path: string;
     public readonly method: Methods.METHODS;
@@ -113,12 +138,12 @@ declare module Restypie {
     protected _setRouterType(routerType: RouterTypes): void;
   }
 
-  enum ReturnTypes {
-    BODY,
-    DATA,
-    META
-  };
 
+
+  /**************************************************************************************************************************************
+   Client
+  **************************************************************************************************************************************/
+  
   export class Client<T> {
     public readonly url: string;
     public readonly defaultHeaders: Headers;
@@ -206,9 +231,15 @@ declare module Restypie {
 
     public static extractReturn(body: any, returnType: ReturnTypes): any;
 
-    public static readonly ReturnTypes = ReturnTypes;    
+    public static readonly ReturnTypes: typeof ReturnTypes;
   }
 
+
+
+  /**************************************************************************************************************************************
+   Operators
+  **************************************************************************************************************************************/
+  
   export module Operators {
     export abstract class AbstractOperator {
       public static readonly filteringWeight: number;
@@ -232,6 +263,57 @@ declare module Restypie {
     export class Nin extends AbstractListOperator {}
   }
 
+
+
+  /**************************************************************************************************************************************
+   RestErrors
+  **************************************************************************************************************************************/
+  
+  export module RestErrors {
+    export function toRestError(err: Error | AbstractRestError): AbstractRestError;
+    export function fromStatusCode(statusCode: number, message: string, meta?: { [key: string]: any }): AbstractRestError;;
+
+    export class AbstractRestError extends Error {
+      public readonly name: string;
+      public readonly statusCode: number;
+      public constructor(message: string, meta?: { [key: string]: any });
+    }
+    export class InternalServerError extends AbstractRestError {};
+    export class BadRequest extends AbstractRestError {};
+    export class NotFound extends AbstractRestError {};
+    export class Forbidden extends AbstractRestError {};
+    export class NotImplemented extends AbstractRestError {};
+    export class UnsupportedMediaType extends AbstractRestError {};
+    export class NotAcceptable extends AbstractRestError {};
+    export class Unauthorized extends AbstractRestError {};
+    export class Conflict extends AbstractRestError {};
+    export class GatewayTimeOut extends AbstractRestError {};
+    export class ServiceUnavailable extends AbstractRestError {};
+  }
+
+
+
+  /**************************************************************************************************************************************
+   BasicRoutes
+  **************************************************************************************************************************************/
+  
+  export module BasicRoutes {
+    export class DeleteSingleRoute extends Route {}
+    export class GetManyRoute extends Route {}
+    export class GetSingleRoute extends Route {}
+    export class OptionsRoute extends Route {}
+    export class PatchManyRoute extends Route {}
+    export class PatchSingleRoute extends Route {}
+    export class PostRoute extends Route { public readonly allowsMany: boolean; }
+    export class PutSingleRoute extends Route {}
+  }
+
+
+
+  /**************************************************************************************************************************************
+   Fields
+  **************************************************************************************************************************************/
+  
   export module Fields {
     export interface IFileObject {
       name: string;
@@ -378,6 +460,12 @@ declare module Restypie {
     export class ToOneField extends AbstractRelationField {}
   }
 
+
+
+  /**************************************************************************************************************************************
+   Methods
+  **************************************************************************************************************************************/
+  
   export module Methods {
     export enum METHODS {
       GET,
@@ -400,12 +488,24 @@ declare module Restypie {
     export function isSupportedMethod(method: string): boolean;
   }
 
+
+
+  /**************************************************************************************************************************************
+   Serializers
+  **************************************************************************************************************************************/
+  
   export module Serializers {
     export abstract class AbstractSerializer {
 
     }
   }
 
+
+
+  /**************************************************************************************************************************************
+   Bundle
+  **************************************************************************************************************************************/
+  
   class TaskPipeline {
     public readonly bundle: Bundle;
     public readonly exit: ExitFunction;
@@ -505,18 +605,271 @@ declare module Restypie {
     protected _getNavLink(limit: number, offset: number): string;    
   }
 
-  declare class Score {
+
+
+  /**************************************************************************************************************************************
+   QueryScore
+  **************************************************************************************************************************************/
+
+  interface IScore {
+    total: number;
+    maxLevel: number;
+    filters: Filters;
+  }
+  
+  class Score {
 
   }
 
   export class QueryScore {
+    public constructor(fields: Fields.AbstractField[], bundle: Bundle);
 
-    public static Score = Score;
+    public compute(): Promise<IScore>;
+    protected _computeOwn(originalFilters: Filters): IScore;
+    protected _computeNested(originalFilters: Filters): Promise<IScore> ;
+    protected _setLevels(score: IScore): void;
+    protected _penalizeDeepNesting(score: IScore);
+    protected _getFieldByPath(path: string): Fields.AbstractField;
+    protected _formatFilters(originalFilters: Filters): any;
+    static compute(fields: Fields.AbstractField[], bundle: Bundle): Promise<IScore>;
+    public static Score: typeof Score;
   }
 
+
+  
+  /**************************************************************************************************************************************
+   Url
+  **************************************************************************************************************************************/
+  
+  export module Url {
+    export function join(...parts: string[]): string;
+    export function ensureHTTPProtocol(url: string, useHTTPS?: boolean): string;
+  }
+
+
+
+  /**************************************************************************************************************************************
+   Codes
+  **************************************************************************************************************************************/
+  
+  export module Codes {
+    export function isErrorCode(code: number): boolean;
+    export const Continue: number;
+    export const SwitchingProtocols: number;
+    export const OK: number;
+    export const Created: number;
+    export const Accepted: number;
+    export const NonAuthoritativeInformation: number;
+    export const NoContent: number;
+    export const ResetContent: number;
+    export const PartialContent: number;
+    export const MultipleChoices: number;
+    export const MovedPermanently: number;
+    export const MovedTemporarily: number;
+    export const SeeOther: number;
+    export const NotModified: number;
+    export const UseProxy: number;
+    export const BadRequest: number;
+    export const Unauthorized: number;
+    export const PaymentRequired: number;
+    export const Forbidden: number;
+    export const NotFound: number;
+    export const MethodNotAllowed: number;
+    export const NotAcceptable: number;
+    export const ProxyAuthenticationRequired: number;
+    export const RequestTimeOut: number;
+    export const Conflict: number;
+    export const Gone: number;
+    export const LengthRequired: number;
+    export const PreconditionFailed: number;
+    export const RequestEntityTooLarge: number;
+    export const RequestURITooLong: number;
+    export const UnsupportedMediaType: number;
+    export const RequestRangeUnsatisfiable: number;
+    export const ExpectationFailed: number;
+    export const InternalServerError: number;
+    export const NotImplemented: number;
+    export const BadGateway: number;
+    export const ServiceUnavailable: number;
+    export const GatewayTimeOut: number;
+    export const HTTPVersionNotSupported: number;
+    export module Codes {
+      export const Continue: number;
+      export const SwitchingProtocols: number;
+      export const OK: number;
+      export const Created: number;
+      export const Accepted: number;
+      export const NonAuthoritativeInformation: number;
+      export const NoContent: number;
+      export const ResetContent: number;
+      export const PartialContent: number;
+      export const MultipleChoices: number;
+      export const MovedPermanently: number;
+      export const MovedTemporarily: number;
+      export const SeeOther: number;
+      export const NotModified: number;
+      export const UseProxy: number;
+      export const BadRequest: number;
+      export const Unauthorized: number;
+      export const PaymentRequired: number;
+      export const Forbidden: number;
+      export const NotFound: number;
+      export const MethodNotAllowed: number;
+      export const NotAcceptable: number;
+      export const ProxyAuthenticationRequired: number;
+      export const RequestTimeOut: number;
+      export const Conflict: number;
+      export const Gone: number;
+      export const LengthRequired: number;
+      export const PreconditionFailed: number;
+      export const RequestEntityTooLarge: number;
+      export const RequestURITooLong: number;
+      export const UnsupportedMediaType: number;
+      export const RequestRangeUnsatisfiable: number;
+      export const ExpectationFailed: number;
+      export const InternalServerError: number;
+      export const NotImplemented: number;
+      export const BadGateway: number;
+      export const ServiceUnavailable: number;
+      export const GatewayTimeOut: number;
+      export const HTTPVersionNotSupported: number;
+    }
+  }
+
+
+
+  /**************************************************************************************************************************************
+   EventEmitter
+  **************************************************************************************************************************************/
+  
+  export const EventEmitter: EventEmitter;
+
+
+
+  /**************************************************************************************************************************************
+   Logger
+  **************************************************************************************************************************************/
+  
+  export const Logger: winston.Winston;
+
+
+
+  /**************************************************************************************************************************************
+   Utils
+  **************************************************************************************************************************************/
+  
+  export module Utils {
+    export function isSubclassOf(child: typeof Object, parent: typeof Object, shouldThrow: boolean = false): boolean;
+    export function assertIsSubclassOf(child: typeof Object, parent: typeof Object): void;
+    export function isInstanceOf(obj: any, construc: typeof Object, shouldThrow: boolean = false): boolean;
+    export function assertIsInstanceOf(obj: any, construc: typeof Object): void;
+    export function forceAbstract(context: any, construc: typeof Object): void;
+    export function forceStatic(context: any, construc: typeof Object): void;
+    export function isNone(value: any): boolean;
+    export function isValidNumber(value: any): boolean;
+    export function didReturnAPromise(obj: any): boolean;
+    export function missingImplementation(name: string): void;
+    export function makeArray<T>(value: any): T[];
+  }
+
+
+
+  /**************************************************************************************************************************************
+   TemplateErrors
+  **************************************************************************************************************************************/
+  
+  export module TemplateErrors {
+    export function overrideTemplate(error: typeof AbstractError, templateFunction: Function): void;
+
+    export class AbstractError extends RestErrors.AbstractRestError {
+      public readonly name: string;
+      public readonly statusCode: number;
+
+      public constructor(meta: any);
+
+      public static template(meta: any): string;
+    }
+
+    export class AbstractBadRequestError extends AbstractError {}
+    export class AbstractForbiddenError extends AbstractError {}
+    export class Missing extends AbstractBadRequestError {
+      static template(meta: { key: string }): string;
+    }
+    export class OutOfRange extends AbstractForbiddenError {
+      static template(meta: { key: string, min?: number, max?: number, value: any }): string;
+    }
+    export class BadType extends AbstractBadRequestError {
+      static template(meta: { key: string, expected: string, type?: string, value: any }): string;
+    }
+    export class BadPattern extends AbstractBadRequestError {
+      static template(meta: { key: string, expected: RegExp }): string;
+    }
+    export class UnsupportedFormat extends AbstractError {
+      static template(meta: { expected: string[], value: string }): string;
+    }
+    export class ResourceNotFound extends AbstractError {
+      static template(meta: { pk: any }): string;
+    }
+    export class UnknownPath extends AbstractForbiddenError {
+      static template(meta: { key: string }): string;
+    }
+    export class UnsupportedOption extends AbstractBadRequestError {
+      static template(meta: { options: string[], option: string }): string;
+    }
+    export class NotWritable extends AbstractForbiddenError {
+      static template(meta: { key: string, value: any }): string;
+    }
+    export class NotUpdatable extends AbstractForbiddenError {
+      static template(meta: { key: string, value: any }): string;
+    }
+    export class NotFilterable extends AbstractForbiddenError {
+      static template(meta: { key: string }): string;
+    }
+    export class NotPopulable extends AbstractForbiddenError {
+      static template(meta: { key: string }): string;
+    }
+    export class NotInEnum extends AbstractBadRequestError {
+      static template(meta: { key: string, expected: any[], value: any }): string;
+    }
+    export class UnsupportedOperator extends AbstractBadRequestError {
+      static template(meta: { key: string, operator: string }): string;
+    }
+    export class NotMixableOperators extends AbstractForbiddenError {
+      static template(meta: { operators: string[], key: string }): string;
+    }
+    export class UniquenessConstraintViolation extends AbstractError {
+      static template(meta: { keys: { [key: string]: any } = {} }): string;
+    }
+    export class RequestOutOfRange extends AbstractForbiddenError {
+      static template(): string;
+    }
+    export class InconsistentRequest extends AbstractBadRequestError {
+      static template(meta: { key: string, filterValue: any, bodyValue: any }): string
+    }
+  }
+
+
+
+  /**************************************************************************************************************************************
+   RoutesSorter
+  **************************************************************************************************************************************/
+  
+  export module RoutesSorter {
+    export function sort(routes: { method: string, path: string }[]): { method: string, path: string }[];
+    export function _computeMethodRoutes(routes: { path: string }[]): void;
+    export function _getPathWeight(str: string): number;
+    export function _fillPartsArray(arr: any[], length: number): any[];
+  }
+
+
+
+  /**************************************************************************************************************************************
+   Resources
+  **************************************************************************************************************************************/
+  
   export module Resources {
-    export abstract class AbstractCoreResource {
-      public abstract readonly primaryKeyField: typeof Fields.AbstractField;
+    export abstract class AbstractCoreResource<T = any> {
+      public readonly primaryKeyField: typeof Fields.AbstractField;
       public readonly primaryKeyPath: string;
       public readonly primaryKeyKey: string;
       public readonly fieldsByKey: { [key: string]: typeof Fields.AbstractField };
@@ -528,13 +881,13 @@ declare module Restypie {
 
       public getFullUrl(): string;
       public createFields(): void;
-      public createClient(): Client;
+      public createClient(): Client<T>;
       protected _createRoute(route: typeof Route): void;
       protected _createRoutes(): void;
       protected _ensurePrimaryKeyField(): void;
     }
 
-    export abstract class AbstractResource<T> extends AbstractCoreResource {
+    export abstract class AbstractResource<T> extends AbstractCoreResource<T> {
       public readonly path: string;
       public readonly displayPath: string;
       public readonly fullDisplayPath: string;
@@ -595,7 +948,7 @@ declare module Restypie {
       public parseSelect(bundle: Bundle): void;
       public parsePopulate(bundle: Bundle): void;
       public getQueryScore(bundle: Bundle): Promise<number>;
-      public validateQueryScore(score: QueryScore.Score): Promise<boolean>;
+      public validateQueryScore(score: Score): Promise<boolean>;
       public applyNestedFilters(bundle: Bundle): Promise<Bundle>;
       public hydrate(bundle: Bundle): Promise<Bundle>;
       public validate(bundle: Bundle): Promise<Bundle>;
@@ -633,12 +986,32 @@ declare module Restypie {
       protected __reset(): Promise<any>;
     }
 
-    export abstract class SequelizeResource extends AbstractResource {
-
+    export abstract class SequelizeResource<T> extends AbstractResource<T> {
+      public abstract readonly model: any; // FIXME could provide Sequelize definition
+      public countObjects(bundle: Bundle): Promise<number>;
+      public createObject(bundle: Bundle): Promise<T>;
+      public createObjects(bundle: Bundle): Promise<T[]>;
+      public getObject(bundle: Bundle): Promise<T>;
+      public getObjects(bundle: Bundle): Promise<T[]>;
+      public updateObject(bundle: Bundle): Promise<void>;
+      public deleteObject(bundle: Bundle): Promise<void>;
+      public replaceObject(bundle: Bundle): Promise<void>;
+      public filterObjects(bundle: Bundle): T[];
+      public mapErrors(err: Error): Error;
+      protected __reset(): Promise<any>;
+      static formatFilters(filters: Filters): Filters;
+      static toOrder(sort: string[]): ([string, 'DESC' | 'ASC'])[];
     }
 
-    export abstract class ProxyResource extends AbstractCoreResource {
+    export class ProxyResource<T> extends AbstractCoreResource<T> {
+      public readonly targetUrl: string;
+      public readonly targetHost: string;
+      public readonly targetVersion: string;
+      public readonly targetPath: string;
 
+      public constructor(targetUrl?: string);
+      
+      protected _buildTargetUrl(): void;
     }
   }
 }

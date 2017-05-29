@@ -16,6 +16,9 @@
     "definition": "index.d.ts"
   },
   "dependencies": {
+    "@types/node": "4.2.8",
+    "@types/sequelize": "4.0.55",
+    "@types/winston": "2.3.2",
     "bluebird": "^3.0.6",
     "body-parser": "^1.15.2",
     "busboy": "~0.2.12",
