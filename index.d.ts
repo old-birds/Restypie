@@ -496,7 +496,15 @@ declare module Restypie {
   
   export module Serializers {
     export abstract class AbstractSerializer {
+      private constructor();
 
+      static serialize(content: any): Promise<any>;
+      static readonly mimeType: string;
+      static readonly aliases: string[];
+    }
+
+    export class JSONSerializer extends AbstractSerializer {
+      static serialize(content: string | { [key: string]: any }): Promise<{ [key: string]: any }>;
     }
   }
 
