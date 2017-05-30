@@ -4,10 +4,10 @@
 import { Url } from 'url';
 import { Writable } from 'stream';
 import { IncomingMessage, ServerResponse } from 'http';
-import { EventEmitter } from 'event';
+import { EventEmitter } from 'events';
 import * as winston from 'winston';
 
-declare module Restypie {
+module Restypie {
   type Host = string | Url;
   type HandlerFunction = Function | GeneratorFunction;
   type Request = OpenPartial<IncomingMessage>;
@@ -121,7 +121,7 @@ declare module Restypie {
   /**************************************************************************************************************************************
    Route
   **************************************************************************************************************************************/
-  
+
   export class Route {
     public readonly path: string;
     public readonly method: Methods.METHODS;
@@ -143,7 +143,7 @@ declare module Restypie {
   /**************************************************************************************************************************************
    Client
   **************************************************************************************************************************************/
-  
+
   export class Client<T> {
     public readonly url: string;
     public readonly defaultHeaders: Headers;
@@ -239,7 +239,7 @@ declare module Restypie {
   /**************************************************************************************************************************************
    Operators
   **************************************************************************************************************************************/
-  
+
   export module Operators {
     export abstract class AbstractOperator {
       public static readonly filteringWeight: number;
@@ -268,7 +268,7 @@ declare module Restypie {
   /**************************************************************************************************************************************
    RestErrors
   **************************************************************************************************************************************/
-  
+
   export module RestErrors {
     export function toRestError(err: Error | AbstractRestError): AbstractRestError;
     export function fromStatusCode(statusCode: number, message: string, meta?: { [key: string]: any }): AbstractRestError;;
@@ -296,7 +296,7 @@ declare module Restypie {
   /**************************************************************************************************************************************
    BasicRoutes
   **************************************************************************************************************************************/
-  
+
   export module BasicRoutes {
     export class DeleteSingleRoute extends Route {}
     export class GetManyRoute extends Route {}
@@ -313,7 +313,7 @@ declare module Restypie {
   /**************************************************************************************************************************************
    Fields
   **************************************************************************************************************************************/
-  
+
   export module Fields {
     export interface IFileObject {
       name: string;
@@ -465,7 +465,7 @@ declare module Restypie {
   /**************************************************************************************************************************************
    Methods
   **************************************************************************************************************************************/
-  
+
   export module Methods {
     export enum METHODS {
       GET,
@@ -493,7 +493,7 @@ declare module Restypie {
   /**************************************************************************************************************************************
    Serializers
   **************************************************************************************************************************************/
-  
+
   export module Serializers {
     export abstract class AbstractSerializer {
       private constructor();
@@ -513,7 +513,7 @@ declare module Restypie {
   /**************************************************************************************************************************************
    Bundle
   **************************************************************************************************************************************/
-  
+
   class TaskPipeline {
     public readonly bundle: Bundle;
     public readonly exit: ExitFunction;
@@ -610,7 +610,7 @@ declare module Restypie {
     public makeSudo(value: boolean): void;
     public getNavLinks(total: number): NavLinks;
     public createPipeline(exit: ExitFunction, context?: any): TaskPipeline;
-    protected _getNavLink(limit: number, offset: number): string;    
+    protected _getNavLink(limit: number, offset: number): string;
   }
 
 
@@ -624,7 +624,7 @@ declare module Restypie {
     maxLevel: number;
     filters: Filters;
   }
-  
+
   class Score {
 
   }
@@ -644,11 +644,11 @@ declare module Restypie {
   }
 
 
-  
+
   /**************************************************************************************************************************************
    Url
   **************************************************************************************************************************************/
-  
+
   export module Url {
     export function join(...parts: string[]): string;
     export function ensureHTTPProtocol(url: string, useHTTPS?: boolean): string;
@@ -659,7 +659,7 @@ declare module Restypie {
   /**************************************************************************************************************************************
    Codes
   **************************************************************************************************************************************/
-  
+
   export module Codes {
     export function isErrorCode(code: number): boolean;
     export const Continue: number;
@@ -749,7 +749,7 @@ declare module Restypie {
   /**************************************************************************************************************************************
    EventEmitter
   **************************************************************************************************************************************/
-  
+
   export const EventEmitter: EventEmitter;
 
 
@@ -757,7 +757,7 @@ declare module Restypie {
   /**************************************************************************************************************************************
    Logger
   **************************************************************************************************************************************/
-  
+
   export const Logger: winston.Winston;
 
 
@@ -765,7 +765,7 @@ declare module Restypie {
   /**************************************************************************************************************************************
    Utils
   **************************************************************************************************************************************/
-  
+
   export module Utils {
     export function isSubclassOf(child: typeof Object, parent: typeof Object, shouldThrow: boolean = false): boolean;
     export function assertIsSubclassOf(child: typeof Object, parent: typeof Object): void;
@@ -785,7 +785,7 @@ declare module Restypie {
   /**************************************************************************************************************************************
    TemplateErrors
   **************************************************************************************************************************************/
-  
+
   export module TemplateErrors {
     export function overrideTemplate(error: typeof AbstractError, templateFunction: Function): void;
 
@@ -846,13 +846,13 @@ declare module Restypie {
       static template(meta: { operators: string[], key: string }): string;
     }
     export class UniquenessConstraintViolation extends AbstractError {
-      static template(meta: { keys: { [key: string]: any } = {} }): string;
+      static template(meta: { keys?: { [key: string]: any } }): string;
     }
     export class RequestOutOfRange extends AbstractForbiddenError {
       static template(): string;
     }
     export class InconsistentRequest extends AbstractBadRequestError {
-      static template(meta: { key: string, filterValue: any, bodyValue: any }): string
+      static template(meta: { key: string, filterValue: any, bodyValue: any }): string;
     }
   }
 
@@ -861,7 +861,7 @@ declare module Restypie {
   /**************************************************************************************************************************************
    RoutesSorter
   **************************************************************************************************************************************/
-  
+
   export module RoutesSorter {
     export function sort(routes: { method: string, path: string }[]): { method: string, path: string }[];
     export function _computeMethodRoutes(routes: { path: string }[]): void;
@@ -874,7 +874,7 @@ declare module Restypie {
   /**************************************************************************************************************************************
    ResourceTester
   **************************************************************************************************************************************/
-  
+
   export class ResourceTester {
     static validate(resourceClass: typeof Resources.AbstractCoreResource, options: { routerType: RouterTypes, before?: (...args: any[]) => void }): void;
   }
@@ -884,7 +884,7 @@ declare module Restypie {
   /**************************************************************************************************************************************
    Resources
   **************************************************************************************************************************************/
-  
+
   export module Resources {
     export abstract class AbstractCoreResource<T = any> {
       public readonly primaryKeyField: typeof Fields.AbstractField;
@@ -991,7 +991,7 @@ declare module Restypie {
       public readonly fixtures: T[];
       public readonly size: number;
       protected _fixtures: T[];
-      
+
       public countObjects(bundle: Bundle): Promise<number>;
       public createObject(bundle: Bundle): Promise<T>;
       public createObjects(bundle: Bundle): Promise<T[]>;

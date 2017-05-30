@@ -11,13 +11,11 @@
   "scripts": {
     "test": "grunt check"
   },
-  "typings": "index.d.ts",
-  "typescript": {
-    "definition": "index.d.ts"
-  },
+  "typings": "./index.d.ts",
   "dependencies": {
     "@types/node": "4.2.8",
     "@types/sequelize": "4.0.55",
+    "@types/typescript": "2.0.0",
     "@types/winston": "2.3.2",
     "bluebird": "^3.0.6",
     "body-parser": "^1.15.2",
@@ -34,7 +32,6 @@
     "winston": "^2.2.0"
   },
   "devDependencies": {
-    "@types/node": "4.2.8",
     "async": "^1.5.2",
     "chai": "^3.4.1",
     "coveralls": "^2.11.9",
