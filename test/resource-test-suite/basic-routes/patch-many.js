@@ -102,6 +102,62 @@ module.exports = function (Fixtures) {
       });
     });
 
+    it('should update users (has correct auth)', function () {
+      const updatedCount = 3;
+
+      return Fixtures.generateUsers(5, (index) => {
+        return {
+          yearOfBirth: index > 1 ? 1950 + index : 1950,
+          internalName: `john_doe${index}`
+        };
+      }, { setSudoHeader: true }).then(() => {
+        const filters = { yearOfBirth: { gt: 1950 } };
+        const updates = { firstName: 'Updated', internalName: 'UpdatedInternalName' };
+
+        return Fixtures.getUsers(filters).then((preMatch) => {
+          preMatch.should.have.lengthOf(updatedCount);
+          return Fixtures.updateUsers(filters, updates, { return: true, setSudoHeader: true }).then((updated) => {
+            updated.should.have.lengthOf(updatedCount);
+            updated.forEach((user) => {
+              user.firstName.should.equal(updates.firstName);
+            });
+            return Fixtures.getUsers(filters, {  select: ['internalName'], forceGetAllAllowed: true }).then((postMatch) => {
+              postMatch.should.have.lengthOf(updatedCount);
+              postMatch.forEach((user) => {
+                user.internalName.should.equal(updates.internalName);
+              })
+            });
+          });
+        });
+      });
+    });
+
+    it('should NOT update users (missing correct auth)', function () {
+      const updatedCount = 3;
+
+      return Fixtures.generateUsers(5, (index) => {
+        return {
+          yearOfBirth: index > 1 ? 1950 + index : 1950,
+          internalName: `john_doe${index}`
+        };
+      }, { setSudoHeader: true }).then(() => {
+        const filters = { yearOfBirth: { gt: 1950 } };
+        const updates = { firstName: 'Updated', internalName: 'UpdatedInternalName' };
+
+        return Fixtures.getUsers(filters).then((preMatch) => {
+          preMatch.should.have.lengthOf(updatedCount);
+          return Fixtures.updateUsers(filters, updates, { statusCode: Restypie.Codes.Forbidden }).then((body) => {
+            body.error.should.equal(true);
+            body.meta.should.be.an('object');
+            body.message.should.be.a('string');
+            body.code.should.be.a('string');
+            body.meta.should.be.an('object');
+            body.meta.key.should.equal('internalName');
+          });
+        });
+      });
+    });
+
   });
 
 };

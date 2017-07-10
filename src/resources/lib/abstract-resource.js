@@ -251,7 +251,10 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
     if (this.defaultSelect) {
       this.defaultSelect.forEach(keyItem => {
         if (!schema.hasOwnProperty(keyItem)) {
-          throw new Error('Schema doesnt have this property ' + keyItem);
+          throw new Error(`Schema doesnt have this property ${keyItem}`);
+        }
+        if (schema[keyItem].hasOwnProperty('canRead')) {
+          throw new Error(`Cannot override canRead authentication for default select value '${keyItem}'`);
         }
       });
     }
@@ -479,16 +482,31 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
    * @return {Promise}
    */
   parseBody(bundle) {
+    const self = this;
     let supported = ['application/json', 'multipart/form-data'];
+    let parserPromise;
     switch (typeIs(bundle.req, supported)) {
       case 'application/json':
-        return this._parseJSON(bundle);
+        parserPromise = this._parseJSON(bundle);
+        break;
       case 'multipart/form-data':
-        return this._parseMultipart(bundle);
+        parserPromise = this._parseMultipart(bundle);
+        break;
     }
 
-    let headers = bundle.req.headers['content-type'];
-    return Promise.reject(new Restypie.TemplateErrors.UnsupportedFormat({ expected: supported, value: headers }));
+    if (!parserPromise) {
+      let headers = bundle.req.headers['content-type'];
+      return Promise.reject(new Restypie.TemplateErrors.UnsupportedFormat({ expected: supported, value: headers }));
+    }
+
+    return parserPromise
+      .then(bundle => {
+        const data = Restypie.Utils.makeArray(bundle.body);
+        const fields = Object.keys(data.reduce((acc, object) => {
+          return _.defaults(acc, object);
+        }, {}));
+        return self.authorize(bundle, fields);
+      });
   }
 
   /**
@@ -951,6 +969,51 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
         return bundle.setBody(isArray ? final : final[0]).next();
       }).then(this.afterHydrate.bind(this, bundle))
         .then(function () { return bundle.next(); });
+  }
+
+  /**
+   * Authorizes fields access according to action
+   *
+   * @param bundle
+   * @param fields
+   * @returns {Promise.<TResult>}
+   */
+  authorize(bundle, fields) {
+    const self = this;
+    const permissions = AbstractResource.getPermissions(bundle);
+
+    // Default to select if fields not passed in
+    let fieldsList = fields;
+    let fieldsArray = Restypie.listToArray(fieldsList);
+
+    if (!fields) {
+      let selectFieldsArray = Restypie.listToArray(bundle.query.select);
+      // Get the populate item in current resource
+      let populateFieldsArray = Restypie.listToArray(bundle.query.populate).map((path) => {
+        return Restypie.getItemInPath(path);
+      });
+      fieldsArray = _.union(selectFieldsArray, populateFieldsArray);
+    }
+
+    let fieldsByKey = this.fieldsByKey;
+    let fieldsMap = this.fieldsByPath;
+
+    let fieldsPermissions = [];
+    fieldsArray.forEach(function (key) {
+      let field;
+      if (key === PRIMARY_KEY_KEYWORD) {
+        key = self.primaryKeyKey;
+        fieldsArray.splice(fieldsArray.indexOf(PRIMARY_KEY_KEYWORD), 1, key);
+      }
+      field = fieldsByKey[key];
+      if (!field) {
+        field = fieldsMap[key];
+      }
+      fieldsPermissions.push(field.authenticatePermissions(permissions, bundle));
+    });
+    return Promise.all(fieldsPermissions).then(() => {
+      return bundle;
+    });
   }
 
   /**
@@ -1428,6 +1491,23 @@ module.exports = class AbstractResource extends Restypie.Resources.AbstractCoreR
       throw new Error('reset() is only intended to be used for Restypie internal testing');
     }
     return this.__reset();
+  }
+
+
+  static getPermissions(bundle, currentPermissions) {
+    let permissions = currentPermissions || [];
+    let isRead = bundle.isRead;
+    let isWrite = bundle.isWrite;
+    let isUpdate = bundle.isUpdate;
+    if (isRead) {
+      permissions = Restypie.Utils.pushUnique(permissions, Restypie.PermissionTypes.READ);
+    }
+    if (isUpdate) {
+      permissions = Restypie.Utils.pushUnique(permissions, Restypie.PermissionTypes.UPDATE);
+    } else if (isWrite) {
+      permissions = Restypie.Utils.pushUnique(permissions, Restypie.PermissionTypes.CREATE);
+    }
+    return permissions;
   }
 
   static get LIST_SEPARATOR() { return /\s*,\s*/; }

@@ -45,7 +45,6 @@ class AbstractForbiddenError extends AbstractError {
   }
 }
 
-
 /***********************************************************************************************************************
  * @namespace Restypie
  * @class TemplateErrors
@@ -184,6 +183,23 @@ module.exports = {
   },
 
   /**
+   * Requested permission is not supported.
+   *
+   * @property UnsupportedPermission
+   * @type constructor
+   * @static
+   * @extends Restypie.TemplateErrors.AbstractError
+   * @constructor
+   */
+  UnsupportedPermission: class UnsupportedPermissionError extends AbstractError {
+    get statusCode() { return Restypie.Codes.NotAcceptable; }
+    static template(meta) {
+      return `Requested permission is not supported ; should be one of ${meta.expected.join(', ')} ; 
+      got "${meta.value}"`;
+    }
+  },
+
+  /**
    * The resource could not be found.
    *
    * @property ResourceNotFound
@@ -242,6 +258,51 @@ module.exports = {
   NotWritable: class NotWritableError extends AbstractForbiddenError {
     static template(meta) {
       return `Path "${meta.key}" cannot be written, got "${meta.value}"`;
+    }
+  },
+
+  /**
+   * Missing read permissions for the path
+   *
+   * @property FieldNotReadable
+   * @type constructor
+   * @static
+   * @extends Restypie.TemplateErrors.AbstractForbiddenError
+   * @constructor
+   */
+  FieldNotReadable: class FieldNotReadableError extends AbstractForbiddenError {
+     static template(meta) {
+       return `Missing Read permission for request on field "${meta.key}"`;
+     }
+  },
+
+  /**
+   * Missing write permissions for the path
+   *
+   * @property FieldNotWritable
+   * @type constructor
+   * @static
+   * @extends Restypie.TemplateErrors.AbstractForbiddenError
+   * @constructor
+   */
+  FieldNotWritable: class FieldNotWritableError extends AbstractForbiddenError {
+    static template(meta) {
+      return `Missing Create permission for request on field "${meta.key}"`;
+    }
+  },
+
+  /**
+   * Missing update permissions for the path
+   *
+   * @property FieldNotUpdatable
+   * @type constructor
+   * @static
+   * @extends Restypie.TemplateErrors.AbstractForbiddenError
+   * @constructor
+   */
+  FieldNotUpdatable: class FieldNotUpdatableError extends AbstractForbiddenError {
+    static template(meta) {
+      return `Missing Update permission for request on field "${meta.key}"`;
     }
   },
 
@@ -370,8 +431,8 @@ module.exports = {
       return `Request is trying to access too many data, try refining your filters`;
     }
   },
-  
-  
+
+
   InconsistentRequest: class InconsistentRequestError extends AbstractBadRequestError {
     static template(meta) {
       return `Request is not consistent, values for path "${meta.key}" don't match :` +

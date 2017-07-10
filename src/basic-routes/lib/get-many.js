@@ -22,6 +22,7 @@ module.exports = class GetManyRoute extends Restypie.Route {
     const pipeline = bundle.createPipeline(resource.exit, resource);
 
     return pipeline
+      .add(resource.authorize)
       .add((bundle) => {
         resource.parseOptions(bundle);
         resource.parseLimit(bundle);
@@ -77,6 +78,7 @@ module.exports = class GetManyRoute extends Restypie.Route {
         }
       })
       .run();
+
   }
 
 };

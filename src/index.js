@@ -31,6 +31,7 @@ const Restypie = module.exports = {
   EQUALITY_OPERATOR: 'eq',
   LIST_SEPARATOR: ',',
   get LIST_SEPARATOR_REG() { return new RegExp('\\\s*' + this.LIST_SEPARATOR + '\\\s*', 'g'); },
+  DEEP_PATH_SEPARATOR: '.',
 
   RouterTypes: {
     KOA_ROUTER: 'koa-router',
@@ -50,6 +51,12 @@ const Restypie = module.exports = {
     WARN: 'warn'
   },
 
+  PermissionTypes: {
+    READ: 'read',
+    CREATE: 'create',
+    UPDATE: 'update'
+  },
+
   isSupportedRouterType(type) {
     return _.contains(_.values(Restypie.RouterTypes), type);
   },
@@ -67,6 +74,15 @@ const Restypie = module.exports = {
   },
 
   arrayToList(arr) { return (arr || []).join(this.LIST_SEPARATOR); },
+
+  getItemInPath(path, index, separator) {
+    if (!path) {
+      return null;
+    }
+    index = index || 0;
+    separator = separator || this.DEEP_PATH_SEPARATOR;
+    return path.split(separator)[index];
+  },
 
   stringify(options) {
     options = options || {};

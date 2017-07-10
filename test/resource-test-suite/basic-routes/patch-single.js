@@ -5,7 +5,7 @@ const Path = require('path');
 const Restypie = require('../../../');
 
 module.exports = function (Fixtures) {
-  
+
   describe('PATCH single', function () {
 
     it('should update a user (no profile picture)', function () {
@@ -72,6 +72,30 @@ module.exports = function (Fixtures) {
       return Fixtures.updateUser(123, {}, { statusCode: Restypie.Codes.NotFound });
     });
 
+    it('should updated fields if authorized for update', function () {
+      const updates = { internalName: `john-doe` };
+      return Fixtures.generateUser({ internalName: `john_doe` }, { setSudoHeader: true }).then((user) => {
+        return Fixtures.updateUser(user.theId, updates, { setSudoHeader: true, return: true});
+      }).then((user) => {
+        user.should.be.an('object');
+        return Fixtures.getUser(user.theId, { select: ['theId', 'internalName'], setSudoHeader: true });
+      }).then((user) => {
+        user.internalName.should.equal(updates.internalName);
+      });
+    });
+
+    it('should NOT update if missing update permissions', function () {
+      return Fixtures.generateUser({ internalName: `john_doe` }, { setSudoHeader: true }).then((user) => {
+        return Fixtures.updateUser(user.theId, { internalName: 'hacker' }, { statusCode: Restypie.Codes.Forbidden });
+      }).then((body) => {
+        body.error.should.equal(true);
+        body.message.should.be.a('string');
+        body.code.should.be.a('string');
+        body.meta.should.be.an('object');
+        body.meta.key.should.equal('internalName');
+      });
+    });
+
   });
-  
+
 };

@@ -6,6 +6,7 @@
 const _ = require('lodash');
 
 const Restypie = require('../../');
+const PermissionTypes = Restypie.PermissionTypes;
 
 const AUTO_FILTERING_WEIGHT = Symbol('AUTO_FILTERING_WEIGHT');
 const MAX_FILTERING_WEIGHT = 100;
@@ -113,6 +114,16 @@ module.exports = class AbstractField {
         if (!this.otherThroughKey) throw new Error('ManyToMany relation defined without a `otherThroughKey`');
       }
     }
+
+    if (options.hasOwnProperty('canRead')) {
+      this._canReadField = options.canRead;
+    }
+    if (options.hasOwnProperty('canWriteOnCreate')) {
+      this._canWriteOnCreateField = options.canWriteOnCreate;
+    }
+    if (options.hasOwnProperty('canWriteOnUpdate')) {
+      this._canWriteOnUpdateField = options.canWriteOnUpdate;
+    }
   }
 
   setFilteringWeight(weight) {
@@ -217,6 +228,139 @@ module.exports = class AbstractField {
     for (let operator of this.supportedOperators) {
       if (operator.stringName === operatorName) return operator;
     }
+  }
+
+  /**
+   * Checks for read permission on the field. Override or pass in constructor options
+   * this method for field level authentication. Defaults to true otherwise
+   *
+   * @method canRead
+   * @param bundle
+   * @returns {Promise.<boolean>}
+   */
+  canRead(bundle) {
+    if (this._canReadField) {
+      return Promise.resolve(this._canReadField.call(this, bundle));
+    }
+    return Promise.resolve(true);
+  }
+
+  /**
+   * Checks for create permission on the field. Override or pass in constructor options
+   * this method for field level authentication. Defaults to true otherwise
+   *
+   * @method canWriteOnCreate
+   * @param bundle
+   * @returns {Promise.<boolean>}
+   */
+  canWriteOnCreate(bundle) {
+    if (this._canWriteOnCreateField) {
+      return Promise.resolve(this._canWriteOnCreateField.call(this, bundle));
+    }
+    return Promise.resolve(true);
+  }
+
+  /**
+   * Checks for update permission on the field. Override or pass in constructor options
+   * this method for field level authentication. Defaults to true otherwise
+   *
+   * @method canWriteOnUpdate
+   * @param bundle
+   * @returns {Promise.<boolean>}
+   */
+  canWriteOnUpdate(bundle) {
+    if (this._canWriteOnUpdateField) {
+      return Promise.resolve(this._canWriteOnUpdateField.call(this, bundle));
+    }
+    return Promise.resolve(true);
+  }
+
+  /**
+   * Rejects the request by throwing if canRead returns false
+   *
+   * @param bundle
+   * @returns {Promise.<boolean>}
+   * @private
+   */
+  _canRead(bundle) {
+    return Promise.resolve(this.canRead(bundle))
+      .then(result => {
+        if (!result) {
+          throw new Restypie.TemplateErrors.FieldNotReadable({
+            key: this.key
+          });
+        }
+        return;
+      });
+  }
+
+  /**
+   * Rejects the request by throwing if canWriteOnCreate returns false
+   *
+   * @param bundle
+   * @returns {Promise.<boolean>}
+   * @private
+   */
+  _canWriteOnCreate(bundle) {
+    return Promise.resolve(this.canWriteOnCreate(bundle))
+      .then(result => {
+        if (!result) {
+          throw new Restypie.TemplateErrors.FieldNotWritable({
+            key: this.key
+          });
+        }
+        return;
+      });
+  }
+
+  /**
+   * Rejects the request by throwing if canWriteOnUpdate returns false
+   *
+   * @param bundle
+   * @returns {Promise.<boolean>}
+   * @private
+   */
+  _canWriteOnUpdate(bundle) {
+    return Promise.resolve(this.canWriteOnUpdate(bundle))
+      .then(result => {
+        if (!result) {
+          throw new Restypie.TemplateErrors.FieldNotUpdatable({
+            key: this.key
+          });
+        }
+        return;
+      });
+  }
+
+  /**
+   * Checks for all permissions requested for the field
+   *
+   * @param requestedPermissions
+   * @param bundle
+   * @returns {Promise.<boolean>}
+   */
+  authenticatePermissions(requestedPermissions, bundle) {
+    return Promise.all(requestedPermissions.map(perm => {
+      let permissionPromise;
+      switch (perm) {
+        case PermissionTypes.READ:
+          permissionPromise = this._canRead(bundle);
+          break;
+        case PermissionTypes.CREATE:
+          permissionPromise = this._canWriteOnCreate(bundle);
+          break;
+        case PermissionTypes.UPDATE:
+          permissionPromise = this._canWriteOnUpdate(bundle);
+          break;
+        default:
+          const supported = [PermissionTypes.READ, PermissionTypes.CREATE, PermissionTypes.UPDATE];
+          permissionPromise = Promise.reject(new Restypie.TemplateErrors.UnsupportedPermission({
+            expected: supported,
+            value: perm
+          }));
+      }
+      return permissionPromise;
+    }));
   }
 
   static get AUTO_FILTERING_WEIGHT() { return AUTO_FILTERING_WEIGHT; }

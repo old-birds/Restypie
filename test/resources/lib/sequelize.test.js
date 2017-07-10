@@ -25,6 +25,10 @@ const User = db.define('User', {
     type: Sequelize.STRING,
     allowNull: false
   },
+  iName: {
+    type: Sequelize.STRING,
+    allowNull: true
+  },
   email: {
     type: Sequelize.STRING,
     allowNull: false,

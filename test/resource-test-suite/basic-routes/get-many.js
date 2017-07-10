@@ -35,6 +35,40 @@ module.exports = function (Fixtures, api) {
       });
     });
 
+    it('should NOT populate job (selecting internal name)', function () {
+      const usersCount = 10;
+
+      return Fixtures.generateUsers(usersCount).then(() => {
+        return Fixtures.getUsers(null, {
+          select: ['internalName'],
+          statusCode: Restypie.Codes.Forbidden
+        }).then((body) => {
+            body.error.should.equal(true);
+            body.message.should.be.a('string');
+            body.code.should.be.a('string');
+            body.meta.should.be.an('object');
+            body.meta.key.should.equal('internalName');
+        });
+      });
+    });
+
+    it('should NOT populate job (populating internal name)', function () {
+      const usersCount = 10;
+
+      return Fixtures.generateUsers(usersCount).then(() => {
+        return Fixtures.getUsers(null, {
+          populate: ['internalName', 'job', 'otherJobPopulation'],
+          statusCode: Restypie.Codes.Forbidden
+        }).then((body) => {
+          body.error.should.equal(true);
+          body.message.should.be.a('string');
+          body.code.should.be.a('string');
+          body.meta.should.be.an('object');
+          body.meta.key.should.equal('internalName');
+        });
+      });
+    });
+
     it('should populate users on jobs resource', function () {
       const usersCount = 5;
       const jobsCount = 2;
@@ -412,6 +446,47 @@ module.exports = function (Fixtures, api) {
           users.forEach((user) => {
             user.should.have.keys(select);
           });
+        });
+      });
+    });
+
+    it('should select internal name with authorization', function () {
+      const usersCount = 10;
+
+      return Fixtures.generateUsers(usersCount, (index) => {
+        return {
+          internalName: `john_doe${index}`
+        };
+      }, { setSudoHeader: true }).then(() => {
+        return Fixtures.getUsers(null, {
+          select: ['internalName'],
+          forceGetAllAllowed: true
+        }).then((populated) => {
+          populated.should.be.an('array').and.have.lengthOf(usersCount);
+          populated.forEach((user) => {
+            should.exist(user.internalName);
+          });
+        });
+      });
+    });
+
+    it('should NOT select internal name without authorization', function () {
+      const usersCount = 10;
+
+      return Fixtures.generateUsers(usersCount, (index) => {
+        return {
+          internalName: `john_doe${index}`
+        };
+      }, { setSudoHeader: true }).then(() => {
+        return Fixtures.getUsers(null, {
+          select: ['internalName'],
+          statusCode: Restypie.Codes.Forbidden
+        }).then((body) => {
+          body.error.should.equal(true);
+          body.message.should.be.a('string');
+          body.code.should.be.a('string');
+          body.meta.should.be.an('object');
+          body.meta.key.should.equal('internalName');
         });
       });
     });

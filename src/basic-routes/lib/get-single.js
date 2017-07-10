@@ -23,6 +23,7 @@ module.exports = class GetSingleRoute extends Restypie.Route {
     let pkField = resource.primaryKeyField;
 
     return pipeline
+      .add(resource.authorize)
       .add((bundle) => {
         pk = pkField.hydrate(bundle.params.pk);
         bundle.query[pkField.key] = pk;
@@ -45,5 +46,4 @@ module.exports = class GetSingleRoute extends Restypie.Route {
       .add(resource.populate)
       .run();
   }
-
 };
